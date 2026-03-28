@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -8,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useI18n } from "@/i18n";
 import {
   type ColumnDef,
   type SortingState,
@@ -33,6 +36,7 @@ interface DataTableProps {
 }
 
 function DataTable({ data, interviewId }: DataTableProps) {
+  const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([{ id: "overallScore", desc: true }]);
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -74,7 +78,7 @@ function DataTable({ data, interviewId }: DataTableProps) {
             className={`w-full justify-start font-semibold text-[15px] mb-1 ${column.getIsSorted() ? "text-indigo-600" : "text-black"}`}
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Name
+            {t("summary.name")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -99,7 +103,7 @@ function DataTable({ data, interviewId }: DataTableProps) {
                 </span>
               </TooltipTrigger>
               <TooltipContent side="top" className="bg-gray-500 text-white font-normal">
-                View Response
+                {t("summary.viewResponse")}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -122,7 +126,7 @@ function DataTable({ data, interviewId }: DataTableProps) {
             className={`w-full justify-start font-semibold text-[15px] mb-1 ${column.getIsSorted() ? "text-indigo-600" : "text-black"}`}
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Overall Score
+            {t("summary.overallScore")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -148,7 +152,7 @@ function DataTable({ data, interviewId }: DataTableProps) {
             className={`w-full justify-start font-semibold text-[15px] mb-1 ${column.getIsSorted() ? "text-indigo-600" : "text-black"}`}
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Communication Score
+            {t("summary.communicationScore")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -169,7 +173,7 @@ function DataTable({ data, interviewId }: DataTableProps) {
       accessorKey: "callSummary",
       header: () => (
         <div className="w-full justify-start font-semibold text-[15px] mb-1 text-black">
-          Summary
+          {t("summary.summaryColumn")}
         </div>
       ),
       cell: ({ row }) => {

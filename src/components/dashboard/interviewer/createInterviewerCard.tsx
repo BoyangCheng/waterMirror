@@ -1,3 +1,5 @@
+"use client";
+
 import Modal from "@/components/dashboard/Modal";
 import { avatars } from "@/components/dashboard/interviewer/avatars";
 import { Button } from "@/components/ui/button";
@@ -5,6 +7,7 @@ import { CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { useInterviewers } from "@/contexts/interviewers.context";
+import { useI18n } from "@/i18n";
 import { useClerk } from "@clerk/nextjs";
 import { Image as LucideImage } from "lucide-react";
 import { Plus } from "lucide-react";
@@ -25,6 +28,7 @@ const createInterviewerCard = () => {
   const { createInterviewer } = useInterviewers();
   const { user } = useClerk();
   const [isClicked, setIsClicked] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!open) {
@@ -53,19 +57,6 @@ const createInterviewerCard = () => {
 
   return (
     <>
-      {/* <Card
-        
-        className="border-dashed border-gray-700 border-4 p-0 inline-block cursor-pointer hover:scale-105 ease-in-out duration-300 h-5 w-5 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md"
-      >
-        <CardContent className="p-0">
-          <div className="flex flex-col justify-center items-center w-full p-4 pb-0 mt-8 overflow-hidden">
-            
-          </div>
-          {/* <CardTitle className="p-0 m-2 mx-0 text-xs text-center">
-            Add Interviewer
-          </CardTitle> 
-        </CardContent>
-      </Card> */}
       <Plus
         size={30}
         strokeWidth={2}
@@ -81,7 +72,7 @@ const createInterviewerCard = () => {
       >
         <div className="text-center w-[35rem]">
           <CardTitle className="text-2xl text mt-0 mb-4 p-0 font-semibold ">
-            Create an interviewer yourself!
+            {t("interviewerSettings.createYourOwn")}
           </CardTitle>
           <div className="mt-3 p-2 flex flex-row justify-center space-x-10 items-center">
             <button
@@ -101,26 +92,26 @@ const createInterviewerCard = () => {
                 <div>
                   <LucideImage className="mt-3 text-gray-300" size={100} strokeWidth={0.7} />
                   <h4 className="text-xs text-center font-medium text-gray-400">
-                    Choose an Avatar
+                    {t("interviewerSettings.chooseAvatar")}
                   </h4>
                 </div>
               )}
             </button>
             <div className="flex flex-col justify-center items-start ml-4">
               <div className="flex flex-row justify-center items-center">
-                <h3 className="text-lg font-medium">Name</h3>
+                <h3 className="text-lg font-medium">{t("interviewerSettings.name")}</h3>
                 <input
                   type="text"
                   className="border-b-2 focus:outline-none border-gray-500 px-2 py-0.5 ml-3 w-[12.5rem]"
-                  placeholder="e.g. Empathetic Bob"
+                  placeholder={t("interviewerSettings.namePlaceholder")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
               </div>
-              <h3 className="text-lg mt-3 font-medium">Interviewer Settings</h3>
+              <h3 className="text-lg mt-3 font-medium">{t("interviewerSettingsLabel")}</h3>
               <div className="ml-5 mt-2 flex flex-col justify-start items-start">
                 <div className="flex flex-row justify-between items-center mb-2">
-                  <h4 className="w-20 text-left">Empathy</h4>
+                  <h4 className="w-20 text-left">{t("interviewerSettings.empathy")}</h4>
                   <div className="w-40 space-x-3 ml-3 flex justify-between items-center">
                     <Slider
                       value={[empathy]}
@@ -132,7 +123,7 @@ const createInterviewerCard = () => {
                   </div>
                 </div>
                 <div className="flex flex-row justify-between items-center mb-2">
-                  <h4 className="w-20 text-left">Rapport</h4>
+                  <h4 className="w-20 text-left">{t("interviewerSettings.rapport")}</h4>
                   <div className="w-40 space-x-3 ml-3 flex justify-between items-center">
                     <Slider
                       value={[rapport]}
@@ -144,7 +135,7 @@ const createInterviewerCard = () => {
                   </div>
                 </div>
                 <div className="flex flex-row justify-between items-center mb-2">
-                  <h4 className="w-20 text-left">Exploration</h4>
+                  <h4 className="w-20 text-left">{t("interviewerSettings.exploration")}</h4>
                   <div className="w-40 space-x-3 ml-3 flex justify-between items-center">
                     <Slider
                       value={[exploration]}
@@ -156,7 +147,7 @@ const createInterviewerCard = () => {
                   </div>
                 </div>
                 <div className="flex flex-row justify-between items-center mb-2">
-                  <h4 className="w-20 text-left">Speed</h4>
+                  <h4 className="w-20 text-left">{t("interviewerSettings.speed")}</h4>
                   <div className="w-40 space-x-3 ml-3 flex justify-between items-center">
                     <Slider
                       value={[speed]}
@@ -179,7 +170,7 @@ const createInterviewerCard = () => {
                 onSave();
               }}
             >
-              Save
+              {t("common.save")}
             </Button>
           </div>
         </div>
@@ -192,7 +183,7 @@ const createInterviewerCard = () => {
         }}
       >
         <div className="text-left w-[20rem]">
-          <CardTitle className="text-xl text mt-0 p-0 font-semibold ">Select an Avatar</CardTitle>
+          <CardTitle className="text-xl text mt-0 p-0 font-semibold ">{t("interviewerSettings.selectAvatar")}</CardTitle>
           <ScrollArea className="mt-3 h-96">
             <div className="flex flex-row flex-wrap justify-center items-center">
               {avatars.map((item) => (

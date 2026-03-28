@@ -1,7 +1,10 @@
+"use client";
+
 import QuestionCard from "@/components/dashboard/interview/create-popup/questionCard";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useInterviews } from "@/contexts/interviews.context";
+import { useI18n } from "@/i18n";
 import type { InterviewBase, Question } from "@/types/interview";
 import { useClerk, useOrganization } from "@clerk/nextjs";
 import axios from "axios";
@@ -20,6 +23,7 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
   const { user } = useClerk();
   const { organization } = useOrganization();
   const [isClicked, setIsClicked] = useState(false);
+  const { t } = useI18n();
 
   const [questions, setQuestions] = useState<Question[]>(interviewData.questions);
   const [description, setDescription] = useState<string>(interviewData.description.trim());
@@ -107,10 +111,10 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
               setProceed(false);
             }}
           />
-          <h1 className="text-2xl font-semibold">Create Interview</h1>
+          <h1 className="text-2xl font-semibold">{t("create.createInterview")}</h1>
         </div>
         <div className="my-3 text-left w-[96%] text-sm">
-          We will be using these questions during the interviews. Please make sure they are ok.
+          {t("create.questionsReview")}
         </div>
         <ScrollArea className="flex flex-col justify-center items-center w-full mt-3">
           {questions.map((question, index) => (
@@ -137,18 +141,18 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
         )}
       </div>
       <p className="mt-3 mb-1 ml-2 font-medium">
-        Interview Description{" "}
+        {t("interview.description")}{" "}
         <span
           style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
           className="font-light text-xs italic w-full text-left block"
         >
-          Note: Interviewees will see this description.
+          {t("create.descriptionNoteInterviewees")}
         </span>
       </p>
       <textarea
         value={description}
         className="h-fit mt-3 mx-2 py-2 border-2 rounded-md px-2 w-full border-gray-400"
-        placeholder="Enter your interview description."
+        placeholder={t("create.descriptionPlaceholderShort")}
         rows={3}
         onChange={(e) => {
           setDescription(e.target.value);
@@ -171,7 +175,7 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
             onSave();
           }}
         >
-          Save
+          {t("common.save")}
         </Button>
       </div>
     </div>

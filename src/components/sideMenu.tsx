@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/i18n";
 import { PlayCircleIcon, SpeechIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
@@ -7,6 +8,7 @@ import React from "react";
 function SideMenu() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useI18n();
 
   return (
     <div className="z-[10] bg-slate-100 p-6 w-[200px] fixed top-[64px] left-0 h-full">
@@ -22,7 +24,7 @@ function SideMenu() {
             onClick={() => router.push("/dashboard")}
           >
             <PlayCircleIcon className="font-thin	 mr-2" />
-            <p className="font-medium ">Interviews</p>
+            <p className="font-medium ">{t("nav.interviews")}</p>
           </button>
           <button
             type="button"
@@ -32,7 +34,7 @@ function SideMenu() {
             onClick={() => router.push("/dashboard/interviewers")}
           >
             <SpeechIcon className="font-thin mr-2" />
-            <p className="font-medium ">Interviewers</p>
+            <p className="font-medium ">{t("nav.interviewers")}</p>
           </button>
         </div>
       </div>

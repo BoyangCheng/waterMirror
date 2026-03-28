@@ -3,12 +3,14 @@
 import CreateInterviewerButton from "@/components/dashboard/interviewer/createInterviewerButton";
 import InterviewerCard from "@/components/dashboard/interviewer/interviewerCard";
 import { useInterviewers } from "@/contexts/interviewers.context";
+import { useI18n } from "@/i18n";
 import { ChevronLeft } from "lucide-react";
 import { ChevronRight } from "lucide-react";
 import React from "react";
 
 function Interviewers() {
   const { interviewers, interviewersLoading } = useInterviewers();
+  const { t } = useI18n();
 
   const slideLeft = () => {
     const slider = document.getElementById("slider");
@@ -41,9 +43,9 @@ function Interviewers() {
       <div className="flex flex-col items-left">
         <div className="flex flex-row mt-5">
           <div>
-            <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-3">Interviewers</h2>
+            <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-3">{t("nav.interviewers")}</h2>
             <h3 className=" text-sm tracking-tight text-gray-600 font-medium ">
-              Get to know them by clicking the profile.
+              {t("interviewerSettings.getToKnow")}
             </h3>
           </div>
         </div>

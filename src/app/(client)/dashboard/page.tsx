@@ -5,6 +5,7 @@ import CreateInterviewCard from "@/components/dashboard/interview/createIntervie
 import InterviewCard from "@/components/dashboard/interview/interviewCard";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useInterviews } from "@/contexts/interviews.context";
+import { useI18n } from "@/i18n";
 import { ClientService } from "@/services/clients.service";
 import { InterviewService } from "@/services/interviews.service";
 import { ResponseService } from "@/services/responses.service";
@@ -20,6 +21,7 @@ function Interviews() {
   const [currentPlan, setCurrentPlan] = useState<string>("");
   const [allowedResponsesCount, setAllowedResponsesCount] = useState<number>(10);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const { t } = useI18n();
 
   function InterviewsLoader() {
     return (
@@ -86,9 +88,9 @@ function Interviews() {
   return (
     <main className="p-8 pt-0 ml-12 mr-auto rounded-md">
       <div className="flex flex-col items-left">
-        <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-8">My Interviews</h2>
+        <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-8">{t("dashboard.myInterviews")}</h2>
         <h3 className=" text-sm tracking-tight text-gray-600 font-medium ">
-          Start getting responses now!
+          {t("dashboard.startGettingResponses")}
         </h3>
         <div className="relative flex items-center mt-1 flex-wrap">
           {currentPlan === "free_trial_over" ? (
@@ -98,7 +100,7 @@ function Interviews() {
                   <Plus size={90} strokeWidth={0.5} className="text-gray-700" />
                 </div>
                 <CardTitle className="p-0 text-md text-center">
-                  You cannot create any more interviews unless you upgrade
+                  {t("dashboard.cannotCreateMore")}
                 </CardTitle>
               </CardContent>
             </Card>
@@ -115,10 +117,9 @@ function Interviews() {
                     <div className="flex justify-center text-indigo-600">
                       <Gem />
                     </div>
-                    <h3 className="text-xl font-semibold text-center">Upgrade to Pro</h3>
+                    <h3 className="text-xl font-semibold text-center">{t("dashboard.upgradeToPro")}</h3>
                     <p className="text-l text-center">
-                      You have reached your limit for the free trial. Please upgrade to pro to
-                      continue using our features.
+                      {t("dashboard.upgradeLimitMessage")}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="flex justify-center items-center">
@@ -132,26 +133,25 @@ function Interviews() {
 
                       <div className="grid grid-rows-2 gap-2">
                         <div className="p-4 border rounded-lg">
-                          <h4 className="text-lg font-medium">Free Plan</h4>
+                          <h4 className="text-lg font-medium">{t("dashboard.freePlan")}</h4>
                           <ul className="list-disc pl-5 mt-2">
-                            <li>10 Responses</li>
-                            <li>Basic Support</li>
-                            <li>Limited Features</li>
+                            <li>{t("dashboard.tenResponses")}</li>
+                            <li>{t("dashboard.basicSupport")}</li>
+                            <li>{t("dashboard.limitedFeatures")}</li>
                           </ul>
                         </div>
                         <div className="p-4 border rounded-lg">
-                          <h4 className="text-lg font-medium">Pro Plan</h4>
+                          <h4 className="text-lg font-medium">{t("dashboard.proPlan")}</h4>
                           <ul className="list-disc pl-5 mt-2">
-                            <li>Flexible Pay-Per-Response</li>
-                            <li>Priority Support</li>
-                            <li>All Features</li>
+                            <li>{t("dashboard.flexiblePay")}</li>
+                            <li>{t("dashboard.prioritySupport")}</li>
+                            <li>{t("dashboard.allFeatures")}</li>
                           </ul>
                         </div>
                       </div>
                     </div>
                     <p className="text-l text-center">
-                      Contact <span className="font-semibold">founders@folo-up.co</span> to upgrade
-                      your plan.
+                      {t("dashboard.contactUpgrade")}
                     </p>
                   </div>
                 </Modal>

@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Alibaba PuHuiTi - Chinese font (local files) */
+@font-face {
+  font-family: "Alibaba PuHuiTi";
+  src: url("./fonts/AlibabaPuHuiTi-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+4E00-9FFF, U+3400-4DBF, U+F900-FAFF, U+FE30-FE4F,
+    U+2F800-2FA1F, U+3000-303F, U+FF00-FFEF, U+2000-206F;
+}
+
+@font-face {
+  font-family: "Alibaba PuHuiTi";
+  src: url("./fonts/AlibabaPuHuiTi-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+4E00-9FFF, U+3400-4DBF, U+F900-FAFF, U+FE30-FE4F,
+    U+2F800-2FA1F, U+3000-303F, U+FF00-FFEF, U+2000-206F;
+}
+
+@font-face {
+  font-family: "Alibaba PuHuiTi";
+  src: url("./fonts/AlibabaPuHuiTi-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+4E00-9FFF, U+3400-4DBF, U+F900-FAFF, U+FE30-FE4F,
+    U+2F800-2FA1F, U+3000-303F, U+FF00-FFEF, U+2000-206F;
+}
+
 @layer base {
   * {
     @apply border-border;

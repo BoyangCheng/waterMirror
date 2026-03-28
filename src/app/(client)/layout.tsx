@@ -6,11 +6,8 @@ import Providers from "@/components/providers";
 import SideMenu from "@/components/sideMenu";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Inter } from "next/font/google";
 import { usePathname } from "next/navigation";
 import { Toaster } from "sonner";
-
-const inter = Inter({ subsets: ["latin"] });
 
 const metadata = {
   title: "FoloUp",
@@ -46,7 +43,7 @@ export default function RootLayout({
         <meta name="description" content={metadata.description} />
         <link rel="icon" href="/browser-client-icon.ico" />
       </head>
-      <body className={cn(inter.className, "antialiased overflow-hidden min-h-screen")}>
+      <body className={cn("font-sans antialiased overflow-hidden min-h-screen")}>
         <ClerkProvider
           dynamic
           signInFallbackRedirectUrl={"/dashboard"}

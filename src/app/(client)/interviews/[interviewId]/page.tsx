@@ -18,6 +18,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useInterviews } from "@/contexts/interviews.context";
+import { useI18n } from "@/i18n";
 import { CandidateStatus } from "@/lib/enum";
 import { formatTimestampToDateHHMM } from "@/lib/utils";
 import { ClientService } from "@/services/clients.service";
@@ -62,6 +63,7 @@ function InterviewHome({ params, searchParams }: Props) {
   const [iconColor, seticonColor] = useState<string>("#4F46E5");
   const { organization } = useOrganization();
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const { t } = useI18n();
 
   const seeInterviewPreviewPage = () => {
     const protocol = base_url?.includes("localhost") ? "http" : "https";
@@ -164,15 +166,15 @@ function InterviewHome({ params, searchParams }: Props) {
         resolvedParams.interviewId,
       );
 
-      toast.success("Interview status updated", {
-        description: `The interview is now ${updatedIsActive ? "active" : "inactive"}.`,
+      toast.success(t("interview.statusUpdated"), {
+        description: updatedIsActive ? t("interview.statusNowActive") : t("interview.statusNowInactive"),
         position: "bottom-right",
         duration: 3000,
       });
     } catch (error) {
       console.error(error);
-      toast.error("Error", {
-        description: "Failed to update the interview status.",
+      toast.error(t("common.error"), {
+        description: t("statusUpdateFailed"),
         duration: 3000,
       });
     }
@@ -182,14 +184,14 @@ function InterviewHome({ params, searchParams }: Props) {
     try {
       await InterviewService.updateInterview({ theme_color: newColor }, resolvedParams.interviewId);
 
-      toast.success("Theme color updated", {
+      toast.success(t("interview.themeUpdated"), {
         position: "bottom-right",
         duration: 3000,
       });
     } catch (error) {
       console.error(error);
-      toast.error("Error", {
-        description: "Failed to update the theme color.",
+      toast.error(t("common.error"), {
+        description: t("interview.themeUpdateFailed"),
         duration: 3000,
       });
     }
@@ -271,7 +273,7 @@ function InterviewHome({ params, searchParams }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">Share</span>
+                  <span className="text-black flex flex-row gap-4">{t("common.share")}</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -289,7 +291,7 @@ function InterviewHome({ params, searchParams }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">Preview</span>
+                  <span className="text-black flex flex-row gap-4">{t("common.preview")}</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -307,7 +309,7 @@ function InterviewHome({ params, searchParams }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">Theme Color</span>
+                  <span className="text-black flex flex-row gap-4">{t("themeColor.tooltip")}</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -324,7 +326,7 @@ function InterviewHome({ params, searchParams }: Props) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">Edit</span>
+                  <span className="text-black flex flex-row gap-4">{t("common.edit")}</span>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -332,18 +334,18 @@ function InterviewHome({ params, searchParams }: Props) {
             <div className="inline-flex cursor-pointer">
               {currentPlan === "free_trial_over" ? (
                 <>
-                  <span className="ms-3 my-auto text-sm">Inactive</span>
+                  <span className="ms-3 my-auto text-sm">{t("common.inactive")}</span>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                        Upgrade your plan to reactivate
+                        {t("interview.upgradeToReactivate")}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </>
               ) : (
                 <>
-                  <span className="ms-3 my-auto text-sm">Active</span>
+                  <span className="ms-3 my-auto text-sm">{t("common.active")}</span>
                   <Switch
                     checked={isActive}
                     className={`ms-3 my-auto ${isActive ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
@@ -363,37 +365,37 @@ function InterviewHome({ params, searchParams }: Props) {
                 >
                   <SelectTrigger className="w-[95%] bg-slate-100 rounded-lg">
                     <Filter size={18} className=" text-slate-400" />
-                    <SelectValue placeholder="Filter By" />
+                    <SelectValue placeholder={t("filter.filterBy")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={CandidateStatus.NO_STATUS}>
                       <div className="flex items-center">
                         <div className="w-3 h-3 bg-gray-400 rounded-full mr-2" />
-                        No Status
+                        {t("candidate.noStatus")}
                       </div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.NOT_SELECTED}>
                       <div className="flex items-center">
                         <div className="w-3 h-3 bg-red-500 rounded-full mr-2" />
-                        Not Selected
+                        {t("candidate.notSelected")}
                       </div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.POTENTIAL}>
                       <div className="flex items-center">
                         <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2" />
-                        Potential
+                        {t("candidate.potential")}
                       </div>
                     </SelectItem>
                     <SelectItem value={CandidateStatus.SELECTED}>
                       <div className="flex items-center">
                         <div className="w-3 h-3 bg-green-500 rounded-full mr-2" />
-                        Selected
+                        {t("candidate.selected")}
                       </div>
                     </SelectItem>
                     <SelectItem value="ALL">
                       <div className="flex items-center">
                         <div className="w-3 h-3 border-2 border-gray-300 rounded-full mr-2" />
-                        All
+                        {t("common.all")}
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -431,7 +433,7 @@ function InterviewHome({ params, searchParams }: Props) {
                         <div className="flex items-center justify-between w-full">
                           <div className="flex flex-col my-auto">
                             <p className="font-medium mb-[2px]">
-                              {response?.name ? `${response?.name}'s Response` : "Anonymous"}
+                              {response?.name ? `${response?.name}'s Response` : t("common.anonymous")}
                             </p>
                             <p className="">
                               {formatTimestampToDateHHMM(String(response?.created_at))}
@@ -465,7 +467,7 @@ function InterviewHome({ params, searchParams }: Props) {
                                         sideOffset={4}
                                       >
                                         <span className="text-white font-normal flex flex-row gap-4">
-                                          Overall Score
+                                          {t("summary.overallScore")}
                                         </span>
                                       </TooltipContent>
                                     </Tooltip>
@@ -478,7 +480,7 @@ function InterviewHome({ params, searchParams }: Props) {
                     </button>
                   ))
                 ) : (
-                  <p className="text-center text-gray-500">No responses to display</p>
+                  <p className="text-center text-gray-500">{t("dashboard.noResponses")}</p>
                 )}
               </ScrollArea>
             </div>
@@ -502,7 +504,7 @@ function InterviewHome({ params, searchParams }: Props) {
       )}
       <Modal open={showColorPicker} closeOnOutsideClick={false} onClose={applyColorChange}>
         <div className="w-[250px] p-3">
-          <h3 className="text-lg font-semibold mb-4 text-center">Choose a Theme Color</h3>
+          <h3 className="text-lg font-semibold mb-4 text-center">{t("themeColor.chooseTitle")}</h3>
           <ChromePicker
             disableAlpha={true}
             color={themeColor}

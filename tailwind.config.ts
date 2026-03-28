@@ -15,6 +15,17 @@ module.exports = {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+      sans: [
+        '"Helvetica Neue"',
+        "Helvetica",
+        '"Alibaba PuHuiTi"',
+        "Arial",
+        '"PingFang SC"',
+        '"Microsoft YaHei"',
+        "sans-serif",
+      ],
+    },
     extend: {
       colors: {
         border: "hsl(var(--border))",

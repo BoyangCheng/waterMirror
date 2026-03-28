@@ -1,6 +1,9 @@
+"use client";
+
 import MiniLoader from "@/components/loaders/mini-loader/miniLoader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/i18n";
 import { InterviewerService } from "@/services/interviewers.service";
 import { ResponseService } from "@/services/responses.service";
 import axios from "axios";
@@ -25,6 +28,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [img, setImg] = useState("");
+  const { t } = useI18n();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
@@ -79,7 +83,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
       .then(
         () => {
           setCopied(true);
-          toast.success("The link to your interview has been copied to your clipboard.", {
+          toast.success(t("interview.linkCopied"), {
             position: "bottom-right",
             duration: 3000,
           });
@@ -131,7 +135,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
               />
             </div>
             <div className="text-black text-sm font-semibold mt-2 mr-2 whitespace-nowrap">
-              Responses: <span className="font-normal">{responseCount?.toString() || 0}</span>
+              {t("create.responses")} <span className="font-normal">{responseCount?.toString() || 0}</span>
             </div>
           </div>
           <div className="absolute top-2 right-2 flex gap-1">

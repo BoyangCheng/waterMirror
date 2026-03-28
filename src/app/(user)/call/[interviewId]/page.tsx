@@ -3,6 +3,7 @@
 import Call from "@/components/call";
 import LoaderWithText from "@/components/loaders/loader-with-text/loaderWithText";
 import { useInterviews } from "@/contexts/interviews.context";
+import { useI18n } from "@/i18n";
 import type { Interview } from "@/types/interview";
 import { ArrowUpRightSquareIcon } from "lucide-react";
 import Image from "next/image";
@@ -21,6 +22,7 @@ type PopupProps = {
 };
 
 function PopupLoader() {
+  const { t } = useI18n();
   return (
     <div className="bg-white rounded-md absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 md:w-[80%] w-[90%]">
       <div className="h-[88vh] justify-center items-center rounded-lg border-2 border-b-4 border-r-4 border-black font-bold transition-all md:block dark:border-white">
@@ -35,7 +37,7 @@ function PopupLoader() {
         rel="noopener noreferrer"
       >
         <div className="text-center text-md font-semibold mr-2">
-          Powered by{" "}
+          {t("common.poweredBy")}{" "}
           <span className="font-bold">
             Folo<span className="text-indigo-600">Up</span>
           </span>
@@ -47,6 +49,7 @@ function PopupLoader() {
 }
 
 function PopUpMessage({ title, description, image }: PopupProps) {
+  const { t } = useI18n();
   return (
     <div className="bg-white rounded-md absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 md:w-[80%] w-[90%]">
       <div className="h-[88vh] content-center rounded-lg border-2 border-b-4 border-r-4 border-black font-bold transition-all  md:block dark:border-white ">
@@ -63,7 +66,7 @@ function PopUpMessage({ title, description, image }: PopupProps) {
         rel="noopener noreferrer"
       >
         <div className="text-center text-md font-semibold mr-2">
-          Powered by{" "}
+          {t("common.poweredBy")}{" "}
           <span className="font-bold">
             Folo<span className="text-indigo-600">Up</span>
           </span>
@@ -80,6 +83,8 @@ function InterviewInterface({ params }: Props) {
   const [isActive, setIsActive] = useState(true);
   const { getInterviewById } = useInterviews();
   const [interviewNotFound, setInterviewNotFound] = useState(false);
+  const { t } = useI18n();
+
   useEffect(() => {
     if (interview) {
       setIsActive(interview?.is_active === true);
@@ -111,8 +116,8 @@ function InterviewInterface({ params }: Props) {
         {!interview ? (
           interviewNotFound ? (
             <PopUpMessage
-              title="Invalid URL"
-              description="The interview link you're trying to access is invalid. Please check the URL and try again."
+              title={t("interview.invalidUrl")}
+              description={t("interview.invalidUrlMessage")}
               image="/invalid-url.png"
             />
           ) : (
@@ -120,8 +125,8 @@ function InterviewInterface({ params }: Props) {
           )
         ) : !isActive ? (
           <PopUpMessage
-            title="Interview Is Unavailable"
-            description="We are not currently accepting responses. Please contact the sender for more information."
+            title={t("interview.unavailable")}
+            description={t("interview.unavailableMessage")}
             image="/closed.png"
           />
         ) : (
@@ -132,11 +137,11 @@ function InterviewInterface({ params }: Props) {
         <div className="mt-48 px-3">
           <p className="text-center my-5 text-md font-semibold">{interview?.name}</p>
           <p className="text-center text-gray-600 my-5">
-            Please use a PC to respond to the interview. Apologies for any inconvenience caused.{" "}
+            {t("interview.usePc")}
           </p>
         </div>
         <div className="text-center text-md font-semibold mr-2 my-5">
-          Powered by{" "}
+          {t("common.poweredBy")}{" "}
           <a className="font-bold underline" href="www.folo-up.co" target="_blank" rel="noreferrer">
             Folo<span className="text-indigo-600">Up</span>
           </a>

@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useResponses } from "@/contexts/responses.context";
+import { useI18n } from "@/i18n";
 import { isLightColor, testEmail } from "@/lib/utils";
 import { FeedbackService } from "@/services/feedback.service";
 import { InterviewerService } from "@/services/interviewers.service";
@@ -29,6 +30,7 @@ import MiniLoader from "../loaders/mini-loader/miniLoader";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle } from "../ui/card";
 import { TabSwitchWarning, useTabSwitchPrevention } from "./tabSwitchPrevention";
+import LanguageSwitcher from "../languageSwitcher";
 
 const webClient = new RetellWebClient();
 
@@ -52,6 +54,7 @@ type transcriptType = {
 
 function Call({ interview }: InterviewProps) {
   const { createResponse } = useResponses();
+  const { t } = useI18n();
   const [lastInterviewerResponse, setLastInterviewerResponse] = useState<string>("");
   const [lastUserResponse, setLastUserResponse] = useState<string>("");
   const [activeTurn, setActiveTurn] = useState<string>("");
@@ -82,15 +85,15 @@ function Call({ interview }: InterviewProps) {
       });
 
       if (result) {
-        toast.success("Thank you for your feedback!");
+        toast.success(t("feedback.thankYou"));
         setIsFeedbackSubmitted(true);
         setIsDialogOpen(false);
       } else {
-        toast.error("Failed to submit feedback. Please try again.");
+        toast.error(t("feedback.failed"));
       }
     } catch (error) {
       console.error("Error submitting feedback:", error);
-      toast.error("An error occurred. Please try again later.");
+      toast.error(t("feedback.errorOccurred"));
     }
   };
 
@@ -294,11 +297,11 @@ function Call({ interview }: InterviewProps) {
                     style={{ color: interview.theme_color }}
                   />
                   <div className="text-sm font-normal">
-                    Expected duration:{" "}
+                    {t("interview.expectedDuration")}{" "}
                     <span className="font-bold" style={{ color: interview.theme_color }}>
-                      {interviewTimeDuration} mins{" "}
+                      {interviewTimeDuration} {t("interview.minsOrLess").split(" ")[0]}{" "}
                     </span>
-                    or less
+                    {t("interview.minsOrLess").split(" ").slice(1).join(" ")}
                   </div>
                 </div>
               )}
@@ -306,6 +309,10 @@ function Call({ interview }: InterviewProps) {
             {!isStarted && !isEnded && !isOldUser && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
+                  {/* Language switcher for respondents */}
+                  <div className="flex justify-end p-1">
+                    <LanguageSwitcher />
+                  </div>
                   {interview?.logo_url && (
                     <div className="p-1 flex justify-center">
                       <Image
@@ -320,9 +327,8 @@ function Call({ interview }: InterviewProps) {
                   <div className="p-2 font-normal text-sm mb-4 whitespace-pre-line">
                     {interview?.description}
                     <p className="font-bold text-sm">
-                      {"\n"}Ensure your volume is up and grant microphone access when prompted.
-                      Additionally, please make sure you are in a quiet environment.
-                      {"\n\n"}Note: Tab switching will be recorded.
+                      {"\n"}{t("interview.volumeNote")}
+                      {"\n\n"}{t("interview.tabSwitchNote")}
                     </p>
                   </div>
                   {!interview?.is_anonymous && (
@@ -331,7 +337,7 @@ function Call({ interview }: InterviewProps) {
                         <input
                           value={email}
                           className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                          placeholder="Enter your email address"
+                          placeholder={t("interview.enterEmail")}
                           onChange={(e) => setEmail(e.target.value)}
                         />
                       </div>
@@ -339,7 +345,7 @@ function Call({ interview }: InterviewProps) {
                         <input
                           value={name}
                           className="h-fit mb-4 mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                          placeholder="Enter your first name"
+                          placeholder={t("interview.enterFirstName")}
                           onChange={(e) => setName(e.target.value)}
                         />
                       </div>
@@ -356,7 +362,7 @@ function Call({ interview }: InterviewProps) {
                     disabled={Loading || (!interview?.is_anonymous && (!isValidEmail || !name))}
                     onClick={startConversation}
                   >
-                    {!Loading ? "Start Interview" : <MiniLoader />}
+                    {!Loading ? t("interview.startInterview") : <MiniLoader />}
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger>
@@ -365,22 +371,22 @@ function Call({ interview }: InterviewProps) {
                         style={{ borderColor: interview.theme_color }}
                         disabled={Loading}
                       >
-                        Exit
+                        {t("interview.exit")}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>{t("common.areYouSure")}</AlertDialogTitle>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                           className="bg-indigo-600 hover:bg-indigo-800"
                           onClick={async () => {
                             await onEndCallClick();
                           }}
                         >
-                          Continue
+                          {t("common.continue")}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -411,7 +417,7 @@ function Call({ interview }: InterviewProps) {
                             : ""
                         }`}
                       />
-                      <div className="font-semibold">Interviewer</div>
+                      <div className="font-semibold">{t("interview.interviewer")}</div>
                     </div>
                   </div>
                 </div>
@@ -437,7 +443,7 @@ function Call({ interview }: InterviewProps) {
                           : ""
                       }`}
                     />
-                    <div className="font-semibold">You</div>
+                    <div className="font-semibold">{t("interview.you")}</div>
                   </div>
                 </div>
               </div>
@@ -450,26 +456,26 @@ function Call({ interview }: InterviewProps) {
                       className=" bg-white text-black border  border-indigo-600 h-10 mx-auto flex flex-row justify-center mb-8"
                       disabled={Loading}
                     >
-                      End Interview{" "}
+                      {t("interview.endInterview")}{" "}
                       <XCircleIcon className="h-[1.5rem] ml-2 w-[1.5rem] rotate-0 scale-100  dark:-rotate-90 dark:scale-0 text-red" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogTitle>{t("common.areYouSure")}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This action will end the call.
+                        {t("interview.endCallConfirm")}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                       <AlertDialogAction
                         className="bg-indigo-600 hover:bg-indigo-800"
                         onClick={async () => {
                           await onEndCallClick();
                         }}
                       >
-                        Continue
+                        {t("common.continue")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -484,12 +490,12 @@ function Call({ interview }: InterviewProps) {
                     <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
                     <p className="text-lg font-semibold text-center">
                       {isStarted
-                        ? "Thank you for taking the time to participate in this interview"
-                        : "Thank you very much for considering."}
+                        ? t("interview.thankYouParticipate")
+                        : t("interview.thankYouConsidering")}
                     </p>
                     <p className="text-center">
                       {"\n"}
-                      You can close this tab now.
+                      {t("interview.closeTab")}
                     </p>
                   </div>
 
@@ -500,7 +506,7 @@ function Call({ interview }: InterviewProps) {
                           className="bg-indigo-600 text-white h-10 mt-4 mb-4"
                           onClick={() => setIsDialogOpen(true)}
                         >
-                          Provide Feedback
+                          {t("interview.provideFeedback")}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -517,12 +523,11 @@ function Call({ interview }: InterviewProps) {
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
                     <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
                     <p className="text-lg font-semibold text-center">
-                      You have already responded in this interview or you are not eligible to
-                      respond. Thank you!
+                      {t("interview.alreadyResponded")}
                     </p>
                     <p className="text-center">
                       {"\n"}
-                      You can close this tab now.
+                      {t("interview.closeTab")}
                     </p>
                   </div>
                 </div>
@@ -537,7 +542,7 @@ function Call({ interview }: InterviewProps) {
           rel="noreferrer"
         >
           <div className="text-center text-md font-semibold mr-2  ">
-            Powered by{" "}
+            {t("common.poweredBy")}{" "}
             <span className="font-bold">
               Folo<span className="text-indigo-600">Up</span>
             </span>

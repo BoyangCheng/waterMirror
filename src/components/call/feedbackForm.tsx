@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/i18n";
 import type { FeedbackData } from "@/types/response";
 import React, { useState } from "react";
 
 enum SatisfactionLevel {
-  Positive = "😀",
-  Moderate = "😐",
-  Negative = "😔",
+  Positive = "\u{1F600}",
+  Moderate = "\u{1F610}",
+  Negative = "\u{1F614}",
 }
 
 interface FeedbackFormProps {
@@ -17,6 +18,7 @@ interface FeedbackFormProps {
 export function FeedbackForm({ onSubmit, email }: FeedbackFormProps) {
   const [satisfaction, setSatisfaction] = useState<SatisfactionLevel>(SatisfactionLevel.Moderate);
   const [feedback, setFeedback] = useState("");
+  const { t } = useI18n();
 
   const handleSubmit = () => {
     if (satisfaction !== null || feedback.trim() !== "") {
@@ -30,7 +32,7 @@ export function FeedbackForm({ onSubmit, email }: FeedbackFormProps) {
 
   return (
     <div className="p-4">
-      <h3 className="text-lg font-semibold mb-4">Are you satisfied with the platform?</h3>
+      <h3 className="text-lg font-semibold mb-4">{t("feedback.satisfied")}</h3>
       <div className="flex justify-center space-x-4 mb-4">
         {Object.values(SatisfactionLevel).map((emoji) => (
           <button
@@ -45,7 +47,7 @@ export function FeedbackForm({ onSubmit, email }: FeedbackFormProps) {
       </div>
       <Textarea
         value={feedback}
-        placeholder="Add your feedback here"
+        placeholder={t("feedback.placeholder")}
         className="mb-4"
         onChange={(e) => setFeedback(e.target.value)}
       />
@@ -54,7 +56,7 @@ export function FeedbackForm({ onSubmit, email }: FeedbackFormProps) {
         className="w-full bg-indigo-600 text-white"
         onClick={handleSubmit}
       >
-        Submit Feedback
+        {t("feedback.submit")}
       </Button>
     </div>
   );
