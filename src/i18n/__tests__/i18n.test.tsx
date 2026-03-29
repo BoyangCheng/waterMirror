@@ -1,5 +1,5 @@
 /**
- * Unit tests for the FoloUp i18n system.
+ * Unit tests for the WaterMirror i18n system.
  *
  * Run with:  npx vitest run src/i18n/__tests__/i18n.test.tsx
  *       or:  npx jest src/i18n/__tests__/i18n.test.tsx
@@ -56,10 +56,10 @@ function renderWithI18n() {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-describe("FoloUp i18n system", () => {
+describe("WaterMirror i18n system", () => {
   beforeEach(() => {
     // Clear localStorage before each test to ensure clean state
-    localStorage.removeItem("foloup-locale");
+    localStorage.removeItem("watermirror-locale");
   });
 
   it("defaults to English locale", () => {
@@ -116,6 +116,6 @@ describe("FoloUp i18n system", () => {
 
     await user.click(screen.getByTestId("switch-zh"));
 
-    expect(localStorage.getItem("foloup-locale")).toBe("zh");
+    expect(localStorage.getItem("watermirror-locale")).toBe("zh");
   });
 });

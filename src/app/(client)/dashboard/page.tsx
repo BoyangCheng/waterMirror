@@ -6,17 +6,17 @@ import InterviewCard from "@/components/dashboard/interview/interviewCard";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
+import { useOrg } from "@/contexts/auth.context";
 import { ClientService } from "@/services/clients.service";
 import { InterviewService } from "@/services/interviews.service";
 import { ResponseService } from "@/services/responses.service";
-import { useOrganization } from "@clerk/nextjs";
 import { Gem, Plus } from "lucide-react";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 
 function Interviews() {
   const { interviews, interviewsLoading } = useInterviews();
-  const { organization } = useOrganization();
+  const { organization } = useOrg();
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPlan, setCurrentPlan] = useState<string>("");
   const [allowedResponsesCount, setAllowedResponsesCount] = useState<number>(10);

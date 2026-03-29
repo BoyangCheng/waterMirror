@@ -1,71 +1,46 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+"use server";
 
-const supabase = createClientComponentClient();
+import sql from "@/lib/db";
 
 const getAllInterviewers = async (clientId = "") => {
   try {
-    const { data: clientData, error: clientError } = await supabase.from("interviewer").select("*");
-
-    if (clientError) {
-      console.error(`Error fetching interviewers for clientId ${clientId}:`, clientError);
-
-      return [];
-    }
-
-    return clientData || [];
+    const data = await sql`SELECT * FROM interviewer`;
+    return data || [];
   } catch (error) {
     console.log(error);
-
     return [];
   }
 };
 
 const createInterviewer = async (payload: any) => {
-  // Check for existing interviewer with the same name
-  const { data: existingInterviewer, error: checkError } = await supabase
-    .from("interviewer")
-    .select("*")
-    .eq("name", payload.name)
-    .filter("agent_id", "eq", payload.agent_id)
-    .single();
+  try {
+    const existing = await sql`
+      SELECT * FROM interviewer
+      WHERE name = ${payload.name} AND agent_id = ${payload.agent_id}
+      LIMIT 1
+    `;
 
-  if (checkError && checkError.code !== "PGRST116") {
-    console.error("Error checking existing interviewer:", checkError);
+    if (existing.length > 0) {
+      console.error("An interviewer with this name already exists");
+      return null;
+    }
 
+    await sql`INSERT INTO interviewer ${sql(payload)}`;
     return null;
-  }
-
-  if (existingInterviewer) {
-    console.error("An interviewer with this name already exists");
-
-    return null;
-  }
-
-  const { error, data } = await supabase.from("interviewer").insert({ ...payload });
-
-  if (error) {
+  } catch (error) {
     console.error("Error creating interviewer:", error);
-
     return null;
   }
-
-  return data;
 };
 
 const getInterviewer = async (interviewerId: bigint) => {
-  const { data: interviewerData, error: interviewerError } = await supabase
-    .from("interviewer")
-    .select("*")
-    .eq("id", interviewerId)
-    .single();
-
-  if (interviewerError) {
-    console.error("Error fetching interviewer:", interviewerError);
-
+  try {
+    const data = await sql`SELECT * FROM interviewer WHERE id = ${interviewerId} LIMIT 1`;
+    return data ? data[0] : null;
+  } catch (error) {
+    console.error("Error fetching interviewer:", error);
     return null;
   }
-
-  return interviewerData;
 };
 
 export const InterviewerService = {

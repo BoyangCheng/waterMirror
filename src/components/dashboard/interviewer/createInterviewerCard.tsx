@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
+import { useAuth } from "@/contexts/auth.context";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { useI18n } from "@/i18n";
-import { useClerk } from "@clerk/nextjs";
 import { Image as LucideImage } from "lucide-react";
 import { Plus } from "lucide-react";
 import Image from "next/image";
@@ -26,7 +26,7 @@ const createInterviewerCard = () => {
   const [speed, setSpeed] = useState(0.9);
   const [image, setImage] = useState("");
   const { createInterviewer } = useInterviewers();
-  const { user } = useClerk();
+  const { user } = useAuth();
   const [isClicked, setIsClicked] = useState(false);
   const { t } = useI18n();
 

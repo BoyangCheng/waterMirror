@@ -1,10 +1,19 @@
-import { SignUp } from "@clerk/nextjs";
+import Link from "next/link";
 
 function SignUpPage() {
   return (
     <div className="flex items-center justify-center h-screen w-full bg-white absolute top-0 left-0 z-50">
-      <div className="hidden md:block align-middle my-auto">
-        <SignUp forceRedirectUrl="/dashboard" />
+      <div className="hidden md:block align-middle my-auto text-center">
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          Welcome to Folo<span className="text-indigo-600">Up</span>
+        </h1>
+        <p className="text-gray-500 mb-6">账号注册通过阿里云 IDaaS 完成</p>
+        <Link
+          href="/api/auth/login"
+          className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          注册 / 登录
+        </Link>
       </div>
       <div className="block md:hidden px-3 h-[60%] my-auto">
         <h1 className="text-2xl font-bold text-center text-gray-800">

@@ -20,7 +20,7 @@ const messages: Record<Locale, Messages> = { en, zh } as Record<Locale, Messages
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-const STORAGE_KEY = "foloup-locale";
+const STORAGE_KEY = "watermirror-locale";
 const DEFAULT_LOCALE: Locale = "en";
 
 /** Resolve a dot-separated key against a nested object, returning the leaf string. */

@@ -1,100 +1,82 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+"use server";
 
-const supabase = createClientComponentClient();
+import sql from "@/lib/db";
 
 const getAllInterviews = async (userId: string, organizationId: string) => {
   try {
-    const { data: clientData, error: clientError } = await supabase
-      .from("interview")
-      .select("*")
-      .or(`organization_id.eq.${organizationId},user_id.eq.${userId}`)
-      .order("created_at", { ascending: false });
-
-    return [...(clientData || [])];
+    const data = await sql`
+      SELECT * FROM interview
+      WHERE organization_id = ${organizationId} OR user_id = ${userId}
+      ORDER BY created_at DESC
+    `;
+    return [...(data || [])];
   } catch (error) {
     console.log(error);
-
     return [];
   }
 };
 
 const getInterviewById = async (id: string) => {
   try {
-    const { data, error } = await supabase
-      .from("interview")
-      .select("*")
-      .or(`id.eq.${id},readable_slug.eq.${id}`);
-
+    const data = await sql`
+      SELECT * FROM interview
+      WHERE id = ${id} OR readable_slug = ${id}
+    `;
     return data ? data[0] : null;
   } catch (error) {
     console.log(error);
-
     return [];
   }
 };
 
 const updateInterview = async (payload: any, id: string) => {
-  const { error, data } = await supabase
-    .from("interview")
-    .update({ ...payload })
-    .eq("id", id);
-  if (error) {
+  try {
+    await sql`UPDATE interview SET ${sql(payload)} WHERE id = ${id}`;
+    return null;
+  } catch (error) {
     console.log(error);
-
     return [];
   }
-
-  return data;
 };
 
 const deleteInterview = async (id: string) => {
-  const { error, data } = await supabase.from("interview").delete().eq("id", id);
-  if (error) {
+  try {
+    await sql`DELETE FROM interview WHERE id = ${id}`;
+    return null;
+  } catch (error) {
     console.log(error);
-
     return [];
   }
-
-  return data;
 };
 
 const getAllRespondents = async (interviewId: string) => {
   try {
-    const { data, error } = await supabase
-      .from("interview")
-      .select("respondents")
-      .eq("interview_id", interviewId);
-
+    const data = await sql`
+      SELECT respondents FROM interview WHERE interview_id = ${interviewId}
+    `;
     return data || [];
   } catch (error) {
     console.log(error);
-
     return [];
   }
 };
 
 const createInterview = async (payload: any) => {
-  const { error, data } = await supabase.from("interview").insert({ ...payload });
-  if (error) {
+  try {
+    await sql`INSERT INTO interview ${sql(payload)}`;
+    return null;
+  } catch (error) {
     console.log(error);
-
     return [];
   }
-
-  return data;
 };
 
 const deactivateInterviewsByOrgId = async (organizationId: string) => {
   try {
-    const { error } = await supabase
-      .from("interview")
-      .update({ is_active: false })
-      .eq("organization_id", organizationId)
-      .eq("is_active", true); // Optional: only update if currently active
-
-    if (error) {
-      console.error("Failed to deactivate interviews:", error);
-    }
+    await sql`
+      UPDATE interview SET is_active = false
+      WHERE organization_id = ${organizationId} AND is_active = true
+    `;
   } catch (error) {
     console.error("Unexpected error disabling interviews:", error);
   }

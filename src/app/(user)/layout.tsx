@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
 import "../globals.css";
 import Providers from "@/components/providers";
-import { ClerkProvider } from "@clerk/nextjs";
+import { AuthProvider } from "@/contexts/auth.context";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: "FoloUp",
+  title: "WaterMirror",
   description: "AI powered Interviews",
   openGraph: {
-    title: "FoloUp",
+    title: "WaterMirror",
     description: "AI-powered Interviews",
-    siteName: "FoloUp",
+    siteName: "WaterMirror",
     images: [
       {
-        url: "/foloup.png",
+        url: "/watermirror.png",
         width: 800,
         height: 600,
       },
@@ -35,7 +35,7 @@ export default function RootLayout({
         <link rel="icon" href="/browser-user-icon.ico" />
       </head>
       <body className="font-sans">
-        <ClerkProvider dynamic>
+        <AuthProvider>
           <Providers>
             {children}
             <Toaster
@@ -51,7 +51,7 @@ export default function RootLayout({
               }}
             />
           </Providers>
-        </ClerkProvider>
+        </AuthProvider>
       </body>
     </html>
   );

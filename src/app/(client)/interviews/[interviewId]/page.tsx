@@ -21,12 +21,12 @@ import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
 import { CandidateStatus } from "@/lib/enum";
 import { formatTimestampToDateHHMM } from "@/lib/utils";
+import { useOrg } from "@/contexts/auth.context";
 import { ClientService } from "@/services/clients.service";
 import { InterviewService } from "@/services/interviews.service";
 import { ResponseService } from "@/services/responses.service";
 import type { Interview } from "@/types/interview";
 import type { Response } from "@/types/response";
-import { useOrganization } from "@clerk/nextjs";
 import { Eye, Filter, Palette, Pencil, Share2, UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect, use } from "react";
@@ -61,7 +61,7 @@ function InterviewHome({ params, searchParams }: Props) {
   const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
   const [themeColor, setThemeColor] = useState<string>("#4F46E5");
   const [iconColor, seticonColor] = useState<string>("#4F46E5");
-  const { organization } = useOrganization();
+  const { organization } = useOrg();
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const { t } = useI18n();
 
