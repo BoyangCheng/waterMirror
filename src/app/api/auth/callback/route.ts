@@ -10,15 +10,15 @@ export async function GET(request: NextRequest) {
   }
 
   // 用 code 换 token
-  const tokenRes = await fetch(`${process.env.IDAAS_ISSUER}token`, {
+  const tokenRes = await fetch(`${process.env.AUTHING_ISSUER}/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "authorization_code",
       code,
-      client_id: process.env.IDAAS_CLIENT_ID!,
-      client_secret: process.env.IDAAS_CLIENT_SECRET!,
-      redirect_uri: process.env.IDAAS_REDIRECT_URI!,
+      client_id: process.env.AUTHING_APP_ID!,
+      client_secret: process.env.AUTHING_APP_SECRET!,
+      redirect_uri: process.env.AUTHING_REDIRECT_URI!,
     }),
   });
 
@@ -28,14 +28,20 @@ export async function GET(request: NextRequest) {
 
   const tokens = await tokenRes.json();
 
+  // 获取用户信息
+  const userInfoRes = await fetch(`${process.env.AUTHING_ISSUER}/me`, {
+    headers: { Authorization: `Bearer ${tokens.access_token}` },
+  });
+  const userInfo = userInfoRes.ok ? await userInfoRes.json() : {};
+
   // 签发内部 JWT
   const secret = new TextEncoder().encode(process.env.AUTH_SECRET!);
   const internalToken = await new SignJWT({
-    sub: tokens.user_id ?? tokens.sub,
-    org_id: tokens.org_id ?? "default",
-    email: tokens.email ?? "",
-    org_name: tokens.org_name ?? "",
-    org_image: tokens.org_image ?? "",
+    sub: userInfo.sub ?? tokens.sub,
+    org_id: userInfo.org_id ?? userInfo.sub ?? "default",
+    email: userInfo.email ?? "",
+    org_name: userInfo.org_name ?? "",
+    org_image: userInfo.picture ?? "",
   })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
