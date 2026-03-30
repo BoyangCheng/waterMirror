@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth.context";
-import { InterviewerService } from "@/services/interviewers.service";
+import { getAllInterviewers, createInterviewer as createInterviewerService } from "@/services/interviewers.service";
 import type { Interviewer } from "@/types/interviewer";
 import React, { useState, useContext, type ReactNode, useEffect } from "react";
 
@@ -33,7 +33,7 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
   const fetchInterviewers = async () => {
     try {
       setInterviewersLoading(true);
-      const response = await InterviewerService.getAllInterviewers(user?.id as string);
+      const response = await getAllInterviewers(user?.id as string);
       setInterviewers(response);
     } catch (error) {
       console.error(error);
@@ -42,7 +42,7 @@ export function InterviewerProvider({ children }: InterviewerProviderProps) {
   };
 
   const createInterviewer = async (payload: any) => {
-    await InterviewerService.createInterviewer({ ...payload });
+    await createInterviewerService({ ...payload });
     fetchInterviewers();
   };
 

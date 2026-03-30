@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth, useOrg } from "@/contexts/auth.context";
-import { InterviewService } from "@/services/interviews.service";
+import { getAllInterviews, getInterviewById as getInterviewByIdService } from "@/services/interviews.service";
 import type { Interview } from "@/types/interview";
 import React, { useState, useContext, type ReactNode, useEffect } from "react";
 
@@ -36,7 +36,7 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   const fetchInterviews = async () => {
     try {
       setInterviewsLoading(true);
-      const response = await InterviewService.getAllInterviews(
+      const response = await getAllInterviews(
         user?.id as string,
         organization?.id as string,
       );
@@ -49,7 +49,7 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   };
 
   const getInterviewById = async (interviewId: string) => {
-    const response = await InterviewService.getInterviewById(interviewId);
+    const response = await getInterviewByIdService(interviewId);
 
     return response;
   };

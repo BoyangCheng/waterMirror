@@ -7,9 +7,9 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
 import { useOrg } from "@/contexts/auth.context";
-import { ClientService } from "@/services/clients.service";
-import { InterviewService } from "@/services/interviews.service";
-import { ResponseService } from "@/services/responses.service";
+import { getOrganizationById, updateOrganization } from "@/services/clients.service";
+import { deactivateInterviewsByOrgId } from "@/services/interviews.service";
+import { getResponseCountByOrganizationId } from "@/services/responses.service";
 import { Gem, Plus } from "lucide-react";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -39,7 +39,7 @@ function Interviews() {
     const fetchOrganizationData = async () => {
       try {
         if (organization?.id) {
-          const data = await ClientService.getOrganizationById(organization.id);
+          const data = await getOrganizationById(organization.id);
           if (data?.plan) {
             setCurrentPlan(data.plan);
             if (data.plan === "free_trial_over") {
@@ -66,14 +66,14 @@ function Interviews() {
 
       setLoading(true);
       try {
-        const totalResponses = await ResponseService.getResponseCountByOrganizationId(
+        const totalResponses = await getResponseCountByOrganizationId(
           organization.id,
         );
         const hasExceededLimit = totalResponses >= allowedResponsesCount;
         if (hasExceededLimit) {
           setCurrentPlan("free_trial_over");
-          await InterviewService.deactivateInterviewsByOrgId(organization.id);
-          await ClientService.updateOrganization({ plan: "free_trial_over" }, organization.id);
+          await deactivateInterviewsByOrgId(organization.id);
+          await updateOrganization({ plan: "free_trial_over" }, organization.id);
         }
       } catch (error) {
         console.error("Error fetching responses:", error);

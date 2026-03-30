@@ -2,6 +2,7 @@
   "name": "watermirror-app",
   "version": "0.1.0",
   "private": true,
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",

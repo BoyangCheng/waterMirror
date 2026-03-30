@@ -15,8 +15,14 @@ CREATE TABLE "user" (
     id TEXT PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     email TEXT,
+    name TEXT,
+    phone TEXT,
     organization_id TEXT REFERENCES organization(id)
 );
+
+-- Migration (run if table already exists):
+-- ALTER TABLE "user" ADD COLUMN IF NOT EXISTS name TEXT;
+-- ALTER TABLE "user" ADD COLUMN IF NOT EXISTS phone TEXT;
 
 CREATE TABLE interviewer (
     id SERIAL PRIMARY KEY,

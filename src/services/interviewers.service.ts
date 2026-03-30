@@ -43,8 +43,4 @@ const getInterviewer = async (interviewerId: bigint) => {
   }
 };
 
-export const InterviewerService = {
-  getAllInterviewers,
-  createInterviewer,
-  getInterviewer,
-};
+export { getAllInterviewers, createInterviewer, getInterviewer };

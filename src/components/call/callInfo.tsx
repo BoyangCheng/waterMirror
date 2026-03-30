@@ -25,7 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { CandidateStatus } from "@/lib/enum";
-import { ResponseService } from "@/services/responses.service";
+import { getResponseByCallId, deleteResponse, updateResponse } from "@/services/responses.service";
 import type { Analytics, CallData } from "@/types/response";
 import { CircularProgress } from "@nextui-org/react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
@@ -84,7 +84,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
     const fetchEmail = async () => {
       setIsLoading(true);
       try {
-        const response = await ResponseService.getResponseByCallId(call_id);
+        const response = await getResponseByCallId(call_id);
         setEmail(response.email);
         setName(response.name);
         setCandidateStatus(response.candidate_status);
@@ -124,12 +124,12 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
 
   const onDeleteResponseClick = async () => {
     try {
-      const response = await ResponseService.getResponseByCallId(call_id);
+      const response = await getResponseByCallId(call_id);
 
       if (response) {
         const interview_id = response.interview_id;
 
-        await ResponseService.deleteResponse(call_id);
+        await deleteResponse(call_id);
 
         router.push(`/interviews/${interview_id}`);
 
@@ -197,7 +197,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
                       value={candidateStatus}
                       onValueChange={async (newValue: string) => {
                         setCandidateStatus(newValue);
-                        await ResponseService.updateResponse(
+                        await updateResponse(
                           { candidate_status: newValue },
                           call_id,
                         );

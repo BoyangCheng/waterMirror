@@ -191,5 +191,37 @@
     "shareWithRespondents": "Please share with your intended respondents"
   },
   "interviewerSettingsLabel": "Interviewer Settings",
-  "statusUpdateFailed": "Failed to update the interview status."
+  "statusUpdateFailed": "Failed to update the interview status.",
+  "userMenu": {
+    "userManagement": "User Settings",
+    "orgManagement": "Organization",
+    "signOut": "Sign Out"
+  },
+  "userProfile": {
+    "title": "User Settings",
+    "email": "Email",
+    "name": "Name",
+    "namePlaceholder": "Enter your name",
+    "phone": "Phone",
+    "phonePlaceholder": "Enter your phone number",
+    "saveSuccess": "Profile updated successfully.",
+    "saveFailed": "Failed to update profile."
+  },
+  "orgManagement": {
+    "title": "Organization",
+    "orgName": "Organization Name",
+    "orgNamePlaceholder": "Enter organization name",
+    "orgImage": "Logo URL",
+    "orgImagePlaceholder": "https://...",
+    "createOrg": "Create Organization",
+    "saveSuccess": "Organization updated successfully.",
+    "saveFailed": "Failed to update organization.",
+    "inviteTitle": "Invite Members",
+    "inviteLink": "Invite Link",
+    "copyLink": "Copy",
+    "linkCopied": "Link copied!",
+    "members": "Members",
+    "noOrg": "You are not in an organization yet.",
+    "createNew": "Create New Organization"
+  }
 }

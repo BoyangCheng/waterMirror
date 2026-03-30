@@ -82,12 +82,4 @@ const deactivateInterviewsByOrgId = async (organizationId: string) => {
   }
 };
 
-export const InterviewService = {
-  getAllInterviews,
-  getInterviewById,
-  updateInterview,
-  deleteInterview,
-  getAllRespondents,
-  createInterview,
-  deactivateInterviewsByOrgId,
-};
+export { getAllInterviews, getInterviewById, updateInterview, deleteInterview, getAllRespondents, createInterview, deactivateInterviewsByOrgId };

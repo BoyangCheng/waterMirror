@@ -22,9 +22,9 @@ import { useI18n } from "@/i18n";
 import { CandidateStatus } from "@/lib/enum";
 import { formatTimestampToDateHHMM } from "@/lib/utils";
 import { useOrg } from "@/contexts/auth.context";
-import { ClientService } from "@/services/clients.service";
-import { InterviewService } from "@/services/interviews.service";
-import { ResponseService } from "@/services/responses.service";
+import { getOrganizationById } from "@/services/clients.service";
+import { updateInterview } from "@/services/interviews.service";
+import { getAllResponses, saveResponse } from "@/services/responses.service";
 import type { Interview } from "@/types/interview";
 import type { Response } from "@/types/response";
 import { Eye, Filter, Palette, Pencil, Share2, UserIcon } from "lucide-react";
@@ -98,13 +98,14 @@ function InterviewHome({ params, searchParams }: Props) {
     if (!interview || !isGeneratingInsights) {
       fetchInterview();
     }
-  }, [getInterviewById, resolvedParams.interviewId, isGeneratingInsights, interview]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally omit interview from deps to prevent infinite fetch loop
+  }, [getInterviewById, resolvedParams.interviewId, isGeneratingInsights]);
 
   useEffect(() => {
     const fetchOrganizationData = async () => {
       try {
         if (organization?.id) {
-          const data = await ClientService.getOrganizationById(organization.id);
+          const data = await getOrganizationById(organization.id);
           if (data?.plan) {
             setCurrentPlan(data.plan);
           }
@@ -119,7 +120,7 @@ function InterviewHome({ params, searchParams }: Props) {
   useEffect(() => {
     const fetchResponses = async () => {
       try {
-        const response = await ResponseService.getAllResponses(resolvedParams.interviewId);
+        const response = await getAllResponses(resolvedParams.interviewId);
         setResponses(response);
         setLoading(true);
       } catch (error) {
@@ -143,7 +144,7 @@ function InterviewHome({ params, searchParams }: Props) {
 
   const handleResponseClick = async (response: Response) => {
     try {
-      await ResponseService.saveResponse({ is_viewed: true }, response.call_id);
+      await saveResponse({ is_viewed: true }, response.call_id);
       if (responses) {
         const updatedResponses = responses.map((r) =>
           r.call_id === response.call_id ? { ...r, is_viewed: true } : r,
@@ -161,7 +162,7 @@ function InterviewHome({ params, searchParams }: Props) {
       const updatedIsActive = !isActive;
       setIsActive(updatedIsActive);
 
-      await InterviewService.updateInterview(
+      await updateInterview(
         { is_active: updatedIsActive },
         resolvedParams.interviewId,
       );
@@ -182,7 +183,7 @@ function InterviewHome({ params, searchParams }: Props) {
 
   const handleThemeColorChange = async (newColor: string) => {
     try {
-      await InterviewService.updateInterview({ theme_color: newColor }, resolvedParams.interviewId);
+      await updateInterview({ theme_color: newColor }, resolvedParams.interviewId);
 
       toast.success(t("interview.themeUpdated"), {
         position: "bottom-right",

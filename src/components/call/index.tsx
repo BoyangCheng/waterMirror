@@ -16,8 +16,8 @@ import { useResponses } from "@/contexts/responses.context";
 import { useI18n } from "@/i18n";
 import { isLightColor, testEmail } from "@/lib/utils";
 import { FeedbackService } from "@/services/feedback.service";
-import { InterviewerService } from "@/services/interviewers.service";
-import { ResponseService } from "@/services/responses.service";
+import { getInterviewer } from "@/services/interviewers.service";
+import { getAllEmails, saveResponse } from "@/services/responses.service";
 import type { Interview } from "@/types/interview";
 import type { FeedbackData } from "@/types/response";
 import axios from "axios";
@@ -197,7 +197,7 @@ function Call({ interview }: InterviewProps) {
     };
     setLoading(true);
 
-    const oldUserEmails: string[] = (await ResponseService.getAllEmails(interview.id)).map(
+    const oldUserEmails: string[] = (await getAllEmails(interview.id)).map(
       (item) => item.email,
     );
     const OldUser =
@@ -244,7 +244,7 @@ function Call({ interview }: InterviewProps) {
 
   useEffect(() => {
     const fetchInterviewer = async () => {
-      const interviewer = await InterviewerService.getInterviewer(interview.interviewer_id);
+      const interviewer = await getInterviewer(interview.interviewer_id);
       setInterviewerImg(interviewer.image);
     };
     fetchInterviewer();
@@ -255,7 +255,7 @@ function Call({ interview }: InterviewProps) {
   useEffect(() => {
     if (isEnded) {
       const updateInterview = async () => {
-        await ResponseService.saveResponse(
+        await saveResponse(
           { is_ended: true, tab_switch_count: tabSwitchCount },
           callId,
         );

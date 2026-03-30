@@ -1,16 +1,16 @@
 import ai, { AI_MODELS } from "@/lib/ai";
 import { logger } from "@/lib/logger";
 import { SYSTEM_PROMPT, createUserPrompt } from "@/lib/prompts/generate-insights";
-import { InterviewService } from "@/services/interviews.service";
-import { ResponseService } from "@/services/responses.service";
+import { getInterviewById, updateInterview } from "@/services/interviews.service";
+import { getAllResponses } from "@/services/responses.service";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   logger.info("generate-insights request received");
   const body = await req.json();
 
-  const responses = await ResponseService.getAllResponses(body.interviewId);
-  const interview = await InterviewService.getInterviewById(body.interviewId);
+  const responses = await getAllResponses(body.interviewId);
+  const interview = await getInterviewById(body.interviewId);
 
   let callSummaries = "";
   if (responses) {
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     const content = basePromptOutput.message?.content || "";
     const insightsResponse = JSON.parse(content);
 
-    await InterviewService.updateInterview(
+    await updateInterview(
       { insights: insightsResponse.insights },
       body.interviewId,
     );

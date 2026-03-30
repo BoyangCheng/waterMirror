@@ -32,13 +32,13 @@ function CreateInterviewModal({ open, setOpen }: Props) {
   const [isUploaded, setIsUploaded] = useState(false);
   const [fileName, setFileName] = useState("");
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Need to check
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally omit loading from deps — proceed only when interviewData updates while loading is true
   useEffect(() => {
     if (loading === true) {
       setLoading(false);
       setProceed(true);
     }
-  }, [interviewData, loading]);
+  }, [interviewData]);
 
   useEffect(() => {
     if (!open) {

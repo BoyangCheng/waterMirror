@@ -70,8 +70,69 @@ const getOrganizationById = async (organization_id?: string, organization_name?:
   }
 };
 
-export const ClientService = {
+const updateUser = async (id: string, payload: { name?: string; phone?: string }) => {
+  try {
+    await sql`UPDATE "user" SET ${sql(payload)} WHERE id = ${id}`;
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+};
+
+const getUserById = async (id: string) => {
+  try {
+    const data = await sql`SELECT * FROM "user" WHERE id = ${id}`;
+    return data ? data[0] : null;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+const getUsersByOrgId = async (orgId: string) => {
+  try {
+    const data = await sql`SELECT id, email, name FROM "user" WHERE organization_id = ${orgId}`;
+    return data || [];
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+};
+
+const joinOrganization = async (userId: string, orgId: string) => {
+  try {
+    const org = await sql`SELECT id FROM organization WHERE id = ${orgId}`;
+    if (!org || org.length === 0) return { success: false, error: "Organization not found" };
+    await sql`UPDATE "user" SET organization_id = ${orgId} WHERE id = ${userId}`;
+    return { success: true };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: "Failed to join organization" };
+  }
+};
+
+const createOrganization = async (name: string) => {
+  try {
+    const [org] = await sql`
+      INSERT INTO organization (id, name)
+      VALUES (gen_random_uuid()::TEXT, ${name})
+      RETURNING id, name
+    `;
+    return org;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+export {
   updateOrganization,
   getClientById,
   getOrganizationById,
+  updateUser,
+  getUserById,
+  getUsersByOrgId,
+  joinOrganization,
+  createOrganization,
 };

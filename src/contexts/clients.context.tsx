@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth, useOrg } from "@/contexts/auth.context";
-import { ClientService } from "@/services/clients.service";
+import { getClientById, getOrganizationById } from "@/services/clients.service";
 import type { User } from "@/types/user";
 import React, { useState, useContext, type ReactNode, useEffect } from "react";
 
@@ -27,7 +27,7 @@ export function ClientProvider({ children }: ClientProviderProps) {
   const fetchClient = async () => {
     try {
       setClientLoading(true);
-      const response = await ClientService.getClientById(
+      const response = await getClientById(
         user?.id as string,
         user?.emailAddresses[0]?.emailAddress as string,
         organization?.id as string,
@@ -42,7 +42,7 @@ export function ClientProvider({ children }: ClientProviderProps) {
   const fetchOrganization = async () => {
     try {
       setClientLoading(true);
-      const response = await ClientService.getOrganizationById(
+      const response = await getOrganizationById(
         organization?.id as string,
         organization?.name as string,
       );

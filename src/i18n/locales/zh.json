@@ -191,5 +191,37 @@
     "shareWithRespondents": "请将链接分享给目标受访者"
   },
   "interviewerSettingsLabel": "面试官设置",
-  "statusUpdateFailed": "更新面试状态失败。"
+  "statusUpdateFailed": "更新面试状态失败。",
+  "userMenu": {
+    "userManagement": "用户管理",
+    "orgManagement": "组织管理",
+    "signOut": "退出登录"
+  },
+  "userProfile": {
+    "title": "用户管理",
+    "email": "邮箱",
+    "name": "姓名",
+    "namePlaceholder": "请输入您的姓名",
+    "phone": "电话",
+    "phonePlaceholder": "请输入您的电话号码",
+    "saveSuccess": "个人信息更新成功。",
+    "saveFailed": "更新个人信息失败。"
+  },
+  "orgManagement": {
+    "title": "组织管理",
+    "orgName": "组织名称",
+    "orgNamePlaceholder": "请输入组织名称",
+    "orgImage": "Logo 链接",
+    "orgImagePlaceholder": "https://...",
+    "createOrg": "创建组织",
+    "saveSuccess": "组织信息更新成功。",
+    "saveFailed": "更新组织信息失败。",
+    "inviteTitle": "邀请成员",
+    "inviteLink": "邀请链接",
+    "copyLink": "复制",
+    "linkCopied": "已复制！",
+    "members": "成员列表",
+    "noOrg": "您还未加入任何组织。",
+    "createNew": "创建新组织"
+  }
 }
