@@ -1,8 +1,8 @@
 "use client";
 
+import { useAuth, useOrg } from "@/contexts/auth.context";
 import { InterviewService } from "@/services/interviews.service";
 import type { Interview } from "@/types/interview";
-import { useClerk, useOrganization } from "@clerk/nextjs";
 import React, { useState, useContext, type ReactNode, useEffect } from "react";
 
 interface InterviewContextProps {
@@ -29,8 +29,8 @@ interface InterviewProviderProps {
 
 export function InterviewProvider({ children }: InterviewProviderProps) {
   const [interviews, setInterviews] = useState<Interview[]>([]);
-  const { user } = useClerk();
-  const { organization } = useOrganization();
+  const { user } = useAuth();
+  const { organization } = useOrg();
   const [interviewsLoading, setInterviewsLoading] = useState(false);
 
   const fetchInterviews = async () => {

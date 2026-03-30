@@ -4,21 +4,21 @@ import "../globals.css";
 import Navbar from "@/components/navbar";
 import Providers from "@/components/providers";
 import SideMenu from "@/components/sideMenu";
+import { AuthProvider } from "@/contexts/auth.context";
 import { cn } from "@/lib/utils";
-import { ClerkProvider } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { Toaster } from "sonner";
 
 const metadata = {
-  title: "FoloUp",
+  title: "WaterMirror",
   description: " AI-powered Interviews",
   openGraph: {
-    title: "FoloUp",
+    title: "WaterMirror",
     description: "AI-powered Interviews",
-    siteName: "FoloUp",
+    siteName: "WaterMirror",
     images: [
       {
-        url: "/foloup.png",
+        url: "/watermirror.png",
         width: 800,
         height: 600,
       },
@@ -44,11 +44,7 @@ export default function RootLayout({
         <link rel="icon" href="/browser-client-icon.ico" />
       </head>
       <body className={cn("font-sans antialiased overflow-hidden min-h-screen")}>
-        <ClerkProvider
-          dynamic
-          signInFallbackRedirectUrl={"/dashboard"}
-          afterSignOutUrl={"/sign-in"}
-        >
+        <AuthProvider>
           <Providers>
             {isAuthRoute ? (
               children
@@ -76,7 +72,7 @@ export default function RootLayout({
               }}
             />
           </Providers>
-        </ClerkProvider>
+        </AuthProvider>
       </body>
     </html>
   );

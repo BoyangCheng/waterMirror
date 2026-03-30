@@ -1,11 +1,11 @@
 "use server";
 
+import ai, { AI_MODELS } from "@/lib/ai";
 import { SYSTEM_PROMPT, getInterviewAnalyticsPrompt } from "@/lib/prompts/analytics";
 import { InterviewService } from "@/services/interviews.service";
 import { ResponseService } from "@/services/responses.service";
 import type { Question } from "@/types/interview";
 import type { Analytics } from "@/types/response";
-import { OpenAI } from "openai";
 
 export const generateInterviewAnalytics = async (payload: {
   callId: string;
@@ -28,16 +28,10 @@ export const generateInterviewAnalytics = async (payload: {
       .map((q: Question, index: number) => `${index + 1}. ${q.question}`)
       .join("\n");
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      maxRetries: 5,
-      dangerouslyAllowBrowser: true,
-    });
-
     const prompt = getInterviewAnalyticsPrompt(interviewTranscript, mainInterviewQuestions);
 
-    const baseCompletion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const baseCompletion = await ai.chat.completions.create({
+      model: AI_MODELS.smart,
       messages: [
         {
           role: "system",

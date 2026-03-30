@@ -3,10 +3,10 @@
 import QuestionCard from "@/components/dashboard/interview/create-popup/questionCard";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth, useOrg } from "@/contexts/auth.context";
 import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
 import type { InterviewBase, Question } from "@/types/interview";
-import { useClerk, useOrganization } from "@clerk/nextjs";
 import axios from "axios";
 import { Plus } from "lucide-react";
 import { ChevronLeft } from "lucide-react";
@@ -20,8 +20,8 @@ interface Props {
 }
 
 function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
-  const { user } = useClerk();
-  const { organization } = useOrganization();
+  const { user } = useAuth();
+  const { organization } = useOrg();
   const [isClicked, setIsClicked] = useState(false);
   const { t } = useI18n();
 

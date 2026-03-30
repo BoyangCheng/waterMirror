@@ -1,13 +1,16 @@
 "use client";
 
+import { useAuth, useOrg } from "@/contexts/auth.context";
 import { useI18n } from "@/i18n";
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import { LogOut, User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import LanguageSwitcher from "./languageSwitcher";
 
 function Navbar() {
   const { t } = useI18n();
+  const { organization } = useOrg();
+  const { user, signOut } = useAuth();
 
   return (
     <div className="fixed inset-x-0 top-0 bg-slate-100  z-[10] h-fit  py-4 ">
@@ -19,24 +22,33 @@ function Navbar() {
               <span className="text-[8px]">{t("common.beta")}</span>
             </p>
           </Link>
-          <p className="my-auto text-xl">/</p>
-          <div className="my-auto">
-            <OrganizationSwitcher
-              afterCreateOrganizationUrl="/dashboard"
-              hidePersonal={true}
-              afterSelectOrganizationUrl="/dashboard"
-              afterLeaveOrganizationUrl="/dashboard"
-              appearance={{
-                variables: {
-                  fontSize: "0.9rem",
-                },
-              }}
-            />
-          </div>
+          {organization && (
+            <>
+              <p className="my-auto text-xl">/</p>
+              <span className="my-auto text-sm font-medium text-gray-700">
+                {organization.name}
+              </span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
-          <UserButton afterSignOutUrl="/sign-in" signInUrl="/sign-in" />
+          <div className="flex items-center gap-2">
+            {user && (
+              <span className="flex items-center gap-1 text-sm text-gray-600">
+                <User size={16} />
+                {user.emailAddresses[0]?.emailAddress}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={signOut}
+              className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-red-600 transition-colors"
+              title="退出登录"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

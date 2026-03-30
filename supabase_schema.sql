@@ -3,7 +3,7 @@ CREATE TYPE plan AS ENUM ('free', 'pro', 'free_trial_over');
 
 -- Create tables
 CREATE TABLE organization (
-    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     name TEXT,
     image_url TEXT,
