@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-// 与 Clerk 保持一致的接口形状，减少消费方的改动
+
 interface AuthUser {
   id: string;
   emailAddresses: Array<{ emailAddress: string }>;

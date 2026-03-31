@@ -21,7 +21,7 @@ const messages: Record<Locale, Messages> = { en, zh } as Record<Locale, Messages
 // Helpers
 // ---------------------------------------------------------------------------
 const STORAGE_KEY = "watermirror-locale";
-const DEFAULT_LOCALE: Locale = "en";
+const DEFAULT_LOCALE: Locale = "zh";
 
 /** Resolve a dot-separated key against a nested object, returning the leaf string. */
 function resolve(obj: unknown, path: string): string | undefined {
