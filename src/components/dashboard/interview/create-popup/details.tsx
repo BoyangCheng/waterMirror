@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { useI18n } from "@/i18n";
+import type { Locale } from "@/i18n";
 import type { InterviewBase, Question } from "@/types/interview";
 import type { Interviewer } from "@/types/interviewer";
 import axios from "axios";
@@ -39,6 +40,7 @@ function DetailsPopup({
   setFileName,
 }: Props) {
   const { interviewers } = useInterviewers();
+  const { locale } = useI18n();
   const [isClicked, setIsClicked] = useState(false);
   const [openInterviewerDetails, setOpenInterviewerDetails] = useState(false);
   const [interviewerDetails, setInterviewerDetails] = useState<Interviewer>();
@@ -53,6 +55,12 @@ function DetailsPopup({
   );
   const [duration, setDuration] = useState(interviewData.time_duration);
   const [uploadedDocumentContext, setUploadedDocumentContext] = useState("");
+  const [language, setLanguage] = useState<"zh" | "en">("zh");
+
+  // sync language default with current UI locale on mount
+  useEffect(() => {
+    if (locale === "en" || locale === "zh") setLanguage(locale);
+  }, [locale]);
 
   const slideLeft = (id: string, value: number) => {
     const slider = document.getElementById(`${id}`);
@@ -76,6 +84,7 @@ function DetailsPopup({
       objective: objective.trim(),
       number: numQuestions,
       context: uploadedDocumentContext,
+      language,
     };
 
     const generatedQuestions = (await axios.post("/api/generate-interview-questions", data)) as any;
@@ -98,6 +107,7 @@ function DetailsPopup({
       time_duration: duration,
       description: generatedQuestionsResponse.description,
       is_anonymous: isAnonymous,
+      language,
     };
     setInterviewData(updatedInterviewData);
   };
@@ -115,6 +125,7 @@ function DetailsPopup({
       time_duration: String(duration),
       description: "",
       is_anonymous: isAnonymous,
+      language,
     };
     setInterviewData(updatedInterviewData);
   };
@@ -128,8 +139,9 @@ function DetailsPopup({
       setNumQuestions("");
       setDuration("");
       setIsClicked(false);
+      setLanguage(locale === "en" ? "en" : "zh");
     }
-  }, [open]);
+  }, [open, locale]);
 
   return (
     <>
@@ -283,6 +295,34 @@ function DetailsPopup({
               />
             </div>
           </div>
+          <div className="flex flex-col mt-4 w-full">
+            <span className="text-sm font-medium">{t("create.interviewLanguage")}</span>
+            <div className="flex gap-4 mt-1.5">
+              <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+                <input
+                  type="radio"
+                  name="interview-language"
+                  value="zh"
+                  checked={language === "zh"}
+                  onChange={() => setLanguage("zh")}
+                  className="accent-indigo-600"
+                />
+                {t("create.languageZh")}
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+                <input
+                  type="radio"
+                  name="interview-language"
+                  value="en"
+                  checked={language === "en"}
+                  onChange={() => setLanguage("en")}
+                  className="accent-indigo-600"
+                />
+                {t("create.languageEn")}
+              </label>
+            </div>
+          </div>
+
           <div className="flex flex-row w-full justify-center items-center space-x-24 mt-5">
             <Button
               disabled={

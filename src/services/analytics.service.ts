@@ -1,7 +1,7 @@
 "use server";
 
 import ai, { AI_MODELS } from "@/lib/ai";
-import { SYSTEM_PROMPT, getInterviewAnalyticsPrompt } from "@/lib/prompts/analytics";
+import { getSystemPrompt, getInterviewAnalyticsPrompt } from "@/lib/prompts/analytics";
 import { getInterviewById } from "@/services/interviews.service";
 import { getResponseByCallId } from "@/services/responses.service";
 import type { Question } from "@/types/interview";
@@ -27,15 +27,16 @@ export const generateInterviewAnalytics = async (payload: {
     const mainInterviewQuestions = questions
       .map((q: Question, index: number) => `${index + 1}. ${q.question}`)
       .join("\n");
+    const language: "zh" | "en" = interview?.language === "en" ? "en" : "zh";
 
-    const prompt = getInterviewAnalyticsPrompt(interviewTranscript, mainInterviewQuestions);
+    const prompt = getInterviewAnalyticsPrompt(interviewTranscript, mainInterviewQuestions, language);
 
     const baseCompletion = await ai.chat.completions.create({
       model: AI_MODELS.smart,
       messages: [
         {
           role: "system",
-          content: SYSTEM_PROMPT,
+          content: getSystemPrompt(language),
         },
         {
           role: "user",

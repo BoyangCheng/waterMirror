@@ -9,7 +9,7 @@ interface Props {
   setOpen: (open: boolean) => void;
 }
 
-const CreateEmptyInterviewData = (): InterviewBase => ({
+const CreateEmptyInterviewData = (language: "zh" | "en" = "zh"): InterviewBase => ({
   user_id: "",
   organization_id: "",
   name: "",
@@ -21,6 +21,7 @@ const CreateEmptyInterviewData = (): InterviewBase => ({
   questions: [],
   description: "",
   response_count: BigInt(0),
+  language,
 });
 
 function CreateInterviewModal({ open, setOpen }: Props) {

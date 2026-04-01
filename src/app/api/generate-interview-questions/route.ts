@@ -1,6 +1,6 @@
 import ai, { AI_MODELS } from "@/lib/ai";
 import { logger } from "@/lib/logger";
-import { SYSTEM_PROMPT, generateQuestionsPrompt } from "@/lib/prompts/generate-questions";
+import { getSystemPrompt, generateQuestionsPrompt } from "@/lib/prompts/generate-questions";
 import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
@@ -8,6 +8,7 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   logger.info("generate-interview-questions request received");
   const body = await req.json();
+  const language: "zh" | "en" = body.language === "en" ? "en" : "zh";
 
   try {
     const baseCompletion = await ai.chat.completions.create({
@@ -15,11 +16,11 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: SYSTEM_PROMPT,
+          content: getSystemPrompt(language),
         },
         {
           role: "user",
-          content: generateQuestionsPrompt(body),
+          content: generateQuestionsPrompt(body, language),
         },
       ],
       response_format: { type: "json_object" },

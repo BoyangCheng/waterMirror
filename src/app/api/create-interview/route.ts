@@ -15,11 +15,24 @@ export async function POST(req: Request) {
 
     const payload = body.interviewData;
 
+    // Convert a string to a URL-safe ASCII slug (strips non-ASCII characters like CJK)
+    const toSlug = (str: string): string =>
+      str
+        .toLowerCase()
+        .replace(/[^\x00-\x7F]/g, "") // remove non-ASCII (Chinese, etc.)
+        .replace(/\s+/g, "-")          // spaces → hyphens
+        .replace(/[^a-z0-9-]/g, "")   // remove remaining special chars
+        .replace(/-+/g, "-")           // collapse consecutive hyphens
+        .replace(/^-|-$/g, "");        // trim leading/trailing hyphens
+
     let readableSlug = null;
     if (body.organizationName) {
-      const interviewNameSlug = payload.name?.toLowerCase().replace(/\s/g, "-");
-      const orgNameSlug = body.organizationName?.toLowerCase().replace(/\s/g, "-");
-      readableSlug = `${orgNameSlug}-${interviewNameSlug}`;
+      const interviewNameSlug = toSlug(payload.name ?? "");
+      const orgNameSlug = toSlug(body.organizationName ?? "");
+      // Only set readable slug if both parts yield valid ASCII slugs
+      if (orgNameSlug && interviewNameSlug) {
+        readableSlug = `${orgNameSlug}-${interviewNameSlug}`;
+      }
     }
 
     const newInterview = await createInterview({
