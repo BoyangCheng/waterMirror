@@ -94,7 +94,7 @@ const updateResponse = async (payload: any, call_id: string) => {
   }
 };
 
-export const ResponseService = {
+export {
   createResponse,
   saveResponse,
   updateResponse,
@@ -102,5 +102,6 @@ export const ResponseService = {
   getResponseByCallId,
   deleteResponse,
   getResponseCountByOrganizationId,
-  getAllEmails: getAllEmailAddressesForInterview,
 };
+// Alias for backwards compatibility
+export const getAllEmails = getAllEmailAddressesForInterview;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ResponseService } from "@/services/responses.service";
+import { createResponse, saveResponse, updateResponse, getAllResponses, getResponseByCallId, deleteResponse, getAllEmails, getResponseCountByOrganizationId } from "@/services/responses.service";
 import React, { useContext } from "react";
 
 interface Response {
@@ -19,13 +19,13 @@ interface ResponseProviderProps {
 
 export function ResponseProvider({ children }: ResponseProviderProps) {
   const createResponse = async (payload: any) => {
-    const data = await ResponseService.createResponse({ ...payload });
+    const data = await createResponse({ ...payload });
 
     return data;
   };
 
   const saveResponse = async (payload: any, call_id: string) => {
-    await ResponseService.saveResponse({ ...payload }, call_id);
+    await saveResponse({ ...payload }, call_id);
   };
 
   return (

@@ -8,8 +8,8 @@ import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
 import { useOrg } from "@/contexts/auth.context";
 import { ClientService } from "@/services/clients.service";
-import { InterviewService } from "@/services/interviews.service";
-import { ResponseService } from "@/services/responses.service";
+import { getAllInterviews, getInterviewById, updateInterview, deleteInterview, getAllRespondents, createInterview, deactivateInterviewsByOrgId } from "@/services/interviews.service";
+import { createResponse, saveResponse, updateResponse, getAllResponses, getResponseByCallId, deleteResponse, getAllEmails, getResponseCountByOrganizationId } from "@/services/responses.service";
 import { Gem, Plus } from "lucide-react";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
@@ -66,13 +66,13 @@ function Interviews() {
 
       setLoading(true);
       try {
-        const totalResponses = await ResponseService.getResponseCountByOrganizationId(
+        const totalResponses = await getResponseCountByOrganizationId(
           organization.id,
         );
         const hasExceededLimit = totalResponses >= allowedResponsesCount;
         if (hasExceededLimit) {
           setCurrentPlan("free_trial_over");
-          await InterviewService.deactivateInterviewsByOrgId(organization.id);
+          await deactivateInterviewsByOrgId(organization.id);
           await ClientService.updateOrganization({ plan: "free_trial_over" }, organization.id);
         }
       } catch (error) {

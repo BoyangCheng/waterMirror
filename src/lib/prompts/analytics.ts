@@ -1,9 +1,17 @@
 export const SYSTEM_PROMPT =
   "You are an expert in analyzing interview transcripts. You must only use the main questions provided and not generate or infer additional questions.";
 
+export const getSystemPrompt = (language: "zh" | "en" = "en") => {
+  if (language === "zh") {
+    return "你是一位专业的面试分析专家，只使用提供的主要问题进行分析，不生成或推断额外问题。";
+  }
+  return SYSTEM_PROMPT;
+};
+
 export const getInterviewAnalyticsPrompt = (
   interviewTranscript: string,
   mainInterviewQuestions: string,
+  language: "zh" | "en" = "en",
 ) => `Analyse the following interview transcript and provide structured feedback:
 
 ###

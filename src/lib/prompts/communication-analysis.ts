@@ -3,8 +3,16 @@ export const SYSTEM_PROMPT = `You are an expert in analyzing communication skill
 2. Identify specific quotes that support your analysis
 3. Provide a detailed breakdown of strengths and areas for improvement`;
 
+export const getSystemPrompt = (language: "zh" | "en" = "en") => {
+  if (language === "zh") {
+    return "你是一位专业的沟通技巧分析专家，擅长从面试记录中分析沟通能力、识别优势和改进空间。";
+  }
+  return SYSTEM_PROMPT;
+};
+
 export const getCommunicationAnalysisPrompt = (
   transcript: string,
+  _language: "zh" | "en" = "en",
 ) => `Analyze the communication skills demonstrated in the following interview transcript:
 
 Transcript: ${transcript}

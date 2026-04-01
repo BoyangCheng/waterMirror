@@ -1,12 +1,19 @@
 export const SYSTEM_PROMPT =
   "You are an expert in coming up with follow up questions to uncover deeper insights.";
 
+export const getSystemPrompt = (language: "zh" | "en" = "en") => {
+  if (language === "zh") {
+    return "你是一位专业的面试官，擅长设计追问问题以挖掘更深层的洞察。";
+  }
+  return SYSTEM_PROMPT;
+};
+
 export const generateQuestionsPrompt = (body: {
   name: string;
   objective: string;
   number: number;
   context: string;
-}) => `Imagine you are an interviewer specialized in designing interview questions to help hiring managers find candidates with strong technical expertise and project experience, making it easier to identify the ideal fit for the role.
+}, _language: "zh" | "en" = "en") => `Imagine you are an interviewer specialized in designing interview questions to help hiring managers find candidates with strong technical expertise and project experience, making it easier to identify the ideal fit for the role.
               
 Interview Title: ${body.name}
 Interview Objective: ${body.objective}

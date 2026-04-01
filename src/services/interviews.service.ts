@@ -82,7 +82,7 @@ const deactivateInterviewsByOrgId = async (organizationId: string) => {
   }
 };
 
-export const InterviewService = {
+export {
   getAllInterviews,
   getInterviewById,
   updateInterview,

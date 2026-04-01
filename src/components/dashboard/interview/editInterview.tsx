@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
-import { InterviewService } from "@/services/interviews.service";
+import { getAllInterviews, getInterviewById, updateInterview, deleteInterview, getAllRespondents, createInterview, deactivateInterviewsByOrgId } from "@/services/interviews.service";
 import type { Interview, Question } from "@/types/interview";
 import { Plus, SaveIcon, TrashIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
@@ -99,7 +99,7 @@ function EditInterview({ interview }: EditInterviewProps) {
       if (!interview) {
         return;
       }
-      const response = await InterviewService.updateInterview(interviewData, interview?.id);
+      const response = await updateInterview(interviewData, interview?.id);
       setIsClicked(false);
       fetchInterviews();
       toast.success(t("interview.updatedSuccess"), {
@@ -118,7 +118,7 @@ function EditInterview({ interview }: EditInterviewProps) {
     }
 
     try {
-      await InterviewService.deleteInterview(interview.id);
+      await deleteInterview(interview.id);
       router.push("/dashboard");
     } catch (error) {
       console.error("Error deleting interview:", error);
