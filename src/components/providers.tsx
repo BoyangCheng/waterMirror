@@ -3,6 +3,7 @@
 import { ClientProvider } from "@/contexts/clients.context";
 import { InterviewerProvider } from "@/contexts/interviewers.context";
 import { InterviewProvider } from "@/contexts/interviews.context";
+import { JobsProvider } from "@/contexts/jobs.context";
 import { ResponseProvider } from "@/contexts/responses.context";
 import { I18nProvider } from "@/i18n";
 import compose from "@/lib/compose";
@@ -19,6 +20,7 @@ const providers = ({ children }: ThemeProviderProps) => {
     InterviewerProvider,
     ResponseProvider,
     ClientProvider,
+    JobsProvider,
   ]);
 
   return (

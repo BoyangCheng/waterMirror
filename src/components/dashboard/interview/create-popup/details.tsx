@@ -146,8 +146,7 @@ function DetailsPopup({
   return (
     <>
       <div className="text-center w-[38rem]">
-        <h1 className="text-xl font-semibold">{t("create.createInterview")}</h1>
-        <div className="flex flex-col justify-center items-start mt-4 ml-10 mr-8">
+        <div className="flex flex-col justify-center items-start mt-2 ml-10 mr-8">
           <div className="flex flex-row justify-center items-center">
             <h3 className="text-sm font-medium">{t("create.interviewName")}</h3>
             <input

@@ -20,7 +20,8 @@
   },
   "nav": {
     "interviews": "Interviews",
-    "interviewers": "Interviewers"
+    "interviewers": "Interviewers",
+    "screening": "Resume Screening"
   },
   "dashboard": {
     "myInterviews": "My Interviews",
@@ -162,7 +163,14 @@
     "descriptionNoteInterviewees": "Note: Interviewees will see this description.",
     "descriptionPlaceholderShort": "Enter your interview description.",
     "deleteFailed": "Failed to delete the interview.",
-    "responses": "Responses:"
+    "responses": "Responses:",
+    "tabManual": "Without Job Resumes",
+    "tabFromJob": "With Job Resumes",
+    "selectJob": "Select Position:",
+    "selectJobPlaceholder": "Select a completed screening position",
+    "noCompletedJobs": "No completed positions available",
+    "selectCandidate": "Select Candidate:",
+    "noCandidates": "No candidates for this position"
   },
   "summary": {
     "overallAnalysis": "Overall Analysis",
@@ -192,6 +200,41 @@
     "anonymous": "Anonymous",
     "noSummary": "No summary available",
     "shareWithRespondents": "Please share with your intended respondents"
+  },
+  "screening": {
+    "title": "Resume Screening",
+    "subtitle": "Add positions, AI auto-screens and ranks resumes",
+    "createJob": "Add Position",
+    "jobName": "Position Name",
+    "jobDescription": "Job Description",
+    "jobDescriptionPlaceholder": "Enter the job description/JD, including responsibilities, requirements, etc...",
+    "uploadResumes": "Upload Resumes (PDF, max 10)",
+    "goWork": "Go Work!",
+    "processing": "Processing...",
+    "completed": "Completed",
+    "addMore": "Add Resumes",
+    "rank": "Rank",
+    "candidateName": "Name",
+    "company": "Company",
+    "position": "Position",
+    "highlightSummary": "Highlights",
+    "score": "Score",
+    "resume": "Resume",
+    "resumeCount": "resumes",
+    "backToList": "Back to List",
+    "jobDesc": "Job Description",
+    "analyzing": "Analyzing...",
+    "viewResume": "View Resume",
+    "noJobs": "No positions yet. Click to add and start screening.",
+    "uploadAtLeastOne": "Please upload at least one resume",
+    "maxFiles": "Maximum 10 resumes allowed",
+    "fileTooLarge": "File size cannot exceed 10MB",
+    "onlyPdf": "Only PDF format is supported",
+    "uploadSuccess": "Resumes uploaded successfully",
+    "createSuccess": "Position created successfully",
+    "createFailed": "Failed to create position",
+    "addResumeSuccess": "Resumes added successfully",
+    "addResumeFailed": "Failed to add resumes"
   },
   "interviewerSettingsLabel": "Interviewer Settings",
   "statusUpdateFailed": "Failed to update the interview status.",
