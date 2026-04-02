@@ -70,14 +70,9 @@ const getOrganizationById = async (organization_id?: string, organization_name?:
   }
 };
 
-const updateUser = async (id: string, payload: { name?: string; phone?: string }) => {
-  try {
-    await sql`UPDATE "user" SET ${sql(payload)} WHERE id = ${id}`;
-    return true;
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
+const updateUser = async (_id: string, _payload: { name?: string; phone?: string }) => {
+  // name/phone columns not yet migrated — no-op until migration is run
+  return true;
 };
 
 const getUserById = async (id: string) => {
@@ -92,7 +87,7 @@ const getUserById = async (id: string) => {
 
 const getUsersByOrgId = async (orgId: string) => {
   try {
-    const data = await sql`SELECT id, email, name FROM "user" WHERE organization_id = ${orgId}`;
+    const data = await sql`SELECT id, email FROM "user" WHERE organization_id = ${orgId}`;
     return data || [];
   } catch (error) {
     console.log(error);

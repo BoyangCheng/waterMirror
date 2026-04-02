@@ -1,0 +1,262 @@
+import crypto from "crypto";
+
+// ---------------------------------------------------------------------------
+// RTC Token Generation
+// Docs: https://www.volcengine.com/docs/6348/70121
+// ---------------------------------------------------------------------------
+
+export function generateRTCToken(
+  appId: string,
+  appKey: string,
+  roomId: string,
+  userId: string,
+  ttlSeconds = 3600,
+): string {
+  const expiredTs = Math.floor(Date.now() / 1000) + ttlSeconds;
+  const nonce = Math.floor(Math.random() * 0xffffffff);
+
+  const encodeStr = (s: string) => {
+    const buf = Buffer.from(s, "utf8");
+    return buf.length.toString(16).padStart(4, "0") + buf.toString("hex");
+  };
+
+  const version = "001";
+  const expireHex = expiredTs.toString(16).padStart(8, "0");
+  const nonceHex = nonce.toString(16).padStart(8, "0");
+
+  const content =
+    encodeStr(appId) + encodeStr(roomId) + encodeStr(userId) + expireHex + nonceHex;
+
+  const sig = crypto.createHmac("sha256", appKey).update(content).digest("hex");
+  return version + content + sig;
+}
+
+// ---------------------------------------------------------------------------
+// Volcengine OpenAPI Signing (HMAC-SHA256, AWS SigV4 style)
+// Docs: https://www.volcengine.com/docs/6369/65067
+// ---------------------------------------------------------------------------
+
+async function callRTCAPI(action: string, version: string, body: Record<string, unknown>) {
+  const accessKeyId = process.env.VOLCENGINE_ACCESS_KEY_ID ?? "";
+  const secretKey = process.env.VOLCENGINE_SECRET_KEY ?? "";
+  const host = "rtc.volcengineapi.com";
+  const region = "cn-north-1";
+  const service = "rtc";
+
+  const now = new Date();
+  // Format: 20060102T150405Z
+  const xDate =
+    now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const shortDate = xDate.slice(0, 8);
+
+  const bodyStr = JSON.stringify(body);
+  const bodyHash = crypto.createHash("sha256").update(bodyStr).digest("hex");
+
+  const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-date:${xDate}\n`;
+  const signedHeaders = "content-type;host;x-date";
+  const queryString = `Action=${action}&Version=${version}`;
+
+  const canonicalRequest = [
+    "POST",
+    "/",
+    queryString,
+    canonicalHeaders,
+    signedHeaders,
+    bodyHash,
+  ].join("\n");
+
+  const credentialScope = `${shortDate}/${region}/${service}/request`;
+  const stringToSign = [
+    "HMAC-SHA256",
+    xDate,
+    credentialScope,
+    crypto.createHash("sha256").update(canonicalRequest).digest("hex"),
+  ].join("\n");
+
+  const kDate = crypto.createHmac("sha256", secretKey).update(shortDate).digest();
+  const kRegion = crypto.createHmac("sha256", kDate).update(region).digest();
+  const kService = crypto.createHmac("sha256", kRegion).update(service).digest();
+  const kSigning = crypto.createHmac("sha256", kService).update("request").digest();
+  const signature = crypto.createHmac("sha256", kSigning).update(stringToSign).digest("hex");
+
+  const authorization = `HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const url = `https://${host}?Action=${action}&Version=${version}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Host: host,
+      "X-Date": xDate,
+      Authorization: authorization,
+    },
+    body: bodyStr,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Volcengine RTC API error [${action}]: ${res.status} ${text}`);
+  }
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// StartVoiceChat
+// ---------------------------------------------------------------------------
+
+export interface StartVoiceChatParams {
+  roomId: string;
+  taskId: string;
+  agentUserId: string;
+  targetUserId: string;
+  systemPrompt: string;
+  language: "zh" | "en";
+  welcomeMessage?: string;
+  voiceType?: string; // Volcengine TTS voice type
+}
+
+export async function startVoiceChat(params: StartVoiceChatParams) {
+  const appId = process.env.VOLCENGINE_RTC_APP_ID ?? "";
+  const asrAppId = process.env.VOLCENGINE_ASR_APP_ID ?? "";
+  const asrToken = process.env.VOLCENGINE_ASR_ACCESS_TOKEN ?? "";
+  const ttsAppId = process.env.VOLCENGINE_TTS_APP_ID ?? "";
+  const ttsToken = process.env.VOLCENGINE_TTS_ACCESS_TOKEN ?? "";
+  const dashscopeKey = process.env.DASHSCOPE_API_KEY ?? "";
+  const aiModel = process.env.AI_MODEL_SMART ?? "qwen-plus";
+
+  const body = {
+    AppId: appId,
+    RoomId: params.roomId,
+    TaskId: params.taskId,
+    Config: {
+      ASRConfig: {
+        Provider: "volcano",
+        ProviderParams: {
+          AppId: asrAppId,
+          AccessToken: asrToken,
+          Cluster: "volcengine_streaming_common",
+        },
+        VADConfig: {
+          SilenceTime: 600,
+        },
+        InterruptConfig: {
+          InterruptSpeechDuration: 300,
+        },
+      },
+      LLMConfig: {
+        Provider: "custom",
+        ProviderParams: {
+          Url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+          APIKey: dashscopeKey,
+          Model: aiModel,
+          Messages: [
+            {
+              role: "system",
+              content: params.systemPrompt,
+            },
+          ],
+        },
+      },
+      TTSConfig: {
+        Provider: "volcano",
+        ProviderParams: {
+          AppId: ttsAppId,
+          AccessToken: ttsToken,
+          VoiceType: params.voiceType ?? "BV701_streaming",
+        },
+      },
+    },
+    AgentConfig: {
+      UserId: params.agentUserId,
+      TargetUserId: [params.targetUserId],
+      WelcomeMessage: params.welcomeMessage ?? "",
+    },
+  };
+
+  return callRTCAPI("StartVoiceChat", "2024-12-01", body);
+}
+
+// ---------------------------------------------------------------------------
+// StopVoiceChat
+// ---------------------------------------------------------------------------
+
+export async function stopVoiceChat(roomId: string, taskId: string) {
+  const appId = process.env.VOLCENGINE_RTC_APP_ID ?? "";
+  return callRTCAPI("StopVoiceChat", "2024-12-01", {
+    AppId: appId,
+    RoomId: roomId,
+    TaskId: taskId,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Build system prompt for the AI interviewer
+// ---------------------------------------------------------------------------
+
+export function buildInterviewerPrompt(data: {
+  mins: string;
+  name: string;
+  objective: string;
+  questions: string;
+  language: "zh" | "en";
+}): string {
+  if (data.language === "zh") {
+    return `你是一位专业的面试官，擅长追问以挖掘深层洞察。面试时长不超过${data.mins}分钟。
+被面试者姓名：${data.name}。
+面试目标：${data.objective}。
+参考问题：${data.questions}。
+每问一个问题后必须追问一个跟进问题。
+对话规范：专业而友好，问题不超过30个字，不重复问题，不讨论与目标无关的话题，如果知道对方姓名则在对话中使用。`;
+  }
+  return `You are an expert interviewer who asks follow-up questions to uncover deeper insights. Keep the interview under ${data.mins} minutes.
+Interviewee name: ${data.name}.
+Interview objective: ${data.objective}.
+Reference questions: ${data.questions}.
+After each question, ask one follow-up question.
+Guidelines: professional yet friendly tone, questions under 30 words, no repeated questions, stay on topic, use the interviewee's name if provided.`;
+}
+
+// ---------------------------------------------------------------------------
+// Parse binary subtitle message from onRoomBinaryMessageReceived
+// Returns null if the message cannot be parsed
+// ---------------------------------------------------------------------------
+
+export interface SubtitleMessage {
+  role: "agent" | "user";
+  text: string;
+  isFinal: boolean;
+}
+
+export function parseSubtitleMessage(
+  buffer: ArrayBuffer,
+  senderId: string,
+  agentUserId: string,
+): SubtitleMessage | null {
+  try {
+    // The message payload may have a binary TLV header before the JSON.
+    // We search for the first '{' to locate the JSON start.
+    const bytes = new Uint8Array(buffer);
+    let jsonStart = 0;
+    for (let i = 0; i < bytes.length; i++) {
+      if (bytes[i] === 0x7b) {
+        // '{'
+        jsonStart = i;
+        break;
+      }
+    }
+    const jsonBytes = buffer.slice(jsonStart);
+    const jsonStr = new TextDecoder("utf-8").decode(jsonBytes);
+    const data = JSON.parse(jsonStr);
+
+    const text: string = data.text ?? data.content ?? data.Text ?? "";
+    if (!text.trim()) return null;
+
+    const isFinal: boolean =
+      data.definite === true || data.is_final === true || data.Definite === true;
+
+    const role: "agent" | "user" = senderId === agentUserId ? "agent" : "user";
+    return { role, text, isFinal };
+  } catch {
+    return null;
+  }
+}

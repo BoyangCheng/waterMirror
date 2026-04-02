@@ -1,6 +1,6 @@
 import ai, { AI_MODELS } from "@/lib/ai";
 import { logger } from "@/lib/logger";
-import { SYSTEM_PROMPT, createUserPrompt } from "@/lib/prompts/generate-insights";
+import { getSystemPrompt, createUserPrompt } from "@/lib/prompts/generate-insights";
 import { getInterviewById, updateInterview } from "@/services/interviews.service";
 import { getAllResponses } from "@/services/responses.service";
 import { NextResponse } from "next/server";
@@ -12,12 +12,21 @@ export async function POST(req: Request) {
   const responses = await getAllResponses(body.interviewId);
   const interview = await getInterviewById(body.interviewId);
 
+  // Use call_summary if available (Retell), fall back to plain transcript (Volcengine RTC)
   let callSummaries = "";
   if (responses) {
     for (const response of responses) {
-      callSummaries += response.details?.call_analysis?.call_summary;
+      const summary = response.details?.call_analysis?.call_summary;
+      const transcript = response.details?.transcript;
+      if (summary) {
+        callSummaries += `${summary}\n`;
+      } else if (transcript) {
+        callSummaries += `${transcript}\n`;
+      }
     }
   }
+
+  const language: "zh" | "en" = interview?.language === "en" ? "en" : "zh";
 
   try {
     const prompt = createUserPrompt(
@@ -25,6 +34,7 @@ export async function POST(req: Request) {
       interview.name,
       interview.objective,
       interview.description,
+      language,
     );
 
     const baseCompletion = await ai.chat.completions.create({
@@ -32,7 +42,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: SYSTEM_PROMPT,
+          content: getSystemPrompt(language),
         },
         {
           role: "user",

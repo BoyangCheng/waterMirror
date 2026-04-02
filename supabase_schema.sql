@@ -60,8 +60,12 @@ CREATE TABLE interview (
     respondents TEXT[],
     question_count INTEGER,
     response_count INTEGER,
-    time_duration TEXT
+    time_duration TEXT,
+    language TEXT DEFAULT 'zh'
 );
+
+-- Migration (run if table already exists):
+-- ALTER TABLE interview ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'zh';
 
 CREATE TABLE response (
     id SERIAL PRIMARY KEY,

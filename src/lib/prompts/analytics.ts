@@ -1,10 +1,26 @@
-export const SYSTEM_PROMPT =
+const SYSTEM_PROMPT_EN =
   "You are an expert in analyzing interview transcripts. You must only use the main questions provided and not generate or infer additional questions.";
+
+const SYSTEM_PROMPT_ZH =
+  "你是一位专业的面试记录分析专家。你只能使用所提供的主要问题，不得生成或推断额外的问题。";
+
+export const getSystemPrompt = (language: "zh" | "en") =>
+  language === "zh" ? SYSTEM_PROMPT_ZH : SYSTEM_PROMPT_EN;
+
+// Keep legacy export
+export const SYSTEM_PROMPT = SYSTEM_PROMPT_EN;
 
 export const getInterviewAnalyticsPrompt = (
   interviewTranscript: string,
   mainInterviewQuestions: string,
-) => `Analyse the following interview transcript and provide structured feedback:
+  language: "zh" | "en" = "en",
+) => {
+  const langInstruction =
+    language === "zh"
+      ? "\n\n重要：所有文字输出（反馈、概要、评语等）必须使用中文。"
+      : "";
+
+  return `Analyse the following interview transcript and provide structured feedback:
 
 ###
 Transcript: ${interviewTranscript}
@@ -28,35 +44,22 @@ Based on this transcript and the provided main interview questions, generate the
    - Consistency: Evaluate if the interviewee's answers are consistent throughout the interview or if they contradict themselves.
    - Adaptability: Assess how well the interviewee adapts to different types of questions, including unexpected or challenging ones.
 
-2. Communication Skills: Score (0-10) and Feedback (60 words). Rating system and guidleines for communication skills is as follwing.
-    - 10: Fully operational command, use of English is appropriate, accurate, fluent, shows complete understanding.
-    - 09: Fully operational command with occasional inaccuracies and inappropriate usage. May misunderstand unfamiliar situations but handles complex arguments well.
-    - 08: Operational command with occasional inaccuracies, inappropriate usage, and misunderstandings. Handles complex language and detailed reasoning well.
-    - 07: Effective command despite some inaccuracies, inappropriate usage, and misunderstandings. Can use and understand reasonably complex language, especially in familiar situations.
-    - 06: Partial command, copes with overall meaning, frequent mistakes. Handles basic communication in their field.
-    - 05: Basic competence limited to familiar situations with frequent problems in understanding and expression.
-    - 04: Understands only general meaning in very familiar situations, with frequent communication breakdowns.
-    - 03: Has great difficulty understanding spoken English.
-    - 02: Has no ability to use the language except a few isolated words.
-    - 01: Did not answer the questions.
+2. Communication Skills: Score (0-10) and Feedback (60 words).
 3. Summary for each main interview question: ${mainInterviewQuestions}
    - Use ONLY the main questions provided, it should output all the questions with the numbers even if it's not found in the transcript.
-   - Follow the below rules when outputing the question and summary
-      - If a main interview question isn't found in the transcript, then output the main question and give the summary as "Not Asked"
-      - If a main interview question is found in the transcript but an answer couldn't be found, then output the main question and give the summary as "Not Answered"
-      - If a main interview question is found in the transcript and an answer can also be found, then,
-          - For each main question (q), provide a summary that includes:
-            a) The candidate's response to the main question
-            b) Any follow-up questions that were asked related to this main question and their answers
-          - The summary should be a cohesive paragraph encompassing all related information for each main question
+   - If a main interview question isn't found in the transcript, output the main question and give the summary as "Not Asked"
+   - If a main interview question is found in the transcript but an answer couldn't be found, output the main question and give the summary as "Not Answered"
+   - If found and answered, provide a cohesive paragraph encompassing all related information for each main question
 4. Create a 10 to 15 words summary regarding the soft skills considering factors such as confidence, leadership, adaptability, critical thinking and decision making.
+
 Ensure the output is in valid JSON format with the following structure:
 {
   "overallScore": number,
   "overallFeedback": string,
   "communication": { "score": number, "feedback": string },
   "questionSummaries": [{ "question": string, "summary": string }],
-  "softSkillSummary: string
+  "softSkillSummary": string
 }
 
-IMPORTANT: Only use the main questions provided. Do not generate or infer additional questions such as follow-up questions.`;
+IMPORTANT: Only use the main questions provided. Do not generate or infer additional questions such as follow-up questions.${langInstruction}`;
+};

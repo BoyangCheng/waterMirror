@@ -1,7 +1,7 @@
 import ai, { AI_MODELS } from "@/lib/ai";
 import { logger } from "@/lib/logger";
 import {
-  SYSTEM_PROMPT,
+  getSystemPrompt,
   getCommunicationAnalysisPrompt,
 } from "@/lib/prompts/communication-analysis";
 import { NextResponse } from "next/server";
@@ -12,6 +12,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { transcript } = body;
+    const language: "zh" | "en" = body.language === "en" ? "en" : "zh";
 
     if (!transcript) {
       return NextResponse.json({ error: "Transcript is required" }, { status: 400 });
@@ -22,11 +23,11 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: SYSTEM_PROMPT,
+          content: getSystemPrompt(language),
         },
         {
           role: "user",
-          content: getCommunicationAnalysisPrompt(transcript),
+          content: getCommunicationAnalysisPrompt(transcript, language),
         },
       ],
       response_format: { type: "json_object" },

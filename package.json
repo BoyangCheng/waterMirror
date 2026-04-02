@@ -48,6 +48,7 @@
     "@types/md5": "^2.3.5",
     "@types/pdf-parse": "^1.1.4",
     "ali-oss": "^6.23.0",
+    "@volcengine/rtc": "^4.68.2",
     "axios": "^1.6.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
