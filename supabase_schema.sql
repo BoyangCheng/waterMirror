@@ -88,3 +88,28 @@ CREATE TABLE feedback (
     feedback TEXT,
     satisfaction INTEGER
 );
+
+-- Resume Screening tables
+CREATE TABLE job (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    organization_id TEXT REFERENCES organization(id),
+    user_id TEXT REFERENCES "user"(id),
+    status TEXT DEFAULT 'processing'
+);
+
+CREATE TABLE interviewee (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    job_id TEXT REFERENCES job(id) ON DELETE CASCADE,
+    name TEXT,
+    company TEXT,
+    position TEXT,
+    summary TEXT,
+    score INTEGER DEFAULT 0,
+    resume_url TEXT,
+    original_filename TEXT,
+    status TEXT DEFAULT 'pending'
+);

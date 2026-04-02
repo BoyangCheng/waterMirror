@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/i18n";
-import { PlayCircleIcon, SpeechIcon } from "lucide-react";
+import { FileSearch, PlayCircleIcon, SpeechIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 
@@ -35,6 +35,16 @@ function SideMenu() {
           >
             <SpeechIcon className="font-thin mr-2" />
             <p className="font-medium ">{t("nav.interviewers")}</p>
+          </button>
+          <button
+            type="button"
+            className={`flex flex-row p-3 rounded-md hover:bg-slate-200 cursor-pointer ${
+              pathname.includes("/screening") ? "bg-indigo-200" : "bg-slate-100"
+            }`}
+            onClick={() => router.push("/dashboard/screening")}
+          >
+            <FileSearch className="font-thin mr-2" />
+            <p className="font-medium ">{t("nav.screening")}</p>
           </button>
         </div>
       </div>

@@ -20,7 +20,8 @@
   },
   "nav": {
     "interviews": "面试",
-    "interviewers": "面试官"
+    "interviewers": "面试官",
+    "screening": "简历筛排"
   },
   "dashboard": {
     "myInterviews": "我的面试",
@@ -159,7 +160,14 @@
     "descriptionNoteInterviewees": "注意：受访者将看到此描述。",
     "descriptionPlaceholderShort": "请输入面试描述。",
     "deleteFailed": "删除面试失败。",
-    "responses": "回复数："
+    "responses": "回复数：",
+    "tabManual": "未添加职位简历",
+    "tabFromJob": "已添加职位简历",
+    "selectJob": "选择职位：",
+    "selectJobPlaceholder": "请选择一个已完成筛选的职位",
+    "noCompletedJobs": "暂无已完成的职位",
+    "selectCandidate": "选择候选人：",
+    "noCandidates": "该职位下暂无候选人"
   },
   "summary": {
     "overallAnalysis": "综合分析",
@@ -189,6 +197,41 @@
     "anonymous": "匿名",
     "noSummary": "暂无概要",
     "shareWithRespondents": "请将链接分享给目标受访者"
+  },
+  "screening": {
+    "title": "简历筛排",
+    "subtitle": "添加职位，AI自动筛选匹配简历",
+    "createJob": "添加职位",
+    "jobName": "职位名称",
+    "jobDescription": "职位描述",
+    "jobDescriptionPlaceholder": "请输入职位描述/JD，包括岗位职责、任职要求等...",
+    "uploadResumes": "上传简历（PDF，最多10份）",
+    "goWork": "干活！",
+    "processing": "思考中...",
+    "completed": "已完成",
+    "addMore": "追加简历",
+    "rank": "排名",
+    "candidateName": "名字",
+    "company": "公司",
+    "position": "职位",
+    "highlightSummary": "亮点总结",
+    "score": "评分",
+    "resume": "简历",
+    "resumeCount": "份简历",
+    "backToList": "返回列表",
+    "jobDesc": "职位描述",
+    "analyzing": "分析中...",
+    "viewResume": "查看简历",
+    "noJobs": "暂无职位，点击添加开始筛选",
+    "uploadAtLeastOne": "请至少上传一份简历",
+    "maxFiles": "最多上传10份简历",
+    "fileTooLarge": "文件大小不能超过10MB",
+    "onlyPdf": "仅支持PDF格式",
+    "uploadSuccess": "简历上传成功",
+    "createSuccess": "职位创建成功",
+    "createFailed": "职位创建失败",
+    "addResumeSuccess": "简历追加成功",
+    "addResumeFailed": "简历追加失败"
   },
   "interviewerSettingsLabel": "面试官设置",
   "statusUpdateFailed": "更新面试状态失败。",
