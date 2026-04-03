@@ -14,23 +14,10 @@ import { NextResponse } from "next/server";
 
 export const maxDuration = 300; // 5 minutes for processing multiple resumes
 
-async function fetchAndParsePdf(url: string): Promise<string> {
-  const response = await fetch(url);
-  const arrayBuffer = await response.arrayBuffer();
-  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
-
-  try {
-    const loader = new PDFLoader(blob);
-    const docs = await loader.load();
-    const text = docs.map((doc) => doc.pageContent).join("\n").trim();
-    if (text) return text;
-    throw new Error("PDFLoader returned empty text");
-  } catch (pdfErr) {
-    logger.warn("PDFLoader failed, falling back to LLM extraction", { url, error: String(pdfErr) });
-    return extractTextWithLLM(arrayBuffer);
-  }
-}
-
+/**
+ * LLM fallback: Use DashScope Files API + qwen-long to extract text from PDF
+ * Handles scanned/image PDFs that PDFLoader can't parse
+ */
 async function extractTextWithLLM(arrayBuffer: ArrayBuffer): Promise<string> {
   const file = new File([arrayBuffer], "resume.pdf", { type: "application/pdf" });
   const uploaded = await ai.files.create({ file, purpose: "assistants" });
@@ -47,6 +34,46 @@ async function extractTextWithLLM(arrayBuffer: ArrayBuffer): Promise<string> {
   } finally {
     await ai.files.del(uploaded.id).catch(() => {});
   }
+}
+
+/**
+ * Fetch PDF from URL, then:
+ * 1. Try PDFLoader (fast, local JS parsing)
+ * 2. Fallback to qwen-long LLM (handles scanned/image PDFs)
+ * Only fetches the file once, reuses arrayBuffer for both steps.
+ */
+async function fetchAndParsePdf(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch PDF: ${response.status}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+
+  // Step 1: Try PDFLoader
+  try {
+    const loader = new PDFLoader(blob);
+    const docs = await loader.load();
+    const text = docs.map((doc) => doc.pageContent).join("\n").trim();
+    if (text) {
+      logger.info("PDF parsed successfully with PDFLoader");
+      return text;
+    }
+    throw new Error("PDFLoader returned empty text");
+  } catch (pdfErr) {
+    logger.warn("PDFLoader failed, falling back to LLM extraction", {
+      error: String(pdfErr),
+    });
+  }
+
+  // Step 2: Fallback to LLM extraction
+  const text = await extractTextWithLLM(arrayBuffer);
+  if (text.trim()) {
+    logger.info("PDF text extracted successfully with LLM");
+    return text;
+  }
+
+  throw new Error("Both PDFLoader and LLM extraction returned empty text");
 }
 
 async function analyzeResume(
@@ -72,8 +99,10 @@ async function analyzeResume(
   });
 
   const content = completion.choices[0]?.message?.content || "{}";
-  // Clean up potential markdown code blocks
-  const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+  const cleaned = content
+    .replace(/```json\n?/g, "")
+    .replace(/```\n?/g, "")
+    .trim();
   return JSON.parse(cleaned);
 }
 
@@ -82,7 +111,10 @@ export async function POST(req: Request) {
     const { jobId } = await req.json();
 
     if (!jobId) {
-      return NextResponse.json({ error: "jobId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "jobId is required" },
+        { status: 400 },
+      );
     }
 
     logger.info("Starting resume processing", { jobId });
@@ -96,13 +128,28 @@ export async function POST(req: Request) {
 
     for (const interviewee of pendingInterviewees) {
       try {
-        // Parse the resume PDF from OSS URL
-        const resumeText = await fetchAndParsePdf(interviewee.resume_url);
+        // Priority: use pre-extracted text from DB (parsed during upload)
+        // Fallback: re-download from OSS and parse (PDFLoader → LLM)
+        let resumeText = (interviewee.resume_text || "").trim();
+
+        if (!resumeText) {
+          logger.info(
+            `No pre-extracted text for interviewee ${interviewee.id}, fetching from OSS`,
+          );
+          resumeText = await fetchAndParsePdf(interviewee.resume_url);
+        }
+
+        if (!resumeText.trim()) {
+          await updateInterviewee(interviewee.id, {
+            status: "error",
+            summary: "简历文本为空，可能是图片型PDF",
+          });
+          continue;
+        }
 
         // Analyze with AI
         const result = await analyzeResume(job.description, resumeText);
 
-        // Update the interviewee record
         await updateInterviewee(interviewee.id, {
           name: result.name || "未知",
           company: result.company || "未知",
