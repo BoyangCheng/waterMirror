@@ -15,6 +15,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "*.aliyuncs.com",
       },
+      {
+        protocol: "https",
+        hostname: "files.authing.co",
+      },
     ],
   },
   webpack: (webpackConfig, { webpack }) => {

@@ -8,6 +8,4 @@ const submitFeedback = async (feedbackData: FeedbackData) => {
   return data;
 };
 
-export const FeedbackService = {
-  submitFeedback,
-};
+export { submitFeedback };

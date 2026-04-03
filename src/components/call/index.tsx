@@ -16,7 +16,7 @@ import { useResponses } from "@/contexts/responses.context";
 import { useI18n } from "@/i18n";
 import { parseSubtitleMessage } from "@/lib/volcengine-rtc";
 import { isLightColor, testEmail } from "@/lib/utils";
-import { FeedbackService } from "@/services/feedback.service";
+import { submitFeedback } from "@/services/feedback.service";
 import { getInterviewer } from "@/services/interviewers.service";
 import { getAllEmails, saveResponse } from "@/services/responses.service";
 import type { Interview } from "@/types/interview";
@@ -195,7 +195,7 @@ function Call({ interview }: InterviewProps) {
   // -------------------------------------------------------------------------
   const handleFeedbackSubmit = async (formData: Omit<FeedbackData, "interview_id">) => {
     try {
-      const result = await FeedbackService.submitFeedback({
+      const result = await submitFeedback({
         ...formData,
         interview_id: interview.id,
       });
