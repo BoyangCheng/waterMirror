@@ -34,13 +34,21 @@ export async function POST(req: Request) {
     // Generate RTC access token for the human user
     const token = generateRTCToken(appId, appKey, roomId, userId);
 
-    // Build the system prompt from interview data
+    // Build the system prompt from interview data + interviewer style
     const systemPrompt = buildInterviewerPrompt({
       mins: dynamic_data.mins ?? "10",
       name: dynamic_data.name ?? "not provided",
       objective: dynamic_data.objective ?? "",
       questions: dynamic_data.questions ?? "",
       language: dynamic_data.language ?? "zh",
+      interviewer: interviewer
+        ? {
+            empathy: interviewer.empathy,
+            exploration: interviewer.exploration,
+            rapport: interviewer.rapport,
+            speed: interviewer.speed,
+          }
+        : undefined,
     });
 
     // Determine voice type: use agent_id field if it looks like a voice type,

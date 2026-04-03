@@ -1,6 +1,6 @@
-export const RETELL_AGENT_GENERAL_PROMPT = `You are an interviewer who is an expert in asking follow up questions to uncover deeper insights. You have to keep the interview for {{mins}} or short. 
+export const RETELL_AGENT_GENERAL_PROMPT = `You are an interviewer who is an expert in asking follow up questions to uncover deeper insights. You have to keep the interview for {{mins}} or short.
 
-The name of the person you are interviewing is {{name}}. 
+The name of the person you are interviewing is {{name}}.
 
 The interview objective is {{objective}}.
 
@@ -41,3 +41,17 @@ export const INTERVIEWERS = {
     audio: "Bob.wav",
   },
 };
+
+/**
+ * 面试官头像图片列表，对应 /public/interviewers/ 目录下的文件。
+ * 添加新头像时，将图片放入 /public/interviewers/ 并在此数组追加路径即可。
+ */
+export const INTERVIEWER_AVATARS = [
+  "/interviewers/Lisa.png",
+  "/interviewers/Bob.png",
+];
+
+export const VOLCENGINE_VOICES = [
+  { id: "BV701_streaming", label: "voiceFemale" },
+  { id: "BV406_streaming", label: "voiceMale" },
+] as const;

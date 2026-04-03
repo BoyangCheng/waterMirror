@@ -1,45 +1,37 @@
 "use client";
 
+import Modal from "@/components/dashboard/Modal";
+import CreateInterviewerModal from "@/components/dashboard/interviewer/createInterviewerModal";
 import { Card, CardContent } from "@/components/ui/card";
-import { getAllInterviewers } from "@/services/interviewers.service";
-import axios from "axios";
-import { Loader2, Plus } from "lucide-react";
+import { useI18n } from "@/i18n";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 
 function CreateInterviewerButton() {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const createInterviewers = async () => {
-    setIsLoading(true);
-    const response = await axios.get("/api/create-interviewer", {});
-    console.log(response);
-    setIsLoading(false);
-    getAllInterviewers();
-  };
+  const [open, setOpen] = useState(false);
+  const { t } = useI18n();
 
   return (
     <>
       <Card
         className="p-0 inline-block cursor-pointer hover:scale-105 ease-in-out duration-300 h-40 w-36 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md"
-        onClick={() => createInterviewers()}
+        onClick={() => setOpen(true)}
       >
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="w-full h-20 overflow-hidden flex justify-center items-center">
-              <Loader2 size={40} className="animate-spin" />
-            </div>
-          ) : (
-            <div className="w-full h-20 overflow-hidden flex justify-center items-center">
-              <Plus size={40} />
-            </div>
-          )}
+          <div className="w-full h-20 overflow-hidden flex justify-center items-center">
+            <Plus size={40} />
+          </div>
           <p className="my-3 mx-auto text-xs text-wrap w-fit text-center">
-            Create two Default Interviewers
+            {t("interviewerSettings.createNew")}
           </p>
         </CardContent>
       </Card>
+      <Modal open={open} closeOnOutsideClick={true} onClose={() => setOpen(false)}>
+        <CreateInterviewerModal onClose={() => setOpen(false)} />
+      </Modal>
     </>
   );
 }
 
 export default CreateInterviewerButton;
+

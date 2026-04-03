@@ -1,11 +1,19 @@
 "use server";
 
-import sql from "@/lib/db";
+import sql, { cachedQuery, invalidateCache } from "@/lib/db";
+
+const INTERVIEWERS_TTL = 10 * 60_000; // 10 分钟（静态配置数据）
 
 const getAllInterviewers = async (clientId = "") => {
   try {
-    const data = await sql`SELECT * FROM interviewer`;
-    return data || [];
+    return await cachedQuery(
+      "interviewers",
+      async () => {
+        const data = await sql`SELECT * FROM interviewer`;
+        return data || [];
+      },
+      INTERVIEWERS_TTL,
+    );
   } catch (error) {
     console.log(error);
     return [];
@@ -26,6 +34,7 @@ const createInterviewer = async (payload: any) => {
     }
 
     await sql`INSERT INTO interviewer ${sql(payload)}`;
+    invalidateCache("interviewers");
     return null;
   } catch (error) {
     console.error("Error creating interviewer:", error);
@@ -35,12 +44,32 @@ const createInterviewer = async (payload: any) => {
 
 const getInterviewer = async (interviewerId: bigint) => {
   try {
-    const data = await sql`SELECT * FROM interviewer WHERE id = ${interviewerId} LIMIT 1`;
-    return data ? data[0] : null;
+    return await cachedQuery(
+      `interviewer:${interviewerId}`,
+      async () => {
+        const data = await sql`SELECT * FROM interviewer WHERE id = ${Number(interviewerId)} LIMIT 1`;
+        return data ? data[0] : null;
+      },
+      INTERVIEWERS_TTL,
+    );
   } catch (error) {
     console.error("Error fetching interviewer:", error);
     return null;
   }
 };
 
-export { getAllInterviewers, createInterviewer, getInterviewer };
+const deleteInterviewer = async (id: bigint) => {
+  try {
+    // 先解除 interview 表对该面试官的引用，避免外键约束报错
+    await sql`UPDATE interview SET interviewer_id = NULL WHERE interviewer_id = ${Number(id)}`;
+    await sql`DELETE FROM interviewer WHERE id = ${Number(id)}`;
+    invalidateCache("interviewers");
+    invalidateCache("interviews:");
+    return null;
+  } catch (error) {
+    console.error("Error deleting interviewer:", error);
+    return { error };
+  }
+};
+
+export { getAllInterviewers, createInterviewer, getInterviewer, deleteInterviewer };

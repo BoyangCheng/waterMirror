@@ -1,13 +1,26 @@
 "use client";
 
 import MiniLoader from "@/components/loaders/mini-loader/miniLoader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
+import { deleteInterview } from "@/services/interviews.service";
 import { getInterviewer } from "@/services/interviewers.service";
 import { getAllResponses } from "@/services/responses.service";
 import axios from "axios";
-import { ArrowUpRight, Copy } from "lucide-react";
+import { ArrowUpRight, Copy, Trash2 } from "lucide-react";
 import { CopyCheck } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -29,12 +42,13 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
   const [isFetching, setIsFetching] = useState(false);
   const [img, setImg] = useState("");
   const { t } = useI18n();
+  const { fetchInterviews } = useInterviews();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const fetchInterviewer = async () => {
       const interviewer = await getInterviewer(interviewerId);
-      setImg(interviewer.image);
+      if (interviewer) setImg(interviewer.image);
     };
     fetchInterviewer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,6 +90,13 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
     fetchResponses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleDelete = async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    await deleteInterview(id);
+    fetchInterviews();
+  };
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -159,6 +180,31 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
             >
               {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  className="text-xs text-red-500 px-1 h-6"
+                  variant={"secondary"}
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("common.areYouSure")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("interview.deleteConfirm")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+                    {t("common.cancel")}
+                  </AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    {t("common.continue")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </CardContent>
       </Card>

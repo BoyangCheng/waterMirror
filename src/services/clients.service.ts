@@ -1,10 +1,14 @@
 "use server";
 
-import sql from "@/lib/db";
+import sql, { cachedQuery, invalidateCache } from "@/lib/db";
+
+const ORG_TTL = 5 * 60_000;  // 5 分钟
+const USER_TTL = 5 * 60_000; // 5 分钟
 
 const updateOrganization = async (payload: any, id: string) => {
   try {
     await sql`UPDATE organization SET ${sql(payload)} WHERE id = ${id}`;
+    invalidateCache(`org:${id}`);
     return null;
   } catch (error) {
     console.log(error);
@@ -77,8 +81,14 @@ const updateUser = async (_id: string, _payload: { name?: string; phone?: string
 
 const getUserById = async (id: string) => {
   try {
-    const data = await sql`SELECT * FROM "user" WHERE id = ${id}`;
-    return data ? data[0] : null;
+    return await cachedQuery(
+      `user:${id}`,
+      async () => {
+        const data = await sql`SELECT * FROM "user" WHERE id = ${id}`;
+        return data ? data[0] : null;
+      },
+      USER_TTL,
+    );
   } catch (error) {
     console.log(error);
     return null;
@@ -87,8 +97,14 @@ const getUserById = async (id: string) => {
 
 const getUsersByOrgId = async (orgId: string) => {
   try {
-    const data = await sql`SELECT id, email FROM "user" WHERE organization_id = ${orgId}`;
-    return data || [];
+    return await cachedQuery(
+      `users:${orgId}`,
+      async () => {
+        const data = await sql`SELECT id, email FROM "user" WHERE organization_id = ${orgId}`;
+        return data || [];
+      },
+      USER_TTL,
+    );
   } catch (error) {
     console.log(error);
     return [];

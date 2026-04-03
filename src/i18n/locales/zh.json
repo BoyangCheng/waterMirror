@@ -128,7 +128,16 @@
     "name": "名称",
     "namePlaceholder": "例如：共情小王",
     "selectAvatar": "选择头像",
-    "getToKnow": "点击头像了解他们。"
+    "getToKnow": "点击头像了解他们。",
+    "createNew": "创建面试官",
+    "description": "描述",
+    "descriptionPlaceholder": "例如：我是一位温暖的面试官...",
+    "voiceType": "语音类型",
+    "voiceFemale": "灿灿（女声）",
+    "voiceMale": "博文（男声）",
+    "deleteConfirm": "此操作不可撤销，将永久删除此面试官。",
+    "createSuccess": "面试官创建成功",
+    "createFailed": "面试官创建失败"
   },
   "feedback": {
     "satisfied": "您对平台满意吗？",
@@ -234,7 +243,8 @@
     "createSuccess": "职位创建成功",
     "createFailed": "职位创建失败",
     "addResumeSuccess": "简历追加成功",
-    "addResumeFailed": "简历追加失败"
+    "addResumeFailed": "简历追加失败",
+    "deleteConfirm": "此操作不可撤销，将永久删除此职位及所有候选人数据。"
   },
   "interviewerSettingsLabel": "面试官设置",
   "statusUpdateFailed": "更新面试状态失败。",

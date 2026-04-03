@@ -128,7 +128,16 @@
     "name": "Name",
     "namePlaceholder": "e.g. Empathetic Bob",
     "selectAvatar": "Select an Avatar",
-    "getToKnow": "Get to know them by clicking the profile."
+    "getToKnow": "Get to know them by clicking the profile.",
+    "createNew": "Create Interviewer",
+    "description": "Description",
+    "descriptionPlaceholder": "e.g. I'm a warm and curious interviewer...",
+    "voiceType": "Voice Type",
+    "voiceFemale": "Canan (Female)",
+    "voiceMale": "Bowen (Male)",
+    "deleteConfirm": "This action cannot be undone. This will permanently delete this interviewer.",
+    "createSuccess": "Interviewer created successfully",
+    "createFailed": "Failed to create interviewer"
   },
   "feedback": {
     "satisfied": "Are you satisfied with the platform?",
@@ -234,7 +243,8 @@
     "createSuccess": "Position created successfully",
     "createFailed": "Failed to create position",
     "addResumeSuccess": "Resumes added successfully",
-    "addResumeFailed": "Failed to add resumes"
+    "addResumeFailed": "Failed to add resumes",
+    "deleteConfirm": "This action cannot be undone. This will permanently delete this position and all candidate data."
   },
   "interviewerSettingsLabel": "Interviewer Settings",
   "statusUpdateFailed": "Failed to update the interview status.",

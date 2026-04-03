@@ -54,9 +54,9 @@ function Interviewers() {
             id="slider"
             className=" h-44 pt-2 overflow-x-scroll scroll whitespace-nowrap scroll-smooth scrollbar-hide w-[40rem]"
           >
-            {interviewers.length === 0 ? <CreateInterviewerButton /> : <></>}
             {!interviewersLoading ? (
               <>
+                <CreateInterviewerButton />
                 {interviewers.map((interviewer) => (
                   <InterviewerCard key={interviewer.id} interviewer={interviewer} />
                 ))}

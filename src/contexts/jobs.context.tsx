@@ -1,7 +1,5 @@
-"use client";
-
 import { useAuth, useOrg } from "@/contexts/auth.context";
-import { getAllJobs } from "@/services/jobs.service";
+import { getAllJobs, deleteJob as deleteJobService } from "@/services/jobs.service";
 import type { Job } from "@/types/job";
 import React, { useState, useContext, type ReactNode, useEffect, useCallback } from "react";
 
@@ -10,6 +8,7 @@ interface JobsContextProps {
   setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
   jobsLoading: boolean;
   fetchJobs: () => void;
+  deleteJob: (id: string) => Promise<void>;
 }
 
 export const JobsContext = React.createContext<JobsContextProps>({
@@ -17,6 +16,7 @@ export const JobsContext = React.createContext<JobsContextProps>({
   setJobs: () => {},
   jobsLoading: false,
   fetchJobs: () => {},
+  deleteJob: async () => {},
 });
 
 interface JobsProviderProps {
@@ -43,6 +43,11 @@ export function JobsProvider({ children }: JobsProviderProps) {
     setJobsLoading(false);
   }, [user?.id, organization?.id]);
 
+  const deleteJob = async (id: string) => {
+    await deleteJobService(id);
+    setJobs((prev) => prev.filter((j) => j.id !== id));
+  };
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (organization?.id || user?.id) {
@@ -57,6 +62,7 @@ export function JobsProvider({ children }: JobsProviderProps) {
         setJobs,
         jobsLoading,
         fetchJobs,
+        deleteJob,
       }}
     >
       {children}

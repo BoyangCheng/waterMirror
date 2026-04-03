@@ -199,16 +199,24 @@ export function buildInterviewerPrompt(data: {
   objective: string;
   questions: string;
   language: "zh" | "en";
+  interviewer?: { empathy: number; exploration: number; rapport: number; speed: number };
 }): string {
+  const iv = data.interviewer;
   if (data.language === "zh") {
-    return `你是一位专业的面试官，擅长追问以挖掘深层洞察。面试时长不超过${data.mins}分钟。
+    const styleNote = iv
+      ? `\n面试风格：共情力${iv.empathy}/10，亲和力${iv.rapport}/10，探索力${iv.exploration}/10，语速${iv.speed}/10。共情力高时多关注情感体验，探索力高时深度追问细节，亲和力高时语气温暖亲切，语速高时节奏更快、问题更紧凑。`
+      : "";
+    return `你是一位专业的面试官，擅长追问以挖掘深层洞察。面试时长不超过${data.mins}分钟。${styleNote}
 被面试者姓名：${data.name}。
 面试目标：${data.objective}。
 参考问题：${data.questions}。
 每问一个问题后必须追问一个跟进问题。
 对话规范：专业而友好，问题不超过30个字，不重复问题，不讨论与目标无关的话题，如果知道对方姓名则在对话中使用。`;
   }
-  return `You are an expert interviewer who asks follow-up questions to uncover deeper insights. Keep the interview under ${data.mins} minutes.
+  const styleNote = iv
+    ? `\nInterviewing style: empathy ${iv.empathy}/10, rapport ${iv.rapport}/10, exploration ${iv.exploration}/10, speed ${iv.speed}/10. Higher empathy means focusing on emotional experience; higher exploration means probing deeper into details; higher rapport means warmer, friendlier tone; higher speed means faster pacing and more concise exchanges.`
+    : "";
+  return `You are an expert interviewer who asks follow-up questions to uncover deeper insights. Keep the interview under ${data.mins} minutes.${styleNote}
 Interviewee name: ${data.name}.
 Interview objective: ${data.objective}.
 Reference questions: ${data.questions}.
