@@ -16,10 +16,37 @@ export const maxDuration = 300; // 5 minutes for processing multiple resumes
 
 async function fetchAndParsePdf(url: string): Promise<string> {
   const response = await fetch(url);
-  const blob = await response.blob();
-  const loader = new PDFLoader(blob);
-  const docs = await loader.load();
-  return docs.map((doc) => doc.pageContent).join("\n");
+  const arrayBuffer = await response.arrayBuffer();
+  const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+
+  try {
+    const loader = new PDFLoader(blob);
+    const docs = await loader.load();
+    const text = docs.map((doc) => doc.pageContent).join("\n").trim();
+    if (text) return text;
+    throw new Error("PDFLoader returned empty text");
+  } catch (pdfErr) {
+    logger.warn("PDFLoader failed, falling back to LLM extraction", { url, error: String(pdfErr) });
+    return extractTextWithLLM(arrayBuffer);
+  }
+}
+
+async function extractTextWithLLM(arrayBuffer: ArrayBuffer): Promise<string> {
+  const file = new File([arrayBuffer], "resume.pdf", { type: "application/pdf" });
+  const uploaded = await ai.files.create({ file, purpose: "assistants" });
+
+  try {
+    const completion = await ai.chat.completions.create({
+      model: "qwen-long",
+      messages: [
+        { role: "system", content: `fileid://${uploaded.id}` },
+        { role: "user", content: "请提取并返回这份简历的所有文字内容，尽量保持原有结构。" },
+      ],
+    });
+    return completion.choices[0]?.message?.content ?? "";
+  } finally {
+    await ai.files.del(uploaded.id).catch(() => {});
+  }
 }
 
 async function analyzeResume(
