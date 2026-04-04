@@ -2,8 +2,25 @@ import crypto from "crypto";
 
 // ---------------------------------------------------------------------------
 // RTC Token Generation
-// Docs: https://www.volcengine.com/docs/6348/70121
+// Ref: https://www.volcengine.com/docs/6348/70121
+//      https://github.com/volcengine/VolcEngineRTC (Go / Python 参考实现)
+//
+// 二进制格式 (Big-Endian):
+//   "001"                              ← 版本号 (3 ASCII 字节)
+//   uint16(contentLen) + contentBytes  ← 带长度前缀的内容
+//   uint16(sigLen)     + sigBytes      ← 带长度前缀的 HMAC-SHA256 签名
+//
+// contentBytes =
+//   packString(appId) + packString(roomId) + packString(userId)
+//   + uint32(issuedAt) + uint32(expireAt) + uint32(nonce)
+//   + packMap(privileges)
+//
+// 最终输出: Base64 编码
 // ---------------------------------------------------------------------------
+
+// Privilege 常量
+const PrivPublishStream   = 0;
+const PrivSubscribeStream = 2;
 
 export function generateRTCToken(
   appId: string,
@@ -12,23 +29,70 @@ export function generateRTCToken(
   userId: string,
   ttlSeconds = 3600,
 ): string {
-  const expiredTs = Math.floor(Date.now() / 1000) + ttlSeconds;
-  const nonce = Math.floor(Math.random() * 0xffffffff);
+  const now = Math.floor(Date.now() / 1000);
+  const expireAt = now + ttlSeconds;
+  const nonce = crypto.randomInt(0, 0xffffffff);
 
-  const encodeStr = (s: string) => {
-    const buf = Buffer.from(s, "utf8");
-    return buf.length.toString(16).padStart(4, "0") + buf.toString("hex");
+  // 权限：发布 + 订阅，与 token 同时过期
+  const privileges = new Map<number, number>([
+    [PrivPublishStream, expireAt],
+    [PrivSubscribeStream, expireAt],
+  ]);
+
+  // ---- 构建 content (二进制) ----
+  const parts: Buffer[] = [];
+
+  const packString = (s: string) => {
+    const strBuf = Buffer.from(s, "utf8");
+    const lenBuf = Buffer.alloc(2);
+    lenBuf.writeUInt16BE(strBuf.length);
+    parts.push(lenBuf, strBuf);
   };
 
-  const version = "001";
-  const expireHex = expiredTs.toString(16).padStart(8, "0");
-  const nonceHex = nonce.toString(16).padStart(8, "0");
+  const packUint32 = (v: number) => {
+    const buf = Buffer.alloc(4);
+    buf.writeUInt32BE(v >>> 0);
+    parts.push(buf);
+  };
 
-  const content =
-    encodeStr(appId) + encodeStr(roomId) + encodeStr(userId) + expireHex + nonceHex;
+  packString(appId);
+  packString(roomId);
+  packString(userId);
+  packUint32(now);       // issuedAt
+  packUint32(expireAt);  // expireAt
+  packUint32(nonce);
 
-  const sig = crypto.createHmac("sha256", appKey).update(content).digest("hex");
-  return version + content + sig;
+  // packMap: uint16(count) + foreach(uint16(key) + uint32(value))
+  const mapCountBuf = Buffer.alloc(2);
+  mapCountBuf.writeUInt16BE(privileges.size);
+  parts.push(mapCountBuf);
+  for (const [k, v] of privileges) {
+    const kBuf = Buffer.alloc(2);
+    kBuf.writeUInt16BE(k);
+    const vBuf = Buffer.alloc(4);
+    vBuf.writeUInt32BE(v >>> 0);
+    parts.push(kBuf, vBuf);
+  }
+
+  const content = Buffer.concat(parts);
+
+  // ---- 签名 ----
+  const sig = crypto.createHmac("sha256", appKey).update(content).digest();
+
+  // ---- 组装最终 token ----
+  const packBytes = (buf: Buffer): Buffer => {
+    const lenBuf = Buffer.alloc(2);
+    lenBuf.writeUInt16BE(buf.length);
+    return Buffer.concat([lenBuf, buf]);
+  };
+
+  const output = Buffer.concat([
+    Buffer.from("001", "utf8"),  // 版本
+    packBytes(content),          // 带长度前缀的内容
+    packBytes(sig),              // 带长度前缀的签名
+  ]);
+
+  return output.toString("base64");
 }
 
 // ---------------------------------------------------------------------------
