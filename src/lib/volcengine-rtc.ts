@@ -208,7 +208,6 @@ export interface StartVoiceChatParams {
 export async function startVoiceChat(params: StartVoiceChatParams) {
   const appId = process.env.VOLCENGINE_RTC_APP_ID ?? "";
   const asrAppId = process.env.VOLCENGINE_ASR_APP_ID ?? "";
-  const asrToken = process.env.VOLCENGINE_ASR_ACCESS_TOKEN ?? "";
   const ttsAppId = process.env.VOLCENGINE_TTS_APP_ID ?? "";
   const ttsToken = process.env.VOLCENGINE_TTS_ACCESS_TOKEN ?? "";
   const dashscopeKey = process.env.DASHSCOPE_API_KEY ?? "";
@@ -226,6 +225,8 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
     throw new Error(`Missing environment variables: ${missing.join(", ")}`);
   }
 
+  // Body format follows the official rtc-aigc-demo:
+  // https://github.com/volcengine/rtc-aigc-demo/blob/main/Server/scenes/Custom.json
   const body = {
     AppId: appId,
     RoomId: params.roomId,
@@ -234,8 +235,8 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
       ASRConfig: {
         Provider: "volcano",
         ProviderParams: {
+          Mode: "smallmodel",
           AppId: asrAppId,
-          AccessToken: asrToken,
           Cluster: "volcengine_streaming_common",
         },
         VADConfig: {
@@ -246,36 +247,41 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
         },
       },
       LLMConfig: {
-        Provider: "custom",
-        ProviderParams: {
-          Url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-          APIKey: dashscopeKey,
-          Model: aiModel,
-          Messages: [
-            {
-              role: "system",
-              content: params.systemPrompt,
-            },
-          ],
-        },
+        Mode: "CustomLLM",
+        Url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+        APIKey: dashscopeKey,
+        ModelName: aiModel,
+        SystemMessages: [params.systemPrompt],
       },
       TTSConfig: {
         Provider: "volcano",
         ProviderParams: {
-          AppId: ttsAppId,
-          AccessToken: ttsToken,
-          VoiceType: params.voiceType ?? "BV701_streaming",
+          app: {
+            appid: ttsAppId,
+            token: ttsToken || undefined,
+            cluster: "volcano_tts",
+          },
+          audio: {
+            voice_type: params.voiceType ?? "BV701_streaming",
+            speed_ratio: 1,
+            pitch_ratio: 1,
+            volume_ratio: 1,
+          },
         },
       },
+      InterruptMode: 0,
     },
     AgentConfig: {
       UserId: params.agentUserId,
       TargetUserId: [params.targetUserId],
       WelcomeMessage: params.welcomeMessage ?? "",
+      EnableConversationStateCallback: true,
     },
   };
 
-  return callRTCAPI("StartVoiceChat", "2024-12-01", body);
+  const result = await callRTCAPI("StartVoiceChat", "2024-12-01", body);
+  console.log("[RTC] StartVoiceChat response:", JSON.stringify(result));
+  return result;
 }
 
 // ---------------------------------------------------------------------------
