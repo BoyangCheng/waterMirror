@@ -344,8 +344,10 @@ Guidelines: professional yet friendly tone, questions under 30 words, no repeate
 }
 
 // ---------------------------------------------------------------------------
-// Parse binary subtitle message from onRoomBinaryMessageReceived
-// Returns null if the message cannot be parsed
+// Parse binary TLV message from onRoomBinaryMessageReceived
+// TLV format: 4-byte type (ASCII) + 4-byte length (BE uint32) + value (UTF-8)
+// Message types: "conv" = agent state, "subv" = subtitle, "tool" = function call
+// Ref: https://github.com/volcengine/rtc-aigc-demo/blob/main/src/utils/utils.ts
 // ---------------------------------------------------------------------------
 
 export interface SubtitleMessage {
@@ -354,36 +356,79 @@ export interface SubtitleMessage {
   isFinal: boolean;
 }
 
+/**
+ * Decode a TLV binary message into { type, value }
+ */
+function tlv2String(buffer: ArrayBuffer): { type: string; value: string } {
+  const view = new DataView(buffer);
+  const decoder = new TextDecoder("utf-8");
+
+  // First 4 bytes: type (ASCII string like "subv", "conv", "tool")
+  const typeBytes = new Uint8Array(buffer, 0, 4);
+  const type = decoder.decode(typeBytes);
+
+  // Next 4 bytes: length of value (big-endian uint32)
+  const length = view.getUint32(4, false); // big-endian
+
+  // Remaining bytes: UTF-8 encoded JSON string
+  const valueBytes = new Uint8Array(buffer, 8, length);
+  const value = decoder.decode(valueBytes);
+
+  return { type, value };
+}
+
 export function parseSubtitleMessage(
   buffer: ArrayBuffer,
   senderId: string,
   agentUserId: string,
 ): SubtitleMessage | null {
   try {
-    // The message payload may have a binary TLV header before the JSON.
-    // We search for the first '{' to locate the JSON start.
-    const bytes = new Uint8Array(buffer);
-    let jsonStart = 0;
-    for (let i = 0; i < bytes.length; i++) {
-      if (bytes[i] === 0x7b) {
-        // '{'
-        jsonStart = i;
-        break;
-      }
-    }
-    const jsonBytes = buffer.slice(jsonStart);
-    const jsonStr = new TextDecoder("utf-8").decode(jsonBytes);
-    const data = JSON.parse(jsonStr);
+    const { type, value } = tlv2String(buffer);
+    console.log("[RTC] binary message type:", type, "length:", buffer.byteLength);
 
-    const text: string = data.text ?? data.content ?? data.Text ?? "";
+    // Only handle subtitle messages ("subv")
+    if (type !== "subv") {
+      console.log("[RTC] non-subtitle message type:", type, "value:", value.substring(0, 100));
+      return null;
+    }
+
+    const parsed = JSON.parse(value);
+    console.log("[RTC] subtitle parsed:", JSON.stringify(parsed).substring(0, 200));
+
+    // Subtitle data is nested under data[0]
+    // Structure: { data: [{ text, definite, userId, paragraph }] }
+    const item = parsed.data?.[0] ?? parsed;
+    const text: string = item.text ?? item.content ?? item.Text ?? "";
     if (!text.trim()) return null;
 
-    const isFinal: boolean =
-      data.definite === true || data.is_final === true || data.Definite === true;
+    const isFinal: boolean = item.definite === true || item.is_final === true;
 
-    const role: "agent" | "user" = senderId === agentUserId ? "agent" : "user";
+    // Use userId from the message payload if available, otherwise fall back to senderId
+    const msgUserId: string = item.userId ?? item.user_id ?? senderId;
+    const role: "agent" | "user" = msgUserId === agentUserId ? "agent" : "user";
+
     return { role, text, isFinal };
-  } catch {
-    return null;
+  } catch (err) {
+    // Fallback: try parsing as raw JSON (no TLV header)
+    try {
+      const bytes = new Uint8Array(buffer);
+      let jsonStart = 0;
+      for (let i = 0; i < bytes.length; i++) {
+        if (bytes[i] === 0x7b) { jsonStart = i; break; }
+      }
+      const jsonStr = new TextDecoder("utf-8").decode(buffer.slice(jsonStart));
+      console.log("[RTC] fallback JSON parse:", jsonStr.substring(0, 200));
+      const data = JSON.parse(jsonStr);
+      const item = data.data?.[0] ?? data;
+      const text: string = item.text ?? item.content ?? "";
+      if (!text.trim()) return null;
+      const isFinal: boolean = item.definite === true || item.is_final === true;
+      const msgUserId: string = item.userId ?? item.user_id ?? senderId;
+      const role: "agent" | "user" = msgUserId === agentUserId ? "agent" : "user";
+      return { role, text, isFinal };
+    } catch {
+      console.warn("[RTC] failed to parse binary message, length:", buffer.byteLength);
+      return null;
+    }
   }
 }

@@ -330,7 +330,11 @@ function Call({ interview }: InterviewProps) {
       });
 
       // Receive subtitle / transcript binary messages
-      engine.on(VERTC.events.onRoomBinaryMessageReceived, ({ message, userId }) => {
+      engine.on(VERTC.events.onRoomBinaryMessageReceived, (event: any) => {
+        console.log("[RTC] onRoomBinaryMessageReceived fired, event keys:", Object.keys(event));
+        const message = event.message ?? event.binaryMessage ?? event;
+        const userId = event.userId ?? event.uid ?? "";
+        console.log("[RTC] binary message from:", userId, "size:", message?.byteLength ?? "N/A");
         const parsed = parseSubtitleMessage(message, userId as string, agentUserIdRef.current);
         if (!parsed) return;
 
@@ -347,6 +351,24 @@ function Call({ interview }: InterviewProps) {
             transcriptRef.current.push({ role: "user", content: parsed.text });
           }
         }
+      });
+
+      // Debug: monitor remote audio activity
+      engine.on(VERTC.events.onRemoteAudioPropertiesReport, (event: any) => {
+        // Log once to confirm we receive remote audio data
+        console.log("[RTC] onRemoteAudioPropertiesReport:", JSON.stringify(event).substring(0, 200));
+        // Remove this listener after first fire to avoid spam
+        engine.off(VERTC.events.onRemoteAudioPropertiesReport);
+      });
+
+      // Debug: user message (non-binary)
+      engine.on(VERTC.events.onUserMessageReceived, (event: any) => {
+        console.log("[RTC] onUserMessageReceived:", JSON.stringify(event).substring(0, 300));
+      });
+
+      // Debug: room message (non-binary)
+      engine.on(VERTC.events.onRoomMessageReceived, (event: any) => {
+        console.log("[RTC] onRoomMessageReceived:", JSON.stringify(event).substring(0, 300));
       });
 
       engine.on(VERTC.events.onError, (error) => {
@@ -371,7 +393,7 @@ function Call({ interview }: InterviewProps) {
           room_id,
           { userId: user_id },
           {
-            isAutoPublish: false,
+            isAutoPublish: true,
             isAutoSubscribeAudio: true,
             roomProfileType: RoomProfileType.chat,
           },
