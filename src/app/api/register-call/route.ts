@@ -31,8 +31,19 @@ export async function POST(req: Request) {
     const appId = process.env.VOLCENGINE_RTC_APP_ID ?? "";
     const appKey = process.env.VOLCENGINE_RTC_APP_KEY ?? "";
 
+    if (!appId || !appKey) {
+      logger.error(
+        `Missing Volcengine RTC credentials: APP_ID=${appId ? "set" : "MISSING"}, APP_KEY=${appKey ? "set" : "MISSING"}`,
+      );
+      return NextResponse.json(
+        { error: "RTC service not configured — missing VOLCENGINE_RTC_APP_ID or VOLCENGINE_RTC_APP_KEY" },
+        { status: 500 },
+      );
+    }
+
     // Generate RTC access token for the human user
     const token = generateRTCToken(appId, appKey, roomId, userId);
+    logger.info(`RTC token generated for room=${roomId}, user=${userId}, appId=${appId.slice(0, 6)}...`);
 
     // Build the system prompt from interview data + interviewer style
     const systemPrompt = buildInterviewerPrompt({

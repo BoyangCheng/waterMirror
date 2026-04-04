@@ -365,9 +365,15 @@ function Call({ interview }: InterviewProps) {
       startTimeRef.current = Date.now();
       setIsCalling(true);
       setIsStarted(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error starting conversation:", err);
-      toast.error("Failed to start interview. Please try again.");
+      const detail = err?.response?.data?.error || err?.message || "";
+      toast.error(
+        detail
+          ? `${t("interview.startFailed")}: ${detail}`
+          : t("interview.startFailed"),
+        { duration: 6000 },
+      );
     } finally {
       setLoading(false);
     }
@@ -513,17 +519,21 @@ function Call({ interview }: InterviewProps) {
                       {lastInterviewerResponse}
                     </div>
                     <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                      <Image
-                        src={interviewerImg}
-                        alt="Image of the interviewer"
-                        width={120}
-                        height={120}
-                        className={`object-cover object-center mx-auto my-auto ${
-                          activeTurn === "agent"
-                            ? `border-4 border-[${interview.theme_color}] rounded-full`
-                            : ""
-                        }`}
-                      />
+                      {interviewerImg ? (
+                        <Image
+                          src={interviewerImg}
+                          alt="Image of the interviewer"
+                          width={120}
+                          height={120}
+                          className={`object-cover object-center mx-auto my-auto ${
+                            activeTurn === "agent"
+                              ? `border-4 border-[${interview.theme_color}] rounded-full`
+                              : ""
+                          }`}
+                        />
+                      ) : (
+                        <div className="w-[120px] h-[120px] bg-gray-200 rounded-full animate-pulse mx-auto" />
+                      )}
                       <div className="font-semibold">{t("interview.interviewer")}</div>
                     </div>
                   </div>

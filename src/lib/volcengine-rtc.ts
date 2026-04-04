@@ -124,6 +124,18 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
   const dashscopeKey = process.env.DASHSCOPE_API_KEY ?? "";
   const aiModel = process.env.AI_MODEL_SMART ?? "qwen-plus";
 
+  const missing = [
+    !appId && "VOLCENGINE_RTC_APP_ID",
+    !process.env.VOLCENGINE_ACCESS_KEY_ID && "VOLCENGINE_ACCESS_KEY_ID",
+    !process.env.VOLCENGINE_SECRET_KEY && "VOLCENGINE_SECRET_KEY",
+    !asrAppId && "VOLCENGINE_ASR_APP_ID",
+    !ttsAppId && "VOLCENGINE_TTS_APP_ID",
+    !dashscopeKey && "DASHSCOPE_API_KEY",
+  ].filter(Boolean);
+  if (missing.length) {
+    throw new Error(`Missing environment variables: ${missing.join(", ")}`);
+  }
+
   const body = {
     AppId: appId,
     RoomId: params.roomId,

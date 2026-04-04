@@ -187,13 +187,19 @@ function DetailsPopup({
                     }`}
                     onClick={() => setSelectedInterviewer(item.id)}
                   >
-                    <Image
-                      src={item.image}
-                      alt="Picture of the interviewer"
-                      width={70}
-                      height={70}
-                      className="w-full h-full object-cover"
-                    />
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt="Picture of the interviewer"
+                        width={70}
+                        height={70}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-[96px] h-[96px] bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xl">
+                        {item.name?.[0] ?? "?"}
+                      </div>
+                    )}
                   </button>
                   <CardTitle className="mt-0 text-xs text-center">{item.name}</CardTitle>
                 </div>

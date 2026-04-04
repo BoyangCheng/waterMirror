@@ -16,7 +16,8 @@
     "inactive": "Inactive",
     "anonymous": "Anonymous",
     "all": "All",
-    "back": "Back"
+    "back": "Back",
+    "thinking": "Thinking..."
   },
   "nav": {
     "interviews": "Interviews",
@@ -44,6 +45,7 @@
     "expectedDuration": "Expected duration:",
     "minsOrLess": "mins or less",
     "startInterview": "Start Interview",
+    "startFailed": "Failed to start interview, please try again",
     "endInterview": "End Interview",
     "exit": "Exit",
     "endCallConfirm": "This action cannot be undone. This action will end the call.",
