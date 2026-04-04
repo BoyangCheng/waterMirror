@@ -2,25 +2,84 @@ import crypto from "crypto";
 
 // ---------------------------------------------------------------------------
 // RTC Token Generation
-// Ref: https://www.volcengine.com/docs/6348/70121
-//      https://github.com/volcengine/VolcEngineRTC (Go / Python 参考实现)
+// Ref: https://github.com/volcengine/rtc-aigc-demo/blob/main/Server/token.js
 //
-// 二进制格式 (Big-Endian):
-//   "001"                              ← 版本号 (3 ASCII 字节)
-//   uint16(contentLen) + contentBytes  ← 带长度前缀的内容
-//   uint16(sigLen)     + sigBytes      ← 带长度前缀的 HMAC-SHA256 签名
+// 格式 (Little-Endian):
+//   token = "001" + appId + base64(content)
+//   content = uint16LE(msgLen) + msgBytes + uint16LE(sigLen) + sigBytes
+//   msgBytes = uint32LE(nonce) + uint32LE(issuedAt) + uint32LE(expireAt)
+//            + packString(roomId) + packString(userId) + packTreeMap(privileges)
+//   sigBytes = HMAC-SHA256(appKey, msgBytes)
 //
-// contentBytes =
-//   packString(appId) + packString(roomId) + packString(userId)
-//   + uint32(issuedAt) + uint32(expireAt) + uint32(nonce)
-//   + packMap(privileges)
-//
-// 最终输出: Base64 编码
+// 版本号 "001" 和 appId 以明文前缀拼接，不参与 base64
 // ---------------------------------------------------------------------------
 
-// Privilege 常量
+// Privilege 常量 (与官方 SDK 一致)
 const PrivPublishStream   = 0;
-const PrivSubscribeStream = 2;
+const PrivSubscribeStream = 4;
+
+// ---- ByteBuf: Little-Endian binary buffer helper ----
+class ByteBuf {
+  private buffer: Buffer;
+  private position: number;
+
+  constructor() {
+    this.buffer = Buffer.alloc(1024);
+    this.position = 0;
+  }
+
+  private ensureCapacity(len: number) {
+    if (this.position + len > this.buffer.length) {
+      const newBuf = Buffer.alloc(this.buffer.length * 2 + len);
+      this.buffer.copy(newBuf);
+      this.buffer = newBuf;
+    }
+  }
+
+  putUint16(v: number): this {
+    this.ensureCapacity(2);
+    this.buffer.writeUInt16LE(v, this.position);
+    this.position += 2;
+    return this;
+  }
+
+  putUint32(v: number): this {
+    this.ensureCapacity(4);
+    this.buffer.writeUInt32LE(v >>> 0, this.position);
+    this.position += 4;
+    return this;
+  }
+
+  putBytes(bytes: Buffer): this {
+    this.ensureCapacity(2 + bytes.length);
+    this.buffer.writeUInt16LE(bytes.length, this.position);
+    this.position += 2;
+    bytes.copy(this.buffer, this.position);
+    this.position += bytes.length;
+    return this;
+  }
+
+  putString(str: string): this {
+    return this.putBytes(Buffer.from(str, "utf8"));
+  }
+
+  putTreeMapUInt32(map: Map<number, number>): this {
+    this.ensureCapacity(2);
+    this.buffer.writeUInt16LE(map.size, this.position);
+    this.position += 2;
+    for (const [k, v] of map) {
+      this.putUint16(k);
+      this.putUint32(v);
+    }
+    return this;
+  }
+
+  pack(): Buffer {
+    return Buffer.from(this.buffer.subarray(0, this.position));
+  }
+}
+
+const VERSION = "001";
 
 export function generateRTCToken(
   appId: string,
@@ -39,60 +98,27 @@ export function generateRTCToken(
     [PrivSubscribeStream, expireAt],
   ]);
 
-  // ---- 构建 content (二进制) ----
-  const parts: Buffer[] = [];
-
-  const packString = (s: string) => {
-    const strBuf = Buffer.from(s, "utf8");
-    const lenBuf = Buffer.alloc(2);
-    lenBuf.writeUInt16BE(strBuf.length);
-    parts.push(lenBuf, strBuf);
-  };
-
-  const packUint32 = (v: number) => {
-    const buf = Buffer.alloc(4);
-    buf.writeUInt32BE(v >>> 0);
-    parts.push(buf);
-  };
-
-  packString(appId);
-  packString(roomId);
-  packString(userId);
-  packUint32(now);       // issuedAt
-  packUint32(expireAt);  // expireAt
-  packUint32(nonce);
-
-  // packMap: uint16(count) + foreach(uint16(key) + uint32(value))
-  const mapCountBuf = Buffer.alloc(2);
-  mapCountBuf.writeUInt16BE(privileges.size);
-  parts.push(mapCountBuf);
-  for (const [k, v] of privileges) {
-    const kBuf = Buffer.alloc(2);
-    kBuf.writeUInt16BE(k);
-    const vBuf = Buffer.alloc(4);
-    vBuf.writeUInt32BE(v >>> 0);
-    parts.push(kBuf, vBuf);
-  }
-
-  const content = Buffer.concat(parts);
+  // ---- 构建 msg (二进制, Little-Endian) ----
+  const msgBuf = new ByteBuf();
+  msgBuf.putUint32(nonce);
+  msgBuf.putUint32(now);       // issuedAt
+  msgBuf.putUint32(expireAt);
+  msgBuf.putString(roomId);
+  msgBuf.putString(userId);
+  msgBuf.putTreeMapUInt32(privileges);
+  const msgBytes = msgBuf.pack();
 
   // ---- 签名 ----
-  const sig = crypto.createHmac("sha256", appKey).update(content).digest();
+  const sigBytes = crypto.createHmac("sha256", appKey).update(msgBytes).digest();
 
-  // ---- 组装最终 token ----
-  const packBytes = (buf: Buffer): Buffer => {
-    const lenBuf = Buffer.alloc(2);
-    lenBuf.writeUInt16BE(buf.length);
-    return Buffer.concat([lenBuf, buf]);
-  };
+  // ---- 组装 content: putBytes(msg) + putBytes(sig) ----
+  const contentBuf = new ByteBuf();
+  contentBuf.putBytes(msgBytes);
+  contentBuf.putBytes(sigBytes);
+  const content = contentBuf.pack();
 
-  const output = Buffer.concat([
-    packBytes(Buffer.from("001", "utf8")),  // 版本 (uint16BE 长度前缀 + "001")
-    packBytes(content),                      // 带长度前缀的内容
-    packBytes(sig),                          // 带长度前缀的签名
-  ]);
-
-  return output.toString("base64");
+  // ---- 最终 token: "001" + appId + base64(content) ----
+  return VERSION + appId + content.toString("base64");
 }
 
 // ---------------------------------------------------------------------------
