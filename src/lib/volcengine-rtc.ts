@@ -87,9 +87,9 @@ export function generateRTCToken(
   };
 
   const output = Buffer.concat([
-    Buffer.from("001", "utf8"),  // 版本
-    packBytes(content),          // 带长度前缀的内容
-    packBytes(sig),              // 带长度前缀的签名
+    packBytes(Buffer.from("001", "utf8")),  // 版本 (uint16BE 长度前缀 + "001")
+    packBytes(content),                      // 带长度前缀的内容
+    packBytes(sig),                          // 带长度前缀的签名
   ]);
 
   return output.toString("base64");

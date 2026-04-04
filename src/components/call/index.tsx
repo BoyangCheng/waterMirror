@@ -303,19 +303,21 @@ function Call({ interview }: InterviewProps) {
       // -----------------------------------------------------------------------
       // Initialize ByteRTC engine
       // -----------------------------------------------------------------------
+      console.log("[RTC] createEngine with appId:", app_id);
       const engine = VERTC.createEngine(app_id);
       engineRef.current = engine;
 
       // Subscribe to audio streams from other participants (the AI agent)
       engine.on(VERTC.events.onUserPublishStream, async ({ userId, mediaType }) => {
+        console.log("[RTC] onUserPublishStream:", userId, mediaType);
         if (mediaType === MediaType.AUDIO) {
           await engine.subscribeStream(userId, MediaType.AUDIO);
-          // Agent is speaking when it publishes audio
           setActiveTurn("agent");
         }
       });
 
       engine.on(VERTC.events.onUserUnpublishStream, ({ userId }) => {
+        console.log("[RTC] onUserUnpublishStream:", userId);
         if (userId === agentUserIdRef.current) {
           setActiveTurn("user");
         }
@@ -342,25 +344,47 @@ function Call({ interview }: InterviewProps) {
       });
 
       engine.on(VERTC.events.onError, (error) => {
-        console.error("RTC error:", error);
+        console.error("[RTC] onError event:", JSON.stringify(error));
         handleEndCall();
       });
 
-      // Join room
-      await engine.joinRoom(
-        token,
+      // 详细诊断日志
+      console.log("[RTC] joinRoom params:", {
+        token: token.substring(0, 30) + "...",
+        tokenLength: token.length,
+        tokenPrefix: token.substring(0, 10),
         room_id,
-        { userId: user_id },
-        {
-          isAutoPublish: false,
-          isAutoSubscribeAudio: true,
-          roomProfileType: RoomProfileType.chat,
-        },
-      );
+        user_id,
+        app_id,
+      });
+
+      // Join room
+      try {
+        await engine.joinRoom(
+          token,
+          room_id,
+          { userId: user_id },
+          {
+            isAutoPublish: false,
+            isAutoSubscribeAudio: true,
+            roomProfileType: RoomProfileType.chat,
+          },
+        );
+        console.log("[RTC] joinRoom succeeded");
+      } catch (joinErr: any) {
+        console.error("[RTC] joinRoom FAILED:", joinErr);
+        console.error("[RTC] joinRoom error code:", joinErr?.code);
+        console.error("[RTC] joinRoom error message:", joinErr?.message);
+        console.error("[RTC] joinRoom error name:", joinErr?.name);
+        console.error("[RTC] joinRoom full error:", JSON.stringify(joinErr, Object.getOwnPropertyNames(joinErr)));
+        throw joinErr;
+      }
 
       // Start microphone and publish audio
+      console.log("[RTC] starting audio capture...");
       await engine.startAudioCapture();
       engine.publishStream(MediaType.AUDIO);
+      console.log("[RTC] audio published");
 
       startTimeRef.current = Date.now();
       setIsCalling(true);
