@@ -164,7 +164,7 @@ const createInterviewerCard = () => {
           <div className="flex flex-row justify-end mr-4">
             <Button
               disabled={!(name && image) || isClicked}
-              className="bg-indigo-600  hover:bg-indigo-800"
+              className="bg-indigo-600 hover:bg-indigo-800 font-bold"
               onClick={() => {
                 setIsClicked(true);
                 onSave();

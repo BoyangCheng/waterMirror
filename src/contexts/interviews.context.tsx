@@ -1,9 +1,10 @@
 "use client";
 
 import { useAuth, useOrg } from "@/contexts/auth.context";
-import { getAllInterviews, getInterviewById as getInterviewByIdService } from "@/services/interviews.service";
+import { useInterviewsQuery } from "@/hooks/useInterviewsQuery";
+import { getInterviewById as getInterviewByIdService } from "@/services/interviews.service";
 import type { Interview } from "@/types/interview";
-import React, { useState, useContext, type ReactNode, useEffect } from "react";
+import React, { useContext, type ReactNode } from "react";
 
 interface InterviewContextProps {
   interviews: Interview[];
@@ -23,54 +24,28 @@ export const InterviewContext = React.createContext<InterviewContextProps>({
   fetchInterviews: () => {},
 });
 
-interface InterviewProviderProps {
-  children: ReactNode;
-}
-
-export function InterviewProvider({ children }: InterviewProviderProps) {
-  const [interviews, setInterviews] = useState<Interview[]>([]);
+export function InterviewProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { organization } = useOrg();
-  const [interviewsLoading, setInterviewsLoading] = useState(false);
 
-  const fetchInterviews = async () => {
-    try {
-      setInterviewsLoading(true);
-      const response = await getAllInterviews(
-        user?.id as string,
-        organization?.id as string,
-      );
-      setInterviewsLoading(false);
-      setInterviews(response);
-    } catch (error) {
-      console.error(error);
-    }
-    setInterviewsLoading(false);
-  };
+  const {
+    data: interviews = [],
+    isLoading: interviewsLoading,
+    refetch,
+  } = useInterviewsQuery(user?.id, organization?.id);
 
-  const getInterviewById = async (interviewId: string) => {
-    const response = await getInterviewByIdService(interviewId);
-
-    return response;
-  };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    if (organization?.id || user?.id) {
-      fetchInterviews();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organization?.id, user?.id]);
+  const getInterviewById = (interviewId: string) =>
+    getInterviewByIdService(interviewId);
 
   return (
     <InterviewContext.Provider
       value={{
         interviews,
-        setInterviews,
+        setInterviews: () => {},
         getInterviewById,
         interviewsLoading,
-        setInterviewsLoading,
-        fetchInterviews,
+        setInterviewsLoading: () => {},
+        fetchInterviews: refetch,
       }}
     >
       {children}
@@ -78,8 +53,4 @@ export function InterviewProvider({ children }: InterviewProviderProps) {
   );
 }
 
-export const useInterviews = () => {
-  const value = useContext(InterviewContext);
-
-  return value;
-};
+export const useInterviews = () => useContext(InterviewContext);

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat '/c/Users/XX/Documents/projects/watermirror/src/app/\\(client\\)/dashboard/screening/[jobId]/page.tsx')"
+    ]
+  }
+}

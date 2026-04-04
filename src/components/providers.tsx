@@ -10,11 +10,24 @@ import compose from "@/lib/compose";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ThemeProviderProps } from "next-themes/dist/types";
-import React from "react";
-
-const queryClient = new QueryClient();
+import React, { useState } from "react";
 
 const providers = ({ children }: ThemeProviderProps) => {
+  // 用 useState 初始化，确保每个客户端会话独立的缓存实例
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000,        // 默认 1min 内不重新请求
+            gcTime: 5 * 60 * 1000,       // 5min 后清除未使用的缓存
+            retry: 1,                     // 失败只重试一次
+            refetchOnWindowFocus: false,  // 切换窗口不自动重新请求
+          },
+        },
+      }),
+  );
+
   const Provider = compose([
     InterviewProvider,
     InterviewerProvider,

@@ -2,8 +2,10 @@
 
 import { useAuth, useOrg } from "@/contexts/auth.context";
 import { getClientById, getOrganizationById } from "@/services/clients.service";
+import { queryKeys } from "@/lib/query-keys";
 import type { User } from "@/types/user";
-import React, { useState, useContext, type ReactNode, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import React, { useContext, type ReactNode } from "react";
 
 interface ClientContextProps {
   client?: User;
@@ -13,74 +15,38 @@ export const ClientContext = React.createContext<ClientContextProps>({
   client: undefined,
 });
 
-interface ClientProviderProps {
-  children: ReactNode;
-}
-
-export function ClientProvider({ children }: ClientProviderProps) {
-  const [client, setClient] = useState<User>();
+export function ClientProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { organization } = useOrg();
 
-  const [clientLoading, setClientLoading] = useState(true);
+  // Upsert 用户到数据库（每个会话仅执行一次，staleTime=Infinity 保证不重复请求）
+  const { data: client } = useQuery({
+    queryKey: queryKeys.organization.ensureClient(user?.id ?? ""),
+    queryFn: () =>
+      getClientById(
+        user!.id,
+        user!.emailAddresses[0]?.emailAddress,
+        organization?.id,
+      ),
+    enabled: !!user?.id,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
 
-  const fetchClient = async () => {
-    try {
-      setClientLoading(true);
-      const response = await getClientById(
-        user?.id as string,
-        user?.emailAddresses[0]?.emailAddress as string,
-        organization?.id as string,
-      );
-      setClient(response);
-    } catch (error) {
-      console.error(error);
-    }
-    setClientLoading(false);
-  };
-
-  const fetchOrganization = async () => {
-    try {
-      setClientLoading(true);
-      const response = await getOrganizationById(
-        organization?.id as string,
-        organization?.name as string,
-      );
-    } catch (error) {
-      console.error(error);
-    }
-    setClientLoading(false);
-  };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    if (user?.id) {
-      fetchClient();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    if (organization?.id) {
-      fetchOrganization();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organization?.id]);
+  // Upsert 组织到数据库（每个会话仅执行一次）
+  useQuery({
+    queryKey: queryKeys.organization.ensureOrg(organization?.id ?? ""),
+    queryFn: () => getOrganizationById(organization!.id, organization!.name),
+    enabled: !!organization?.id,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
 
   return (
-    <ClientContext.Provider
-      value={{
-        client,
-      }}
-    >
+    <ClientContext.Provider value={{ client }}>
       {children}
     </ClientContext.Provider>
   );
 }
 
-export const useClient = () => {
-  const value = useContext(ClientContext);
-
-  return value;
-};
+export const useClient = () => useContext(ClientContext);

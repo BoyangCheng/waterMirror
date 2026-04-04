@@ -120,7 +120,7 @@ export default function OrgManagementModal({ onClose }: Props) {
           <Button
             onClick={handleCreateOrg}
             disabled={creating || !newOrgName.trim()}
-            className="bg-indigo-600 hover:bg-indigo-700 text-sm w-full mt-1"
+            className="bg-indigo-600 hover:bg-indigo-700 text-sm w-full mt-1 font-bold"
           >
             {t("orgManagement.createOrg")}
           </Button>
@@ -190,7 +190,7 @@ export default function OrgManagementModal({ onClose }: Props) {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-700 text-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-sm font-bold"
             >
               {t("common.save")}
             </Button>

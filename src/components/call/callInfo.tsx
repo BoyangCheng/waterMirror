@@ -254,7 +254,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
                           <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
 
                           <AlertDialogAction
-                            className="bg-indigo-600 hover:bg-indigo-800"
+                            className="bg-indigo-600 hover:bg-indigo-800 font-bold"
                             onClick={async () => {
                               await onDeleteResponseClick();
                             }}

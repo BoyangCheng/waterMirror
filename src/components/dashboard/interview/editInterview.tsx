@@ -159,7 +159,7 @@ function EditInterview({ interview }: EditInterviewProps) {
           <div className="flex flex-row gap-3">
             <Button
               disabled={isClicked}
-              className="bg-indigo-600 hover:bg-indigo-800 mt-2"
+              className="bg-indigo-600 hover:bg-indigo-800 mt-2 font-bold"
               onClick={() => {
                 setIsClicked(true);
                 onSave();
@@ -183,7 +183,7 @@ function EditInterview({ interview }: EditInterviewProps) {
                 <AlertDialogFooter>
                   <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                   <AlertDialogAction
-                    className="bg-indigo-600 hover:bg-indigo-800"
+                    className="bg-indigo-600 hover:bg-indigo-800 font-bold"
                     onClick={async () => {
                       await onDeleteInterviewClick();
                     }}

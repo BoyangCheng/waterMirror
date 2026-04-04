@@ -465,7 +465,7 @@ function Call({ interview }: InterviewProps) {
                 </div>
                 <div className="w-[80%] flex flex-row mx-auto justify-center items-center align-middle">
                   <Button
-                    className="min-w-20 h-10 rounded-lg flex flex-row justify-center mb-8"
+                    className="min-w-20 h-10 rounded-lg flex flex-row justify-center mb-8 font-bold"
                     style={{
                       backgroundColor: interview.theme_color ?? "#4F46E5",
                       color: isLightColor(interview.theme_color ?? "#4F46E5") ? "black" : "white",
@@ -492,7 +492,7 @@ function Call({ interview }: InterviewProps) {
                       <AlertDialogFooter>
                         <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
-                          className="bg-indigo-600 hover:bg-indigo-800"
+                          className="bg-indigo-600 hover:bg-indigo-800 font-bold"
                           onClick={onEndCallClick}
                         >
                           {t("common.continue")}
@@ -604,7 +604,7 @@ function Call({ interview }: InterviewProps) {
                     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                       <AlertDialogTrigger className="w-full flex justify-center">
                         <Button
-                          className="bg-indigo-600 text-white h-10 mt-4 mb-4"
+                          className="bg-indigo-600 text-white h-10 mt-4 mb-4 font-bold"
                           onClick={() => setIsDialogOpen(true)}
                         >
                           {t("interview.provideFeedback")}

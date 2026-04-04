@@ -53,7 +53,7 @@ export function FeedbackForm({ onSubmit, email }: FeedbackFormProps) {
       />
       <Button
         disabled={satisfaction === null && feedback.trim() === ""}
-        className="w-full bg-indigo-600 text-white"
+        className="w-full bg-indigo-600 text-white font-bold"
         onClick={handleSubmit}
       >
         {t("feedback.submit")}

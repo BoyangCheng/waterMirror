@@ -4,30 +4,12 @@ import CreateJobCard from "@/components/dashboard/screening/createJobCard";
 import JobCard from "@/components/dashboard/screening/jobCard";
 import { useJobs } from "@/contexts/jobs.context";
 import { useI18n } from "@/i18n";
-import React, { useEffect, useRef } from "react";
+import React from "react";
 
 function Screening() {
-  const { jobs, jobsLoading, fetchJobs } = useJobs();
+  const { jobs, jobsLoading } = useJobs();
   const { t } = useI18n();
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Poll for status updates when any job is processing
-  useEffect(() => {
-    const hasProcessing = jobs.some((job) => job.status === "processing");
-
-    if (hasProcessing) {
-      pollingRef.current = setInterval(() => {
-        fetchJobs();
-      }, 5000);
-    }
-
-    return () => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
-      }
-    };
-  }, [jobs, fetchJobs]);
+  // 轮询逻辑已迁移至 useJobsQuery 的 refetchInterval，此处无需手动管理
 
   function JobsLoader() {
     return (

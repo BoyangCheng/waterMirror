@@ -94,7 +94,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
                     readOnly
                   />
                 </div>
-                <Button className="flex items-center bg-indigo-600" onClick={copyLinkToClipboard}>
+                <Button className="flex items-center bg-indigo-600 font-bold" onClick={copyLinkToClipboard}>
                   <Copy size={16} className="mr-2" />
                   {copiedLink ? t("sharePopup.copied") : t("sharePopup.copyUrl")}
                 </Button>
@@ -146,7 +146,7 @@ function SharePopup({ open, onClose, shareContent }: SharePopupProps) {
                     />
                   </div>
                 </div>
-                <Button className="flex items-center bg-indigo-600" onClick={copyEmbedToClipboard}>
+                <Button className="flex items-center bg-indigo-600 font-bold" onClick={copyEmbedToClipboard}>
                   <Copy size={16} className="mr-2" />
                   {copiedEmbed ? t("sharePopup.copied") : t("sharePopup.copyEmbedCode")}
                 </Button>

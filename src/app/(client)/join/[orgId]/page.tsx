@@ -50,7 +50,7 @@ export default function JoinOrgPage() {
             <button
               type="button"
               onClick={() => router.replace("/dashboard")}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm"
+              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold"
             >
               返回主页
             </button>

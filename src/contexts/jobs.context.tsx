@@ -1,7 +1,9 @@
+"use client";
+
 import { useAuth, useOrg } from "@/contexts/auth.context";
-import { getAllJobs, deleteJob as deleteJobService } from "@/services/jobs.service";
+import { useJobsQuery, useDeleteJobMutation } from "@/hooks/useJobsQuery";
 import type { Job } from "@/types/job";
-import React, { useState, useContext, type ReactNode, useEffect, useCallback } from "react";
+import React, { useContext, type ReactNode } from "react";
 
 interface JobsContextProps {
   jobs: Job[];
@@ -19,49 +21,29 @@ export const JobsContext = React.createContext<JobsContextProps>({
   deleteJob: async () => {},
 });
 
-interface JobsProviderProps {
-  children: ReactNode;
-}
-
-export function JobsProvider({ children }: JobsProviderProps) {
-  const [jobs, setJobs] = useState<Job[]>([]);
+export function JobsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { organization } = useOrg();
-  const [jobsLoading, setJobsLoading] = useState(false);
 
-  const fetchJobs = useCallback(async () => {
-    try {
-      setJobsLoading(true);
-      const response = await getAllJobs(
-        user?.id as string,
-        organization?.id as string,
-      );
-      setJobs(response as Job[]);
-    } catch (error) {
-      console.error(error);
-    }
-    setJobsLoading(false);
-  }, [user?.id, organization?.id]);
+  const {
+    data: jobs = [],
+    isLoading: jobsLoading,
+    refetch,
+  } = useJobsQuery(user?.id, organization?.id);
+
+  const deleteMutation = useDeleteJobMutation(user?.id, organization?.id);
 
   const deleteJob = async (id: string) => {
-    await deleteJobService(id);
-    setJobs((prev) => prev.filter((j) => j.id !== id));
+    await deleteMutation.mutateAsync(id);
   };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    if (organization?.id || user?.id) {
-      fetchJobs();
-    }
-  }, [organization?.id, user?.id]);
 
   return (
     <JobsContext.Provider
       value={{
         jobs,
-        setJobs,
+        setJobs: () => {},
         jobsLoading,
-        fetchJobs,
+        fetchJobs: refetch,
         deleteJob,
       }}
     >
@@ -70,7 +52,4 @@ export function JobsProvider({ children }: JobsProviderProps) {
   );
 }
 
-export const useJobs = () => {
-  const value = useContext(JobsContext);
-  return value;
-};
+export const useJobs = () => useContext(JobsContext);

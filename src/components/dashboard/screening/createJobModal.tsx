@@ -116,7 +116,7 @@ function CreateJobModal({ open, setOpen }: Props) {
               !(name.trim() && description.trim() && files.length > 0) ||
               isSubmitting
             }
-            className="bg-indigo-600 hover:bg-indigo-800 w-48 text-lg"
+            className="bg-indigo-600 hover:bg-indigo-800 w-48 text-lg font-bold"
             onClick={onSubmit}
           >
             {isSubmitting ? t("common.loading") : t("screening.goWork")}

@@ -333,7 +333,7 @@ function DetailsPopup({
                   selectedInterviewer !== BigInt(0)
                 ) || isClicked
               }
-              className="bg-indigo-600 hover:bg-indigo-800  w-40"
+              className="bg-indigo-600 hover:bg-indigo-800 w-40 font-bold"
               onClick={() => {
                 setIsClicked(true);
                 onGenrateQuestions();
@@ -351,7 +351,7 @@ function DetailsPopup({
                   selectedInterviewer !== BigInt(0)
                 ) || isClicked
               }
-              className="bg-indigo-600 w-40 hover:bg-indigo-800"
+              className="bg-indigo-600 w-40 hover:bg-indigo-800 font-bold"
               onClick={() => {
                 setIsClicked(true);
                 onManual();

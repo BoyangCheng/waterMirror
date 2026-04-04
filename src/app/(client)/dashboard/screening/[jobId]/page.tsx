@@ -165,7 +165,7 @@ function JobDetailPage() {
       {/* Add More Resumes Button */}
       <div className="mt-4">
         <Button
-          className="bg-indigo-600 hover:bg-indigo-800"
+          className="bg-indigo-600 hover:bg-indigo-800 font-bold"
           onClick={() => {
             setFiles([]);
             setAddModalOpen(true);
@@ -304,7 +304,7 @@ function JobDetailPage() {
             <div className="mt-6 mb-2">
               <Button
                 disabled={files.length === 0 || isSubmitting}
-                className="bg-indigo-600 hover:bg-indigo-800 w-48 text-lg"
+                className="bg-indigo-600 hover:bg-indigo-800 w-48 text-lg font-bold"
                 onClick={onAddResumes}
               >
                 {isSubmitting ? t("common.loading") : t("screening.goWork")}
