@@ -219,9 +219,15 @@ function Call({ interview }: InterviewProps) {
     try {
       const engine = engineRef.current;
       if (engine) {
-        await engine.stopAudioCapture();
-        engine.unpublishStream(MediaType.AUDIO);
-        await engine.leaveRoom();
+        try {
+          await engine.stopAudioCapture();
+        } catch { /* ignore if already stopped */ }
+        try {
+          engine.unpublishStream(MediaType.AUDIO);
+        } catch { /* ignore "not connected" */ }
+        try {
+          await engine.leaveRoom();
+        } catch { /* ignore if already left */ }
         engine.removeAllListeners();
         engineRef.current = null;
       }

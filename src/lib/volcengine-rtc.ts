@@ -183,11 +183,22 @@ async function callRTCAPI(action: string, version: string, body: Record<string, 
     body: bodyStr,
   });
 
+  const text = await res.text();
+  console.log(`[RTC] callRTCAPI ${action} status=${res.status} body=${text.substring(0, 500)}`);
+
   if (!res.ok) {
-    const text = await res.text();
     throw new Error(`Volcengine RTC API error [${action}]: ${res.status} ${text}`);
   }
-  return res.json();
+
+  const json = JSON.parse(text);
+
+  // Volcengine may return 200 with an error in ResponseMetadata
+  if (json?.ResponseMetadata?.Error?.Code) {
+    const err = json.ResponseMetadata.Error;
+    throw new Error(`Volcengine RTC API error [${action}]: ${err.Code} - ${err.Message}`);
+  }
+
+  return json;
 }
 
 // ---------------------------------------------------------------------------
