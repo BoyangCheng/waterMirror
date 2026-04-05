@@ -11,7 +11,7 @@ import { NextResponse } from "next/server";
 // Volcengine TTS voice types per interviewer
 // agent_id field is repurposed to store the voice type string
 const DEFAULT_VOICE_FEMALE = "zh_female_xiaohe_uranus_bigtts"; // 小何
-const DEFAULT_VOICE_MALE = "zh_male_m191_uranus_bigtts";       // 云舟
+const DEFAULT_VOICE_MALE = "zh_female_xiaohe_uranus_bigtts";   // 暂用同一音色, 按需替换
 
 export async function POST(req: Request) {
   logger.info("register-call request received");

@@ -223,7 +223,7 @@ function Call({ interview }: InterviewProps) {
           await engine.stopAudioCapture();
         } catch { /* ignore if already stopped */ }
         try {
-          engine.unpublishStream(MediaType.AUDIO);
+          await engine.unpublishStream(MediaType.AUDIO);
         } catch { /* ignore "not connected" */ }
         try {
           await engine.leaveRoom();
@@ -353,12 +353,43 @@ function Call({ interview }: InterviewProps) {
         }
       });
 
-      // Debug: monitor remote audio activity
+      // Debug: monitor local mic volume (to verify user audio is captured)
+      let localVolLogCount = 0;
+      engine.on(VERTC.events.onLocalAudioPropertiesReport as any, (event: any) => {
+        // Throttle: print every ~20th (assume 2Hz reports => ~10s interval)
+        if (localVolLogCount++ % 20 === 0) {
+          const data = Array.isArray(event) ? event[0] : event;
+          const level = data?.audioPropertiesInfo?.linearVolume
+            ?? data?.audioPropertiesInfo?.nonlinearVolume
+            ?? data?.linearVolume;
+          console.log("[RTC][MIC] local volume:", level, "raw:", JSON.stringify(event).substring(0, 200));
+        }
+      });
+
+      // Debug: monitor remote audio activity (to confirm agent audio arriving)
+      let remoteVolLogCount = 0;
       engine.on(VERTC.events.onRemoteAudioPropertiesReport, (event: any) => {
-        // Log once to confirm we receive remote audio data
-        console.log("[RTC] onRemoteAudioPropertiesReport:", JSON.stringify(event).substring(0, 200));
-        // Remove this listener after first fire to avoid spam
-        engine.off(VERTC.events.onRemoteAudioPropertiesReport);
+        if (remoteVolLogCount++ % 20 === 0) {
+          console.log("[RTC][SPK] remote volume report:", JSON.stringify(event).substring(0, 200));
+        }
+      });
+
+      // Local audio state (capture / device change)
+      engine.on(VERTC.events.onLocalAudioStateChanged as any, (event: any) => {
+        console.log("[RTC][MIC] onLocalAudioStateChanged:", JSON.stringify(event));
+      });
+
+      // User start/stop audio capture
+      engine.on(VERTC.events.onUserStartAudioCapture as any, (event: any) => {
+        console.log("[RTC][MIC] onUserStartAudioCapture:", JSON.stringify(event));
+      });
+      engine.on(VERTC.events.onUserStopAudioCapture as any, (event: any) => {
+        console.log("[RTC][MIC] onUserStopAudioCapture:", JSON.stringify(event));
+      });
+
+      // Audio device warning (mic blocked, no permission, etc.)
+      engine.on(VERTC.events.onAudioDeviceStateChanged as any, (event: any) => {
+        console.log("[RTC][DEV] onAudioDeviceStateChanged:", JSON.stringify(event));
       });
 
       // Debug: user message (non-binary)
@@ -408,9 +439,32 @@ function Call({ interview }: InterviewProps) {
         throw joinErr;
       }
 
+      // Enable audio properties report (fires onLocal/RemoteAudioPropertiesReport periodically)
+      try {
+        (engine as any).enableAudioPropertiesReport?.({ interval: 500 });
+        console.log("[RTC] audio properties report enabled (500ms)");
+      } catch (e) {
+        console.warn("[RTC] enableAudioPropertiesReport failed:", e);
+      }
+
+      // List audio input devices (mic)
+      try {
+        const devices = await (VERTC as any).enumerateAudioCaptureDevices?.();
+        console.log("[RTC][DEV] mic devices:", devices?.length ?? "N/A",
+          (devices ?? []).map((d: any) => ({ label: d.label, deviceId: d.deviceId?.slice(0, 8) })));
+      } catch (e) {
+        console.warn("[RTC][DEV] enumerateAudioCaptureDevices failed:", e);
+      }
+
       // Start microphone and publish audio
       console.log("[RTC] starting audio capture...");
-      await engine.startAudioCapture();
+      try {
+        await engine.startAudioCapture();
+        console.log("[RTC][MIC] startAudioCapture OK");
+      } catch (e) {
+        console.error("[RTC][MIC] startAudioCapture FAILED:", e);
+        throw e;
+      }
       engine.publishStream(MediaType.AUDIO);
       console.log("[RTC] audio published");
 

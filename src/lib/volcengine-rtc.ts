@@ -280,21 +280,22 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
           Credential: {
             AppId: ttsAppId,
             Token: ttsToken,
-            ResourceId: "volc.service_type.10029",
+            ResourceId: "seed-tts-2.0",
           },
           VolcanoTTSParameters: JSON.stringify({
             req_params: {
               speaker: params.voiceType ?? "zh_female_xiaohe_uranus_bigtts",
-              audio_params: {
-                speech_rate: 0,
-                pitch_rate: 0,
-                loudness_rate: 0,
-              },
             },
           }),
         },
       },
       InterruptMode: 0,
+      SubtitleConfig: {
+        // 0 = 关闭, 1 = 开启
+        SubtitleMode: 1,
+        // 开启智能断句（根据标点/停顿切句，字幕更自然）
+        EnableSubtitleSplit: true,
+      },
     },
     AgentConfig: {
       UserId: params.agentUserId,
@@ -402,7 +403,7 @@ export function parseSubtitleMessage(
 
     // Only handle subtitle messages ("subv")
     if (type !== "subv") {
-      console.log("[RTC] non-subtitle message type:", type, "value:", value.substring(0, 100));
+      console.log("[RTC] non-subtitle message type:", type, "value:", value);
       return null;
     }
 
