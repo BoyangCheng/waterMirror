@@ -219,6 +219,7 @@ export interface StartVoiceChatParams {
 export async function startVoiceChat(params: StartVoiceChatParams) {
   const appId = process.env.VOLCENGINE_RTC_APP_ID ?? "";
   const asrAppId = process.env.VOLCENGINE_ASR_APP_ID ?? "";
+  const asrToken = process.env.VOLCENGINE_ASR_ACCESS_TOKEN ?? "";
   const ttsAppId = process.env.VOLCENGINE_TTS_APP_ID ?? "";
   const ttsToken = process.env.VOLCENGINE_TTS_ACCESS_TOKEN ?? "";
   const dashscopeKey = process.env.DASHSCOPE_API_KEY ?? "";
@@ -229,7 +230,9 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
     !process.env.VOLCENGINE_ACCESS_KEY_ID && "VOLCENGINE_ACCESS_KEY_ID",
     !process.env.VOLCENGINE_SECRET_KEY && "VOLCENGINE_SECRET_KEY",
     !asrAppId && "VOLCENGINE_ASR_APP_ID",
+    !asrToken && "VOLCENGINE_ASR_ACCESS_TOKEN",
     !ttsAppId && "VOLCENGINE_TTS_APP_ID",
+    !ttsToken && "VOLCENGINE_TTS_ACCESS_TOKEN",
     !dashscopeKey && "DASHSCOPE_API_KEY",
   ].filter(Boolean);
   if (missing.length) {
@@ -244,11 +247,17 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
     TaskId: params.taskId,
     Config: {
       ASRConfig: {
+        // 豆包流式语音识别 2.0 (seedasr) - 参数透传 with Credential
         Provider: "volcano",
         ProviderParams: {
-          Mode: "smallmodel",
-          AppId: asrAppId,
-          Cluster: "volcengine_streaming_common",
+          Mode: "bigmodel",
+          Credential: {
+            AppId: asrAppId,
+            AccessToken: asrToken,
+            ApiResourceId: "volc.bigasr.sauc.duration",
+          },
+          VolcanoASRParameters: "{}",
+          StreamMode: 2,
         },
         VADConfig: {
           SilenceTime: 600,
@@ -265,19 +274,24 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
         SystemMessages: [params.systemPrompt],
       },
       TTSConfig: {
-        Provider: "volcano",
+        // 豆包语音合成大模型 (uranus_bigtts) - 流式输入流式输出, 参数透传 with Credential
+        Provider: "volcano_bidirection",
         ProviderParams: {
-          app: {
-            appid: ttsAppId,
-            token: ttsToken || undefined,
-            cluster: "volcano_tts",
+          Credential: {
+            AppId: ttsAppId,
+            Token: ttsToken,
+            ResourceId: "volc.service_type.10029",
           },
-          audio: {
-            voice_type: params.voiceType ?? "BV701_streaming",
-            speed_ratio: 1,
-            pitch_ratio: 1,
-            volume_ratio: 1,
-          },
+          VolcanoTTSParameters: JSON.stringify({
+            req_params: {
+              speaker: params.voiceType ?? "zh_female_xiaohe_uranus_bigtts",
+              audio_params: {
+                speech_rate: 0,
+                pitch_rate: 0,
+                loudness_rate: 0,
+              },
+            },
+          }),
         },
       },
       InterruptMode: 0,
