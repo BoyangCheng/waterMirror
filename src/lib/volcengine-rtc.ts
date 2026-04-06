@@ -352,6 +352,7 @@ export function buildInterviewerPrompt(data: {
    - 被面试者的回答已具体、有例子、足以判断能力；
    - 已连续追问 2 次；
    - 被面试者重复、含糊或明确表示"没有更多"。
+   **例外：开场介绍 / 过往经历阶段，最多追问 3~4 次**，深入挖掘具体项目、成果、职责和成长经历，之后再切入正式主问题。
 4. 切换到下一个主问题时，用简短自然过渡（如"好的，我们看下一个问题"），然后**只**问下一个主问题。
 5. 所有主问题问完后，简短致谢并结束面试。
 
@@ -380,6 +381,7 @@ Reference questions (ask these in order as "main questions"): ${data.questions}.
    - the answer is concrete, contains an example, and is enough to judge the skill;
    - you have already asked 2 follow-ups;
    - the candidate repeats, stalls, or says they have nothing more to add.
+   **Exception: for the opening background / past experience section, ask up to 3–4 follow-ups** to deeply explore specific projects, outcomes, responsibilities, and growth before moving to the main questions.
 4. When switching to the next main question, use a short transition (e.g. "Okay, let's move on to the next question."), then ask ONLY that next main question.
 5. Once all main questions are covered, briefly thank the candidate and end the interview.
 

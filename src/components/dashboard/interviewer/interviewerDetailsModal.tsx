@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n";
 import type { Interviewer } from "@/types/interviewer";
 import Image from "next/image";
 import ReactAudioPlayer from "react-audio-player";
+import { useState } from "react";
 
 interface Props {
   interviewer: Interviewer | undefined;
@@ -13,6 +14,28 @@ interface Props {
 
 function InterviewerDetailsModal({ interviewer }: Props) {
   const { t } = useI18n();
+  const [previewing, setPreviewing] = useState(false);
+
+  const handlePreview = async () => {
+    if (previewing || !interviewer?.agent_id) return;
+    setPreviewing(true);
+    try {
+      const res = await fetch("/api/voice-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voice_type: interviewer.agent_id }),
+      });
+      if (!res.ok) throw new Error("preview failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => { URL.revokeObjectURL(url); setPreviewing(false); };
+      audio.onerror = () => setPreviewing(false);
+      audio.play();
+    } catch {
+      setPreviewing(false);
+    }
+  };
 
   return (
     <div className="text-center w-[40rem]">
@@ -38,6 +61,17 @@ function InterviewerDetailsModal({ interviewer }: Props) {
             </p>
             {interviewer?.audio && (
               <ReactAudioPlayer src={`/audio/${interviewer.audio}`} controls />
+            )}
+            {!interviewer?.audio && interviewer?.agent_id && (
+              <button
+                type="button"
+                onClick={handlePreview}
+                disabled={previewing}
+                className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg border border-indigo-400 text-indigo-600 text-sm hover:bg-indigo-50 disabled:opacity-50 transition-colors"
+              >
+                <span>{previewing ? "⏳" : "▶"}</span>
+                <span>{previewing ? "试听中..." : "试听音色"}</span>
+              </button>
             )}
           </div>
         </div>

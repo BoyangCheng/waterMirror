@@ -116,6 +116,9 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
         <div className="my-3 text-left w-[96%] text-sm">
           {t("create.questionsReview")}
         </div>
+        <div className="w-[96%] text-left text-xs text-indigo-500 italic mb-2 px-1">
+          {t("openingHint")}
+        </div>
         <ScrollArea className="flex flex-col justify-center items-center w-full mt-3">
           {questions.map((question, index) => (
             <QuestionCard

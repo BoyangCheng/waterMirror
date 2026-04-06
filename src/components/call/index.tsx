@@ -104,6 +104,8 @@ function Call({ interview }: InterviewProps) {
   // RTC engine ref (created once per mount)
   const engineRef = useRef<ReturnType<typeof VERTC.createEngine> | null>(null);
   const agentUserIdRef = useRef<string>("");
+  const localUserIdRef = useRef<string>("");
+  const localVideoRef = useRef<HTMLDivElement | null>(null);
 
   // -------------------------------------------------------------------------
   // Scroll latest user response into view
@@ -161,32 +163,43 @@ function Call({ interview }: InterviewProps) {
   // -------------------------------------------------------------------------
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   useEffect(() => {
+    console.log("[REPORT] isEnded changed:", isEnded, "callId:", callId || "(empty)");
     if (isEnded && callId) {
       const persist = async () => {
         const endTs = Date.now();
-        // Build plain-text transcript string for analytics
-        const transcriptText = transcriptRef.current
+        const entries = transcriptRef.current;
+        console.log("[REPORT] persisting response, transcript entries:", entries.length);
+        console.log("[REPORT] transcript preview:", JSON.stringify(entries.slice(0, 3)));
+
+        const transcriptText = entries
           .map((e) => `${e.role === "agent" ? "Agent" : "User"}: ${e.content}`)
           .join("\n");
 
-        await saveResponse(
-          {
-            is_ended: true,
-            tab_switch_count: tabSwitchCount,
-            details: {
-              transcript: transcriptText,
-              transcript_object: transcriptRef.current.map((e) => ({
-                role: e.role,
-                content: e.content,
-              })),
-              start_timestamp: startTimeRef.current,
-              end_timestamp: endTs,
+        try {
+          await saveResponse(
+            {
+              is_ended: true,
+              tab_switch_count: tabSwitchCount,
+              details: {
+                transcript: transcriptText,
+                transcript_object: entries.map((e) => ({
+                  role: e.role,
+                  content: e.content,
+                })),
+                start_timestamp: startTimeRef.current,
+                end_timestamp: endTs,
+              },
             },
-          },
-          callId,
-        );
+            callId,
+          );
+          console.log("[REPORT] saveResponse succeeded for callId:", callId);
+        } catch (err) {
+          console.error("[REPORT] saveResponse FAILED:", err);
+        }
       };
       persist();
+    } else if (isEnded && !callId) {
+      console.warn("[REPORT] isEnded=true but callId is empty — saveResponse skipped!");
     }
   }, [isEnded]);
 
@@ -219,6 +232,9 @@ function Call({ interview }: InterviewProps) {
     try {
       const engine = engineRef.current;
       if (engine) {
+        try {
+          await engine.stopVideoCapture();
+        } catch { /* ignore */ }
         try {
           await engine.stopAudioCapture();
         } catch { /* ignore if already stopped */ }
@@ -297,6 +313,7 @@ function Call({ interview }: InterviewProps) {
       setTaskId(task_id);
       setAgentUserId(agent_user_id);
       agentUserIdRef.current = agent_user_id;
+      localUserIdRef.current = user_id;
 
       // Create response record in DB
       await createResponse({
@@ -468,6 +485,22 @@ function Call({ interview }: InterviewProps) {
       engine.publishStream(MediaType.AUDIO);
       console.log("[RTC] audio published");
 
+      // Start local camera preview (local only, not transmitted to AI agent)
+      try {
+        await engine.startVideoCapture();
+        if (localVideoRef.current) {
+          (engine as any).setLocalVideoPlayer(user_id, {
+            renderDom: localVideoRef.current,
+            renderMode: 1, // 1 = fit
+            mirrorType: 2, // 2 = mirror (selfie mode)
+          });
+        }
+        engine.publishStream(MediaType.VIDEO);
+        console.log("[RTC] video capture started");
+      } catch (e) {
+        console.warn("[RTC] video capture failed (may not be available):", e);
+      }
+
       startTimeRef.current = Date.now();
       setIsCalling(true);
       setIsStarted(true);
@@ -531,7 +564,7 @@ function Call({ interview }: InterviewProps) {
 
             {/* Pre-call form */}
             {!isStarted && !isEnded && !isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
+              <div className="w-fit min-w-[400px] max-w-[600px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
                   <div className="flex justify-end p-1">
                     <LanguageSwitcher />
@@ -541,9 +574,9 @@ function Call({ interview }: InterviewProps) {
                       <Image
                         src={interview?.logo_url}
                         alt="Logo"
-                        className="h-10 w-auto"
-                        width={100}
-                        height={100}
+                        className="h-40 w-auto max-w-full object-contain"
+                        width={560}
+                        height={400}
                       />
                     </div>
                   )}
@@ -653,14 +686,11 @@ function Call({ interview }: InterviewProps) {
                     {lastUserResponse}
                   </div>
                   <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                    <Image
-                      src="/user-icon.png"
-                      alt="Picture of the user"
-                      width={120}
-                      height={120}
-                      className={`object-cover object-center mx-auto my-auto ${
+                    <div
+                      ref={localVideoRef}
+                      className={`w-[120px] h-[120px] rounded-full overflow-hidden bg-gray-200 mx-auto my-auto ${
                         activeTurn === "user"
-                          ? `border-4 border-[${interview.theme_color}] rounded-full`
+                          ? `border-4 border-[${interview.theme_color}]`
                           : ""
                       }`}
                     />

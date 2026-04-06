@@ -248,6 +248,12 @@
     "addResumeFailed": "Failed to add resumes",
     "deleteConfirm": "This action cannot be undone. This will permanently delete this position and all candidate data."
   },
+  "tabSwitch": {
+    "title": "Warning: Tab Switching",
+    "description": "Switching tabs may degrade your interview performance. Tab switching is tracked.",
+    "understand": "I understand"
+  },
+  "openingHint": "AI opening: Hello, I'm your interviewer today. Please start by introducing your background and past experience.",
   "interviewerSettingsLabel": "Interviewer Settings",
   "statusUpdateFailed": "Failed to update the interview status.",
   "userMenu": {

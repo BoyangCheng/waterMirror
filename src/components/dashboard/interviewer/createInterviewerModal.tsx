@@ -28,6 +28,28 @@ export default function CreateInterviewerModal({ onClose }: Props) {
   const [exploration, setExploration] = useState(7);
   const [speed, setSpeed] = useState(5);
   const [loading, setLoading] = useState(false);
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
+
+  const handlePreview = async (voiceId: string) => {
+    if (previewingId) return;
+    setPreviewingId(voiceId);
+    try {
+      const res = await fetch("/api/voice-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voice_type: voiceId }),
+      });
+      if (!res.ok) throw new Error("preview failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => { URL.revokeObjectURL(url); setPreviewingId(null); };
+      audio.onerror = () => { setPreviewingId(null); };
+      audio.play();
+    } catch {
+      setPreviewingId(null);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!name.trim()) return;
@@ -103,18 +125,28 @@ export default function CreateInterviewerModal({ onClose }: Props) {
         <Label>{t("interviewerSettings.voiceType")}</Label>
         <div className="flex gap-3">
           {VOLCENGINE_VOICES.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => setAgentId(v.id)}
-              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-                agentId === v.id
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"
-                  : "border-gray-200 hover:border-gray-400"
-              }`}
-            >
-              {t(`interviewerSettings.${v.label}` as any)}
-            </button>
+            <div key={v.id} className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setAgentId(v.id)}
+                className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                  agentId === v.id
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"
+                    : "border-gray-200 hover:border-gray-400"
+                }`}
+              >
+                {t(`interviewerSettings.${v.label}` as any)}
+              </button>
+              <button
+                type="button"
+                title="试听"
+                disabled={previewingId !== null}
+                onClick={() => handlePreview(v.id)}
+                className="text-indigo-500 hover:text-indigo-700 disabled:opacity-40 text-lg leading-none"
+              >
+                {previewingId === v.id ? "⏳" : "▶"}
+              </button>
+            </div>
           ))}
         </div>
       </div>

@@ -248,6 +248,12 @@
     "addResumeFailed": "简历追加失败",
     "deleteConfirm": "此操作不可撤销，将永久删除此职位及所有候选人数据。"
   },
+  "tabSwitch": {
+    "title": "警告：切换标签页",
+    "description": "切换标签页可能影响您的面试表现，切换行为将被记录。",
+    "understand": "我知道了"
+  },
+  "openingHint": "AI 开场白：你好，我是你今天的面试官，请先介绍一下你的过往经历？",
   "interviewerSettingsLabel": "面试官设置",
   "statusUpdateFailed": "更新面试状态失败。",
   "userMenu": {

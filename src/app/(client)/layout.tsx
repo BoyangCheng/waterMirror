@@ -53,7 +53,7 @@ export default function RootLayout({
                 <Navbar />
                 <div className="flex flex-row h-screen">
                   <SideMenu />
-                  <div className="ml-[200px] pt-[64px] h-full overflow-y-auto flex-grow">
+                  <div className="ml-[200px] pt-[80px] h-full overflow-y-auto flex-grow">
                     {children}
                   </div>
                 </div>

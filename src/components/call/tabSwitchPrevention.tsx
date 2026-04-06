@@ -7,6 +7,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useI18n } from "@/i18n";
 import React, { useEffect, useState } from "react";
 
 const useTabSwitchPrevention = () => {
@@ -37,14 +38,15 @@ const useTabSwitchPrevention = () => {
 
 function TabSwitchWarning() {
   const { isDialogOpen, handleUnderstand } = useTabSwitchPrevention();
+  const { t } = useI18n();
 
   return (
     <AlertDialog open={isDialogOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Warning: Tab Switching</AlertDialogTitle>
+          <AlertDialogTitle>{t("tabSwitch.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Switching tabs may degrade your interview performance. Tab switching is tracked.
+            {t("tabSwitch.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -52,7 +54,7 @@ function TabSwitchWarning() {
             className="bg-indigo-400 hover:bg-indigo-600 text-white"
             onClick={handleUnderstand}
           >
-            I understand
+            {t("tabSwitch.understand")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
