@@ -3,20 +3,45 @@
 import { CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { useI18n } from "@/i18n";
+import { INTERVIEWERS, PRESET_INTERVIEWER_MAP } from "@/lib/constants";
 import type { Interviewer } from "@/types/interviewer";
 import Image from "next/image";
-import ReactAudioPlayer from "react-audio-player";
+import { useState } from "react";
 
 interface Props {
   interviewer: Interviewer | undefined;
 }
 
 function InterviewerDetailsModal({ interviewer }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+
+  // Local state so sliders are draggable
+  const [empathy, setEmpathy] = useState((interviewer?.empathy || 10) / 10);
+  const [rapport, setRapport] = useState((interviewer?.rapport || 10) / 10);
+  const [exploration, setExploration] = useState((interviewer?.exploration || 10) / 10);
+  const [speed, setSpeed] = useState((interviewer?.speed || 10) / 10);
+
+  // Check if this is a preset interviewer and get locale-aware text/audio
+  const presetKey = interviewer?.image ? PRESET_INTERVIEWER_MAP[interviewer.image] : undefined;
+  const preset = presetKey ? INTERVIEWERS[presetKey] : undefined;
+
+  const displayName = preset
+    ? t(`interviewers.${preset.i18nKey}.name` as any)
+    : interviewer?.name;
+
+  const displayDescription = preset
+    ? t(`interviewers.${preset.i18nKey}.description` as any)
+    : interviewer?.description;
+
+  const audioSrc = preset
+    ? `/audio/${preset.audio[locale]}`
+    : interviewer?.audio
+      ? `/audio/${interviewer.audio}`
+      : undefined;
 
   return (
     <div className="text-center w-[40rem]">
-      <CardTitle className="text-3xl text mt-0 p-0 font-semibold ">{interviewer?.name}</CardTitle>
+      <CardTitle className="text-3xl text mt-0 p-0 font-semibold ">{displayName}</CardTitle>
       <div className="mt-1 p-2 flex flex-col justify-center items-center">
         <div className="flex flex-row justify-center space-x-10 items-center">
           <div className=" flex items-center justify-center border-4 overflow-hidden border-gray-500 rounded-xl h-48 w-44">
@@ -34,10 +59,10 @@ function InterviewerDetailsModal({ interviewer }: Props) {
           </div>
           <div className="flex flex-col gap-2">
             <p className="text-sm leading-relaxed  mt-0 whitespace-normal w-[25rem] text-justify">
-              {interviewer?.description}
+              {displayDescription}
             </p>
-            {interviewer?.audio && (
-              <ReactAudioPlayer src={`/audio/${interviewer.audio}`} controls />
+            {audioSrc && (
+              <audio controls src={audioSrc} preload="metadata" />
             )}
           </div>
         </div>
@@ -47,15 +72,15 @@ function InterviewerDetailsModal({ interviewer }: Props) {
             <div className="flex flex-row justify-between items-center mb-2">
               <h4 className="w-20 text-left">{t("interviewerSettings.empathy")}</h4>
               <div className="w-40 space-x-3 ml-3 flex justify-between items-center">
-                <Slider value={[(interviewer?.empathy || 10) / 10]} max={1} step={0.1} />
-                <span className="w-8 text-left">{(interviewer?.empathy || 10) / 10}</span>
+                <Slider value={[empathy]} max={1} step={0.1} onValueChange={([v]) => setEmpathy(v)} />
+                <span className="w-8 text-left">{empathy}</span>
               </div>
             </div>
             <div className="flex flex-row justify-between items-center ">
               <h4 className="w-20 text-left">{t("interviewerSettings.rapport")}</h4>
               <div className="w-40 space-x-3 ml-3 flex justify-between items-center">
-                <Slider value={[(interviewer?.rapport || 10) / 10]} max={1} step={0.1} />
-                <span className="w-8 text-left">{(interviewer?.rapport || 10) / 10}</span>
+                <Slider value={[rapport]} max={1} step={0.1} onValueChange={([v]) => setRapport(v)} />
+                <span className="w-8 text-left">{rapport}</span>
               </div>
             </div>
           </div>
@@ -63,15 +88,15 @@ function InterviewerDetailsModal({ interviewer }: Props) {
             <div className="flex flex-row justify-between items-center mb-2">
               <h4 className="w-20 text-left">{t("interviewerSettings.exploration")}</h4>
               <div className="w-40 space-x-3 ml-3 flex justify-between items-center">
-                <Slider value={[(interviewer?.exploration || 10) / 10]} max={1} step={0.1} />
-                <span className="w-8 text-left">{(interviewer?.exploration || 10) / 10}</span>
+                <Slider value={[exploration]} max={1} step={0.1} onValueChange={([v]) => setExploration(v)} />
+                <span className="w-8 text-left">{exploration}</span>
               </div>
             </div>
             <div className="flex flex-row justify-between items-center ">
               <h4 className="w-20 text-left">{t("interviewerSettings.speed")}</h4>
               <div className="w-40 space-x-3 ml-3 flex justify-between items-center">
-                <Slider value={[(interviewer?.speed || 10) / 10]} max={1} step={0.1} />
-                <span className="w-8 text-left">{(interviewer?.speed || 10) / 10}</span>
+                <Slider value={[speed]} max={1} step={0.1} onValueChange={([v]) => setSpeed(v)} />
+                <span className="w-8 text-left">{speed}</span>
               </div>
             </div>
           </div>

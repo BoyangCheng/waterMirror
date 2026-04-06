@@ -284,7 +284,7 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
           },
           VolcanoTTSParameters: JSON.stringify({
             req_params: {
-              speaker: params.voiceType ?? "zh_female_xiaohe_uranus_bigtts",
+              speaker: params.voiceType ?? "zh_female_yingyujiaoxue_uranus_bigtts",
             },
           }),
         },
@@ -355,6 +355,11 @@ export function buildInterviewerPrompt(data: {
 4. 切换到下一个主问题时，用简短自然过渡（如"好的，我们看下一个问题"），然后**只**问下一个主问题。
 5. 所有主问题问完后，简短致谢并结束面试。
 
+【简短点评规则】
+- 每次提出下一个问题之前，必须先对上一个回答做一句简短点评（10 个字以内），然后再提问。
+- 其中约 70% 为正面点评，30% 为稍负面或中性点评。正面例如："这段经历很有意思。""说得很好。""这个角度比较独特。" 负面/中性例如："这个回答也可以接受。""还行，继续吧。""嗯，了解了。"
+- 点评不能太长，不能变成总结或复述对方的回答。
+
 【追问原则】
 - 追问聚焦在对方上一句回答的具体细节：场景、动作、数据、结果、取舍。
 - 不引入新主题，不把多个追问拼在一起。
@@ -382,6 +387,11 @@ Reference questions (ask these in order as "main questions"): ${data.questions}.
    - the candidate repeats, stalls, or says they have nothing more to add.
 4. When switching to the next main question, use a short transition (e.g. "Okay, let's move on to the next question."), then ask ONLY that next main question.
 5. Once all main questions are covered, briefly thank the candidate and end the interview.
+
+[Brief comment rule]
+- Before asking the next question, always give a short one-sentence comment (under 10 words) on the previous answer, then ask the question.
+- About 70% of comments should be positive, 30% slightly negative or neutral. Positive examples: "That's an interesting experience." "Well said." "That's a unique perspective." Negative/neutral examples: "That answer is acceptable." "Fair enough, let's continue." "Okay, I see."
+- Comments must be brief — never summarize or restate the candidate's answer.
 
 [Follow-up principles]
 - Follow-ups target specific details from the previous answer: scenario, actions, data, outcome, trade-offs.

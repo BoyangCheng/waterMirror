@@ -8,10 +8,10 @@ import { getInterviewer } from "@/services/interviewers.service";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
-// Volcengine TTS voice types per interviewer
+// Volcengine TTS voice types (seed-tts-2.0) per interviewer
 // agent_id field is repurposed to store the voice type string
-const DEFAULT_VOICE_FEMALE = "zh_female_xiaohe_uranus_bigtts"; // 小何
-const DEFAULT_VOICE_MALE = "zh_female_xiaohe_uranus_bigtts";   // 暂用同一音色, 按需替换
+const DEFAULT_VOICE_FEMALE = "zh_female_yingyujiaoxue_uranus_bigtts"; // 英语教学女声
+const DEFAULT_VOICE_MALE = "zh_male_dayi_uranus_bigtts";              // 大义男声
 
 export async function POST(req: Request) {
   logger.info("register-call request received");
@@ -62,10 +62,10 @@ export async function POST(req: Request) {
         : undefined,
     });
 
-    // Determine voice type: use agent_id field if it looks like a voice type,
+    // Determine voice type: use agent_id field if it looks like a TTS voice type,
     // otherwise fall back to defaults based on interviewer name
     const voiceType =
-      interviewer?.agent_id?.startsWith("BV")
+      interviewer?.agent_id?.includes("_uranus_bigtts")
         ? interviewer.agent_id
         : interviewer?.name?.toLowerCase().includes("bob")
           ? DEFAULT_VOICE_MALE
@@ -73,8 +73,8 @@ export async function POST(req: Request) {
 
     const welcomeMessage =
       dynamic_data.language === "en"
-        ? `Hello ${dynamic_data.name !== "not provided" ? dynamic_data.name : ""}! I'm your interviewer today. Let's get started.`
-        : `你好${dynamic_data.name !== "not provided" ? ` ${dynamic_data.name}` : ""}！我是你今天的面试官，让我们开始吧。`;
+        ? `Hello ${dynamic_data.name !== "not provided" ? dynamic_data.name : ""}! I'm your interviewer today. Please start by introducing yourself.`
+        : `你好${dynamic_data.name !== "not provided" ? ` ${dynamic_data.name}` : ""}！我是你今天的面试官，请先介绍一下你自己。`;
 
     // Start the AI voice agent in the RTC room
     await startVoiceChat({

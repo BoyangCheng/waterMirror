@@ -16,11 +16,10 @@ interface Props {
 }
 
 export default function CreateInterviewerModal({ onClose }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { createInterviewer } = useInterviewers();
 
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [selectedImage, setSelectedImage] = useState(INTERVIEWER_AVATARS[0]);
   const [agentId, setAgentId] = useState<string>(VOLCENGINE_VOICES[0].id);
   const [empathy, setEmpathy] = useState(7);
@@ -29,13 +28,19 @@ export default function CreateInterviewerModal({ onClose }: Props) {
   const [speed, setSpeed] = useState(5);
   const [loading, setLoading] = useState(false);
 
+  // Auto-generate description based on voice gender and locale
+  const isMale = agentId === VOLCENGINE_VOICES[1].id;
+  const description = isMale
+    ? t("interviewers.bob.description" as any)
+    : t("interviewers.lisa.description" as any);
+
   const handleSubmit = async () => {
     if (!name.trim()) return;
     setLoading(true);
     try {
       await createInterviewer({
         name: name.trim(),
-        description: description.trim(),
+        description,
         image: selectedImage,
         agent_id: agentId,
         empathy,
@@ -66,17 +71,6 @@ export default function CreateInterviewerModal({ onClose }: Props) {
           placeholder={t("interviewerSettings.namePlaceholder")}
           value={name}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-        />
-      </div>
-
-      {/* Description */}
-      <div className="flex flex-col gap-1">
-        <Label>{t("interviewerSettings.description")}</Label>
-        <textarea
-          className={`${inputClass} min-h-[80px] resize-none`}
-          placeholder={t("interviewerSettings.descriptionPlaceholder")}
-          value={description}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
         />
       </div>
 

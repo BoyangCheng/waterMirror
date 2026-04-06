@@ -51,7 +51,7 @@
     "endCallConfirm": "此操作不可撤销，将立即结束通话。",
     "enterEmail": "请输入您的邮箱地址",
     "enterFirstName": "请输入您的名字",
-    "volumeNote": "请确保音量已调高，并在提示时允许麦克风访问。同时，请确保您处于安静的环境中。",
+    "volumeNote": "请确保音量已调高，并在提示时允许麦克风和摄像头访问。同时，请确保您处于安静的环境中。请尽量用标准普通话表达。",
     "tabSwitchNote": "注意：切换标签页的行为将会被记录。",
     "interviewer": "面试官",
     "you": "你",
@@ -135,8 +135,8 @@
     "description": "描述",
     "descriptionPlaceholder": "例如：我是一位温暖的面试官...",
     "voiceType": "语音类型",
-    "voiceFemale": "灿灿（女声）",
-    "voiceMale": "博文（男声）",
+    "voiceFemale": "女声",
+    "voiceMale": "男声",
     "deleteConfirm": "此操作不可撤销，将永久删除此面试官。",
     "createSuccess": "面试官创建成功",
     "createFailed": "面试官创建失败"
@@ -169,6 +169,7 @@
     "languageZh": "中文",
     "languageEn": "英文",
     "generateQuestions": "生成问题",
+    "defaultFirstQuestion": "请先介绍一下你过往的经历。",
     "doItMyself": "我自己来",
     "questionsReview": "面试中将使用这些问题，请确认是否合适。",
     "descriptionNoteInterviewees": "注意：受访者将看到此描述。",
@@ -247,6 +248,16 @@
     "addResumeSuccess": "简历追加成功",
     "addResumeFailed": "简历追加失败",
     "deleteConfirm": "此操作不可撤销，将永久删除此职位及所有候选人数据。"
+  },
+  "interviewers": {
+    "lisa": {
+      "name": "探索者 Lisa",
+      "description": "你好！我是 Lisa，一位充满热情和同理心的面试官，热爱探索未知。凭借共情力与亲和力的完美平衡，我善于在保持稳定节奏的同时深入对话。让我们一起踏上这段旅程，发掘有意义的洞见吧！"
+    },
+    "bob": {
+      "name": "共情者 Bob",
+      "description": "你好！我是 Bob，一位擅长共情的面试官。我善于在更深层次上理解他人、与人建立连接，确保每一次对话都充满洞察力和意义。我注重以同理心倾听和学习，让我们建立真诚的联系吧！"
+    }
   },
   "interviewerSettingsLabel": "面试官设置",
   "statusUpdateFailed": "更新面试状态失败。",

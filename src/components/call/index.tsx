@@ -100,6 +100,8 @@ function Call({ interview }: InterviewProps) {
 
   const { tabSwitchCount } = useTabSwitchPrevention();
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   // RTC engine ref (created once per mount)
   const engineRef = useRef<ReturnType<typeof VERTC.createEngine> | null>(null);
@@ -217,6 +219,11 @@ function Call({ interview }: InterviewProps) {
   // -------------------------------------------------------------------------
   const handleEndCall = useCallback(async () => {
     try {
+      // Stop camera stream
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+        cameraStreamRef.current = null;
+      }
       const engine = engineRef.current;
       if (engine) {
         try {
@@ -468,6 +475,18 @@ function Call({ interview }: InterviewProps) {
       engine.publishStream(MediaType.AUDIO);
       console.log("[RTC] audio published");
 
+      // Start camera (local only, not published to server)
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 320, height: 320 } });
+        cameraStreamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        console.log("[CAM] camera started (local preview only)");
+      } catch (camErr) {
+        console.warn("[CAM] camera access denied or unavailable:", camErr);
+      }
+
       startTimeRef.current = Date.now();
       setIsCalling(true);
       setIsStarted(true);
@@ -653,16 +672,17 @@ function Call({ interview }: InterviewProps) {
                     {lastUserResponse}
                   </div>
                   <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                    <Image
-                      src="/user-icon.png"
-                      alt="Picture of the user"
-                      width={120}
-                      height={120}
-                      className={`object-cover object-center mx-auto my-auto ${
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className={`w-[120px] h-[120px] object-cover rounded-full mx-auto my-auto ${
                         activeTurn === "user"
-                          ? `border-4 border-[${interview.theme_color}] rounded-full`
+                          ? `border-4 border-[${interview.theme_color}]`
                           : ""
                       }`}
+                      style={{ transform: "scaleX(-1)" }}
                     />
                     <div className="font-semibold">{t("interview.you")}</div>
                   </div>
@@ -754,15 +774,11 @@ function Call({ interview }: InterviewProps) {
         </Card>
 
         <div className="flex flex-row justify-center align-middle mt-3">
-          <div className="text-center text-md font-semibold mr-2">
-            {t("common.poweredBy")}
-          </div>
-          <Image
+          <img
             src="/watermirrorlogo.png"
             alt="WaterMirror"
-            width={100}
-            height={30}
-            className="h-6 w-auto"
+            className="h-12 w-auto flex-none"
+            style={{ background: "transparent" }}
           />
         </div>
       </div>
