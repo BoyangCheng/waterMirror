@@ -28,7 +28,7 @@ export const INTERVIEWERS = {
     image: "/interviewers/Lisa.png",
     description:
       "Hi! I'm Lisa, an enthusiastic and empathetic interviewer who loves to explore. With a perfect balance of empathy and rapport, I delve deep into conversations while maintaining a steady pace. Let's embark on this journey together and uncover meaningful insights!",
-    audio: { en: "Lisa.wav", zh: "Lisa.wav" },
+    audio: { en: "Lisa.wav", zh: "Lisa_zh.wav" },
   },
   BOB: {
     name: "Empathetic Bob",
