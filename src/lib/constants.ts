@@ -20,6 +20,7 @@ Follow the guidlines below when conversing.
 export const INTERVIEWERS = {
   LISA: {
     name: "Explorer Lisa",
+    i18nKey: "lisa" as const,
     rapport: 7,
     exploration: 10,
     empathy: 7,
@@ -27,10 +28,11 @@ export const INTERVIEWERS = {
     image: "/interviewers/Lisa.png",
     description:
       "Hi! I'm Lisa, an enthusiastic and empathetic interviewer who loves to explore. With a perfect balance of empathy and rapport, I delve deep into conversations while maintaining a steady pace. Let's embark on this journey together and uncover meaningful insights!",
-    audio: "Lisa.wav",
+    audio: { en: "Lisa.wav", zh: "Lisa.wav" },
   },
   BOB: {
     name: "Empathetic Bob",
+    i18nKey: "bob" as const,
     rapport: 7,
     exploration: 7,
     empathy: 10,
@@ -38,8 +40,14 @@ export const INTERVIEWERS = {
     image: "/interviewers/Bob.png",
     description:
       "Hi! I'm Bob, your go-to empathetic interviewer. I excel at understanding and connecting with people on a deeper level, ensuring every conversation is insightful and meaningful. With a focus on empathy, I'm here to listen and learn from you. Let's create a genuine connection!",
-    audio: "Bob.wav",
+    audio: { en: "Bob.wav", zh: "Bob_zh.wav" },
   },
+};
+
+/** Map preset interviewer image paths to their i18n keys */
+export const PRESET_INTERVIEWER_MAP: Record<string, keyof typeof INTERVIEWERS> = {
+  "/interviewers/Lisa.png": "LISA",
+  "/interviewers/Bob.png": "BOB",
 };
 
 /**
@@ -52,6 +60,6 @@ export const INTERVIEWER_AVATARS = [
 ];
 
 export const VOLCENGINE_VOICES = [
-  { id: "BV701_streaming", label: "voiceFemale" },
-  { id: "BV406_streaming", label: "voiceMale" },
+  { id: "zh_female_yingyujiaoxue_uranus_bigtts", label: "voiceFemale" },
+  { id: "zh_male_dayi_uranus_bigtts", label: "voiceMale" },
 ] as const;

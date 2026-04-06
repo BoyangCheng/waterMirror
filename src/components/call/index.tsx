@@ -100,12 +100,12 @@ function Call({ interview }: InterviewProps) {
 
   const { tabSwitchCount } = useTabSwitchPrevention();
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   // RTC engine ref (created once per mount)
   const engineRef = useRef<ReturnType<typeof VERTC.createEngine> | null>(null);
   const agentUserIdRef = useRef<string>("");
-  const localUserIdRef = useRef<string>("");
-  const localVideoRef = useRef<HTMLDivElement | null>(null);
 
   // -------------------------------------------------------------------------
   // Scroll latest user response into view
@@ -230,11 +230,13 @@ function Call({ interview }: InterviewProps) {
   // -------------------------------------------------------------------------
   const handleEndCall = useCallback(async () => {
     try {
+      // Stop camera stream
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach((track) => track.stop());
+        cameraStreamRef.current = null;
+      }
       const engine = engineRef.current;
       if (engine) {
-        try {
-          await engine.stopVideoCapture();
-        } catch { /* ignore */ }
         try {
           await engine.stopAudioCapture();
         } catch { /* ignore if already stopped */ }
@@ -313,7 +315,6 @@ function Call({ interview }: InterviewProps) {
       setTaskId(task_id);
       setAgentUserId(agent_user_id);
       agentUserIdRef.current = agent_user_id;
-      localUserIdRef.current = user_id;
 
       // Create response record in DB
       await createResponse({
@@ -485,20 +486,16 @@ function Call({ interview }: InterviewProps) {
       engine.publishStream(MediaType.AUDIO);
       console.log("[RTC] audio published");
 
-      // Start local camera preview (local only, not transmitted to AI agent)
+      // Start camera (local only, not published to server)
       try {
-        await engine.startVideoCapture();
-        if (localVideoRef.current) {
-          (engine as any).setLocalVideoPlayer(user_id, {
-            renderDom: localVideoRef.current,
-            renderMode: 1, // 1 = fit
-            mirrorType: 2, // 2 = mirror (selfie mode)
-          });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 320, height: 320 } });
+        cameraStreamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
         }
-        engine.publishStream(MediaType.VIDEO);
-        console.log("[RTC] video capture started");
-      } catch (e) {
-        console.warn("[RTC] video capture failed (may not be available):", e);
+        console.log("[CAM] camera started (local preview only)");
+      } catch (camErr) {
+        console.warn("[CAM] camera access denied or unavailable:", camErr);
       }
 
       startTimeRef.current = Date.now();
@@ -686,13 +683,17 @@ function Call({ interview }: InterviewProps) {
                     {lastUserResponse}
                   </div>
                   <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                    <div
-                      ref={localVideoRef}
-                      className={`w-[120px] h-[120px] rounded-full overflow-hidden bg-gray-200 mx-auto my-auto ${
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className={`w-[120px] h-[120px] object-cover rounded-full mx-auto my-auto ${
                         activeTurn === "user"
                           ? `border-4 border-[${interview.theme_color}]`
                           : ""
                       }`}
+                      style={{ transform: "scaleX(-1)" }}
                     />
                     <div className="font-semibold">{t("interview.you")}</div>
                   </div>
@@ -784,15 +785,11 @@ function Call({ interview }: InterviewProps) {
         </Card>
 
         <div className="flex flex-row justify-center align-middle mt-3">
-          <div className="text-center text-md font-semibold mr-2">
-            {t("common.poweredBy")}
-          </div>
-          <Image
+          <img
             src="/watermirrorlogo.png"
             alt="WaterMirror"
-            width={100}
-            height={30}
-            className="h-6 w-auto"
+            className="h-12 w-auto flex-none"
+            style={{ background: "transparent" }}
           />
         </div>
       </div>

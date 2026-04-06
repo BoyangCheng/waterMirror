@@ -51,7 +51,7 @@
     "endCallConfirm": "This action cannot be undone. This action will end the call.",
     "enterEmail": "Enter your email address",
     "enterFirstName": "Enter your first name",
-    "volumeNote": "Ensure your volume is up and grant microphone access when prompted. Additionally, please make sure you are in a quiet environment.",
+    "volumeNote": "Ensure your volume is up and grant microphone and camera access when prompted. Additionally, please make sure you are in a quiet environment. Please try to speak in standard Mandarin.",
     "tabSwitchNote": "Note: Tab switching will be recorded.",
     "interviewer": "Interviewer",
     "you": "You",
@@ -135,8 +135,8 @@
     "description": "Description",
     "descriptionPlaceholder": "e.g. I'm a warm and curious interviewer...",
     "voiceType": "Voice Type",
-    "voiceFemale": "Canan (Female)",
-    "voiceMale": "Bowen (Male)",
+    "voiceFemale": "Female",
+    "voiceMale": "Male",
     "deleteConfirm": "This action cannot be undone. This will permanently delete this interviewer.",
     "createSuccess": "Interviewer created successfully",
     "createFailed": "Failed to create interviewer"
@@ -169,6 +169,7 @@
     "languageZh": "Chinese",
     "languageEn": "English",
     "generateQuestions": "Generate Questions",
+    "defaultFirstQuestion": "Please start by introducing your past experience.",
     "doItMyself": "I'll do it myself",
     "questionsReview": "We will be using these questions during the interviews. Please make sure they are ok.",
     "descriptionNoteInterviewees": "Note: Interviewees will see this description.",
@@ -254,6 +255,16 @@
     "understand": "I understand"
   },
   "openingHint": "AI opening: Hello, I'm your interviewer today. Please start by introducing your background and past experience.",
+  "interviewers": {
+    "lisa": {
+      "name": "Explorer Lisa",
+      "description": "Hi! I'm Lisa, an enthusiastic and empathetic interviewer who loves to explore. With a perfect balance of empathy and rapport, I delve deep into conversations while maintaining a steady pace. Let's embark on this journey together and uncover meaningful insights!"
+    },
+    "bob": {
+      "name": "Empathetic Bob",
+      "description": "Hi! I'm Bob, your go-to empathetic interviewer. I excel at understanding and connecting with people on a deeper level, ensuring every conversation is insightful and meaningful. With a focus on empathy, I'm here to listen and learn from you. Let's create a genuine connection!"
+    }
+  },
   "interviewerSettingsLabel": "Interviewer Settings",
   "statusUpdateFailed": "Failed to update the interview status.",
   "userMenu": {

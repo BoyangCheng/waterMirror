@@ -36,22 +36,18 @@ function Navbar() {
       <div className="fixed inset-x-0 top-0 bg-slate-100 z-[10] h-fit py-4">
         <div className="flex items-center justify-between h-full gap-2 px-8 mx-auto">
           <div className="flex flex-row gap-3 justify-center">
-            <Link href={"/dashboard"} className="flex items-center gap-2">
-              <Image
+            <Link href={"/dashboard"} className="flex items-center gap-2 flex-none">
+              <img
                 src="/watermirrorlogo.png"
                 alt="WaterMirror"
-                width={120}
-                height={40}
-                className="h-10 w-auto"
+                className="h-20 w-auto flex-none"
+                style={{ background: "transparent" }}
               />
             </Link>
             {organization && (
-              <>
-                <p className="my-auto text-xl">/</p>
-                <span className="my-auto text-sm font-medium text-gray-700">
-                  {organization.name}
-                </span>
-              </>
+              <span className="my-auto text-sm font-medium text-gray-700">
+                {organization.name}
+              </span>
             )}
           </div>
 
