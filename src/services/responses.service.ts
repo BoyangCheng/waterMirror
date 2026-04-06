@@ -28,7 +28,6 @@ const getAllResponses = async (interviewId: string) => {
     const data = await sql`
       SELECT * FROM response
       WHERE interview_id = ${interviewId}
-        AND (details IS NULL OR details->'call_analysis' IS NOT NULL)
         AND is_ended = true
       ORDER BY created_at DESC
     `;

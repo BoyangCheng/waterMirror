@@ -6,7 +6,9 @@
       "Bash(git commit:*)",
       "Bash(find /Users/vibrant-wellness/waterMirror -type f \\\\\\(-name *.js -o -name *.jsx -o -name *.ts -o -name *.tsx -o -name *.vue -o -name *.html \\\\\\))",
       "Bash(find /Users/vibrant-wellness/waterMirror/src -type f \\\\\\(-name *.js -o -name *.jsx -o -name *.ts -o -name *.tsx -o -name *.html \\\\\\))",
-      "Bash(grep -r -i interview /Users/vibrant-wellness/waterMirror/src --include=*.tsx --include=*.ts)"
+      "Bash(grep -r -i interview /Users/vibrant-wellness/waterMirror/src --include=*.tsx --include=*.ts)",
+      "Bash(find /c/Users/XX/Documents/projects/watermirror -type f -name *.wav -o -name *.mp3 -o -name *.ogg)",
+      "Bash(xargs grep:*)"
     ]
   }
 }
