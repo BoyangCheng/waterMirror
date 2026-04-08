@@ -1,10 +1,107 @@
+# ============================================================
+#  WaterMirror Docker Compose 配置（Ubuntu 优化版）
+#  本地开发和生产部署均适用
+# ============================================================
+
+version: '3.9'
+
 services:
+  # ============================================================
+  #  WaterMirror 应用服务
+  # ============================================================
   watermirror:
-    build: .
-    ports:
-      - "${DOCKER_PORT:-3000}:3000"
+    # 构建配置
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # 可选：构建时注入环境变量
+        NEXT_PUBLIC_LIVE_URL: ${NEXT_PUBLIC_LIVE_URL:-http://localhost:3000}
+
+    # 容器名称
+    container_name: watermirror
+
+    # 环境配置
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
+      # 可在此覆盖 .env 中的变量（可选）
+      # NEXT_PUBLIC_LIVE_URL: http://yourdomain.com
+
+    # 端口映射
+    ports:
+      - "${DOCKER_PORT:-3000}:3000"
+
+    # 卷挂载（持久化数据）
+    volumes:
+      # 可选：挂载日志目录
+      - ./logs:/app/logs
+
+    # 重启策略
     restart: unless-stopped
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+    # 资源限制（Ubuntu 生产环境推荐）
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "watermirror=true"
+
+    # 网络配置
+    networks:
+      - watermirror-network
+
+    # 依赖关系（如有数据库等服务）
+    # depends_on:
+    #   - postgres
+
+# ============================================================
+#  网络配置
+# ============================================================
+networks:
+  watermirror-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+# ============================================================
+#  说明和使用方式
+# ============================================================
+#
+# 本地开发：
+#   docker compose up --build
+#   访问: http://localhost:3000
+#
+# 生产部署（Ubuntu）：
+#   docker compose -f docker-compose.yml up -d
+#
+# 查看日志：
+#   docker compose logs -f watermirror
+#
+# 停止服务：
+#   docker compose down
+#
+# 清理（包括所有卷）：
+#   docker compose down -v
+#
