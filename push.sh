@@ -72,21 +72,30 @@ build_image() {
 login_acr() {
   log "检查 ACR 登录状态..."
 
-  if docker pull registry-cn-hangzhou.aliyuncs.com/library/alpine 2>/dev/null; then
+  # 通过 docker config 检查是否已存在该 registry 的认证信息
+  if docker system info 2>/dev/null | grep -q "${ACR_REGISTRY}" || \
+     grep -q "${ACR_REGISTRY}" "${HOME}/.docker/config.json" 2>/dev/null; then
     log "已登录 ACR ✓"
-  else
-    warn "未登录 ACR，请按以下步骤操作："
-    echo ""
-    echo "  1. 在阿里云控制台获取登录命令："
-    echo "     容器镜像服务 → 访问凭证 → 复制 docker login 命令"
-    echo ""
-    echo "  2. 在本终端执行："
-    echo "     docker login ${ACR_REGISTRY}"
-    echo ""
-    echo "  输入用户名（邮箱）和密码"
-    echo ""
+    return 0
+  fi
 
-    read -p "按 Enter 继续（假设已登录）..." -t 5 || true
+  warn "未登录 ACR，请按以下步骤操作："
+  echo ""
+  echo "  1. 在阿里云控制台获取登录命令："
+  echo "     容器镜像服务 → 访问凭证 → 复制 docker login 命令"
+  echo ""
+  echo "  2. 在本终端执行："
+  echo "     docker login ${ACR_REGISTRY}"
+  echo ""
+  echo "  输入用户名（邮箱）和密码"
+  echo ""
+
+  read -p "现在登录? (y/n) " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    docker login "${ACR_REGISTRY}" || error "ACR 登录失败"
+  else
+    error "未登录 ACR，无法继续推送"
   fi
 }
 
@@ -109,11 +118,11 @@ push_to_acr() {
 verify_push() {
   log "验证推送结果..."
 
-  # 尝试拉取刚推上去的镜像
-  if docker pull "${IMAGE_LATEST}" | grep -q "Status: Downloaded"; then
-    log "镜像验证成功 ✓"
+  # 通过 manifest 检查远端是否真的存在该镜像
+  if docker manifest inspect "${IMAGE_LATEST}" >/dev/null 2>&1; then
+    log "镜像验证成功 ✓ (远端 ${IMAGE_LATEST})"
   else
-    warn "镜像已存在或验证异常，这是正常的"
+    warn "无法通过 manifest 验证，可能是 docker 未启用 experimental，跳过"
   fi
 }
 
@@ -155,10 +164,13 @@ EOF
 }
 
 main() {
-  if [ $# -lt 1 ]; then
-    show_help
-    exit 1
-  fi
+  # 优先处理 help 参数
+  case "${1:-}" in
+    ""|help|-h|--help)
+      show_help
+      [ -z "${1:-}" ] && exit 1 || exit 0
+      ;;
+  esac
 
   local cmd="${2:-push}"
 

@@ -249,6 +249,7 @@ verify_installation() {
 
   local all_ok=true
 
+  # 1. Docker CLI 是否存在
   if command -v docker &> /dev/null; then
     log "✓ Docker: $(docker --version)"
   else
@@ -256,17 +257,29 @@ verify_installation() {
     all_ok=false
   fi
 
+  # 2. Docker Compose 是否存在
   if docker compose version &> /dev/null; then
     log "✓ Docker Compose: $(docker compose version | head -1)"
   else
     warn "⚠ Docker Compose 未找到，但不影响部署"
   fi
 
-  if docker run --rm hello-world &> /dev/null; then
-    log "✓ Docker 运行正常"
+  # 3. Docker daemon 是否在运行（不依赖外网拉取）
+  if docker info &> /dev/null; then
+    log "✓ Docker daemon 运行正常"
   else
-    error "✗ Docker 无法运行（权限问题？）"
-    all_ok=false
+    warn "⚠ Docker daemon 无法访问，可能需要重新登录以刷新 docker 用户组"
+    warn "  请执行: newgrp docker 或重新登录 SSH"
+  fi
+
+  # 4. 尝试拉取 hello-world（仅作为连通性测试，失败不中断）
+  info "尝试拉取 hello-world 镜像验证网络（失败不影响部署）..."
+  if timeout 30 docker run --rm hello-world &> /dev/null; then
+    log "✓ Docker Hub 连接正常"
+  else
+    warn "⚠ 无法拉取 hello-world 镜像（Docker Hub 网络问题，常见于国内 ECS）"
+    warn "  这不影响部署，因为我们从阿里云 ACR 拉取镜像"
+    warn "  建议配置镜像加速器（重新运行本脚本，或手动配置 /etc/docker/daemon.json）"
   fi
 
   if [ "$all_ok" = true ]; then

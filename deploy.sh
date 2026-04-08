@@ -20,7 +20,7 @@ ACR_IMAGE="${ACR_REGISTRY}/${ACR_NAMESPACE}/${ACR_REPO}"
 SSH_USER="${SSH_USER:-root}"                          # ← 替换为你的用户名（通常 root）
 SSH_HOST="${SSH_HOST:-1.2.3.4}"                       # ← 替换为你的服务器公网 IP
 SSH_PORT="${SSH_PORT:-22}"
-SSH_KEY="${SSH_KEY:-~/.ssh/id_rsa}"                   # ← SSH 私钥路径
+SSH_KEY="${SSH_KEY:-${HOME}/.ssh/id_rsa}"             # ← SSH 私钥路径
 
 # 服务器上的部署目录（Ubuntu）
 REMOTE_DIR="/opt/watermirror"
@@ -120,7 +120,7 @@ cd ${REMOTE_DIR}
 
 # 拉取最新镜像
 echo "[REMOTE] 拉取镜像: ${IMAGE_LATEST}..."
-docker pull ${IMAGE_LATEST} || error "[REMOTE] 镜像拉取失败"
+docker pull ${IMAGE_LATEST} || { echo "[REMOTE] ❌ 镜像拉取失败"; exit 1; }
 
 # 停止旧容器（如果存在）
 echo "[REMOTE] 停止旧容器..."

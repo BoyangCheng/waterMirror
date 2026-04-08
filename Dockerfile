@@ -5,7 +5,7 @@
 
 # -------------------- 基础镜像 --------------------
 # 使用官方 Node.js LTS Alpine 镜像（轻量级，适合生产）
-FROM node:23-alpine AS base
+FROM node:22-alpine AS base
 
 WORKDIR /app
 
@@ -39,6 +39,12 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_LIVE_URL
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
+# 将 ARG 暴露为 ENV，这样 Next.js build 时才能将 NEXT_PUBLIC_* 内联到客户端 bundle
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_LIVE_URL=$NEXT_PUBLIC_LIVE_URL \
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
 RUN yarn build
 
 # -------------------- 运行时镜像 --------------------
@@ -60,8 +66,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 USER nextjs
 
 # 健康检查（可选，但推荐）
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000', (r) => {if(r.statusCode !== 200) throw new Error(r.statusCode)})"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
 # 暴露端口
 EXPOSE 3000

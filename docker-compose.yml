@@ -3,8 +3,6 @@
 #  本地开发和生产部署均适用
 # ============================================================
 
-version: '3.9'
-
 services:
   # ============================================================
   #  WaterMirror 应用服务
@@ -41,13 +39,13 @@ services:
     # 重启策略
     restart: unless-stopped
 
-    # 健康检查
+    # 健康检查（用 node 而非 wget，alpine 镜像默认不带 wget）
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 15s
 
     # 资源限制（Ubuntu 生产环境推荐）
     deploy:
