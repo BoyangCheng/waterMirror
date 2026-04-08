@@ -102,10 +102,46 @@ function Call({ interview }: InterviewProps) {
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+
+  // Attach camera stream to <video> element once it is mounted.
+  // The <video> is only rendered when isStarted becomes true, so we need
+  // this effect to bind the stream after the element exists.
+  useEffect(() => {
+    if (isStarted && videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [isStarted, cameraStream]);
+
+  // Safety net: release RTC engine + camera on unmount so that if the
+  // component ever unmounts mid-call, audio does not keep playing and
+  // the room is left cleanly.
+  useEffect(() => {
+    return () => {
+      try {
+        cameraStreamRef.current?.getTracks().forEach((t) => t.stop());
+        cameraStreamRef.current = null;
+      } catch { /* ignore */ }
+      const engine = engineRef.current;
+      if (engine) {
+        try { engine.stopAudioCapture(); } catch { /* ignore */ }
+        try { engine.leaveRoom(); } catch { /* ignore */ }
+        try { engine.removeAllListeners(); } catch { /* ignore */ }
+        engineRef.current = null;
+      }
+    };
+  }, []);
 
   // RTC engine ref (created once per mount)
   const engineRef = useRef<ReturnType<typeof VERTC.createEngine> | null>(null);
   const agentUserIdRef = useRef<string>("");
+
+  // 时间到结束流程：先给 AI 推一条 [TIME_UP] 提示让它说结束语，
+  // 再延迟 ~15s 真正断开 RTC，留给 AI 播报致谢的时间。
+  const timeUpWarningSentRef = useRef(false);
+  const endTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const TIME_UP_WARNING_LEAD_SECS = 20; // 距离结束多少秒发送提示
+  const TIME_UP_GRACE_MS = 15000;       // 收到提示后留多少 ms 给 AI 播报
 
   // -------------------------------------------------------------------------
   // Scroll latest user response into view
@@ -126,12 +162,57 @@ function Call({ interview }: InterviewProps) {
     if (isCalling) {
       intervalId = setInterval(() => setTime((t) => t + 1), 10);
     }
-    setCurrentTimeDuration(String(Math.floor(time / 100)));
-    if (Number(currentTimeDuration) === Number(interviewTimeDuration) * 60) {
+    const seconds = Math.floor(time / 100);
+    setCurrentTimeDuration(String(seconds));
+
+    const totalSeconds = Number(interviewTimeDuration) * 60;
+
+    // 距离结束 ~20s：给 AI 推一条 [TIME_UP] 提示，让它在剩余时间里说结束语
+    if (
+      isCalling &&
+      !timeUpWarningSentRef.current &&
+      totalSeconds > TIME_UP_WARNING_LEAD_SECS &&
+      seconds >= totalSeconds - TIME_UP_WARNING_LEAD_SECS
+    ) {
+      timeUpWarningSentRef.current = true;
+      const engine = engineRef.current;
+      const targetAgent = agentUserIdRef.current;
+      if (engine && targetAgent) {
+        try {
+          (engine as any).sendUserMessage?.(
+            targetAgent,
+            "[TIME_UP] 面试时间快到了，请立刻用一句话向被面试者表示感谢并自然结束面试，不要再提新问题。",
+          );
+        } catch { /* ignore */ }
+      }
+      // 时间到时延迟一段时间再真正断开，留给 AI 播报致谢
+      if (endTimeoutRef.current) clearTimeout(endTimeoutRef.current);
+      endTimeoutRef.current = setTimeout(() => {
+        handleEndCall();
+      }, TIME_UP_WARNING_LEAD_SECS * 1000 + TIME_UP_GRACE_MS);
+    }
+
+    // 兜底：如果总时长太短（小于提示前置量）或一直没触发，时间真的到了就直接结束
+    if (
+      isCalling &&
+      !endTimeoutRef.current &&
+      seconds >= totalSeconds
+    ) {
       handleEndCall();
     }
+
     return () => clearInterval(intervalId);
-  }, [isCalling, time, currentTimeDuration]);
+  }, [isCalling, time]);
+
+  // 组件卸载时清理结束定时器
+  useEffect(() => {
+    return () => {
+      if (endTimeoutRef.current) {
+        clearTimeout(endTimeoutRef.current);
+        endTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // -------------------------------------------------------------------------
   // Email validation
@@ -153,7 +234,11 @@ function Call({ interview }: InterviewProps) {
   useEffect(() => {
     const fetchInterviewer = async () => {
       const interviewer = await getInterviewer(interview.interviewer_id);
-      setInterviewerImg(interviewer.image);
+      if (interviewer?.image) {
+        setInterviewerImg(interviewer.image);
+      } else {
+        // console.warn("[Call] getInterviewer returned null or no image, interviewer_id:", interview.interviewer_id);
+      }
     };
     fetchInterviewer();
   }, [interview.interviewer_id]);
@@ -163,13 +248,13 @@ function Call({ interview }: InterviewProps) {
   // -------------------------------------------------------------------------
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   useEffect(() => {
-    console.log("[REPORT] isEnded changed:", isEnded, "callId:", callId || "(empty)");
+    // console.log("[REPORT] isEnded changed:", isEnded, "callId:", callId || "(empty)");
     if (isEnded && callId) {
       const persist = async () => {
         const endTs = Date.now();
         const entries = transcriptRef.current;
-        console.log("[REPORT] persisting response, transcript entries:", entries.length);
-        console.log("[REPORT] transcript preview:", JSON.stringify(entries.slice(0, 3)));
+        // console.log("[REPORT] persisting response, transcript entries:", entries.length);
+        // console.log("[REPORT] transcript preview:", JSON.stringify(entries.slice(0, 3)));
 
         const transcriptText = entries
           .map((e) => `${e.role === "agent" ? "Agent" : "User"}: ${e.content}`)
@@ -192,14 +277,15 @@ function Call({ interview }: InterviewProps) {
             },
             callId,
           );
-          console.log("[REPORT] saveResponse succeeded for callId:", callId);
+          // console.log("[REPORT] saveResponse succeeded for callId:", callId);
         } catch (err) {
-          console.error("[REPORT] saveResponse FAILED:", err);
+          // console.error("[REPORT] saveResponse FAILED:", err);
+          void err;
         }
       };
       persist();
     } else if (isEnded && !callId) {
-      console.warn("[REPORT] isEnded=true but callId is empty — saveResponse skipped!");
+      // console.warn("[REPORT] isEnded=true but callId is empty — saveResponse skipped!");
     }
   }, [isEnded]);
 
@@ -229,12 +315,18 @@ function Call({ interview }: InterviewProps) {
   // End call (shared logic)
   // -------------------------------------------------------------------------
   const handleEndCall = useCallback(async () => {
+    // 取消可能挂起的"时间到延迟结束"定时器，防止重复执行
+    if (endTimeoutRef.current) {
+      clearTimeout(endTimeoutRef.current);
+      endTimeoutRef.current = null;
+    }
     try {
       // Stop camera stream
       if (cameraStreamRef.current) {
         cameraStreamRef.current.getTracks().forEach((track) => track.stop());
         cameraStreamRef.current = null;
       }
+      setCameraStream(null);
       const engine = engineRef.current;
       if (engine) {
         try {
@@ -275,6 +367,11 @@ function Call({ interview }: InterviewProps) {
   // -------------------------------------------------------------------------
   const startConversation = async () => {
     setLoading(true);
+    timeUpWarningSentRef.current = false;
+    if (endTimeoutRef.current) {
+      clearTimeout(endTimeoutRef.current);
+      endTimeoutRef.current = null;
+    }
     try {
       const oldUserEmails: string[] = (await getAllEmails(interview.id)).map((item) => item.email);
       const isOld =
@@ -325,15 +422,40 @@ function Call({ interview }: InterviewProps) {
       });
 
       // -----------------------------------------------------------------------
+      // Start camera first (local preview only) so the video element has a
+      // stream ready as soon as it mounts.
+      // -----------------------------------------------------------------------
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: 320, height: 320 },
+        });
+        cameraStreamRef.current = stream;
+        setCameraStream(stream);
+        // console.log("[CAM] camera started (local preview only)");
+      } catch (camErr) {
+        // console.warn("[CAM] camera access denied or unavailable:", camErr);
+        void camErr;
+      }
+
+      // Transition UI to the in-call view so the <video> element mounts and
+      // starts rendering the camera preview.
+      setIsStarted(true);
+
+      // Give the page a moment to finish rendering the call UI before we
+      // actually join the RTC room. This ensures the video element is
+      // mounted and the user sees the interface load cleanly.
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // -----------------------------------------------------------------------
       // Initialize ByteRTC engine
       // -----------------------------------------------------------------------
-      console.log("[RTC] createEngine with appId:", app_id);
+      // console.log("[RTC] createEngine with appId:", app_id);
       const engine = VERTC.createEngine(app_id);
       engineRef.current = engine;
 
       // Subscribe to audio streams from other participants (the AI agent)
       engine.on(VERTC.events.onUserPublishStream, async ({ userId, mediaType }) => {
-        console.log("[RTC] onUserPublishStream:", userId, mediaType);
+        // console.log("[RTC] onUserPublishStream:", userId, mediaType);
         if (mediaType === MediaType.AUDIO) {
           await engine.subscribeStream(userId, MediaType.AUDIO);
           setActiveTurn("agent");
@@ -341,7 +463,7 @@ function Call({ interview }: InterviewProps) {
       });
 
       engine.on(VERTC.events.onUserUnpublishStream, ({ userId }) => {
-        console.log("[RTC] onUserUnpublishStream:", userId);
+        // console.log("[RTC] onUserUnpublishStream:", userId);
         if (userId === agentUserIdRef.current) {
           setActiveTurn("user");
         }
@@ -349,10 +471,10 @@ function Call({ interview }: InterviewProps) {
 
       // Receive subtitle / transcript binary messages
       engine.on(VERTC.events.onRoomBinaryMessageReceived, (event: any) => {
-        console.log("[RTC] onRoomBinaryMessageReceived fired, event keys:", Object.keys(event));
+        // console.log("[RTC] onRoomBinaryMessageReceived fired, event keys:", Object.keys(event));
         const message = event.message ?? event.binaryMessage ?? event;
         const userId = event.userId ?? event.uid ?? "";
-        console.log("[RTC] binary message from:", userId, "size:", message?.byteLength ?? "N/A");
+        // console.log("[RTC] binary message from:", userId, "size:", message?.byteLength ?? "N/A");
         const parsed = parseSubtitleMessage(message, userId as string, agentUserIdRef.current);
         if (!parsed) return;
 
@@ -380,7 +502,8 @@ function Call({ interview }: InterviewProps) {
           const level = data?.audioPropertiesInfo?.linearVolume
             ?? data?.audioPropertiesInfo?.nonlinearVolume
             ?? data?.linearVolume;
-          console.log("[RTC][MIC] local volume:", level, "raw:", JSON.stringify(event).substring(0, 200));
+          // console.log("[RTC][MIC] local volume:", level, "raw:", JSON.stringify(event).substring(0, 200));
+          void level;
         }
       });
 
@@ -388,52 +511,53 @@ function Call({ interview }: InterviewProps) {
       let remoteVolLogCount = 0;
       engine.on(VERTC.events.onRemoteAudioPropertiesReport, (event: any) => {
         if (remoteVolLogCount++ % 20 === 0) {
-          console.log("[RTC][SPK] remote volume report:", JSON.stringify(event).substring(0, 200));
+          // console.log("[RTC][SPK] remote volume report:", JSON.stringify(event).substring(0, 200));
         }
       });
 
       // Local audio state (capture / device change)
       engine.on(VERTC.events.onLocalAudioStateChanged as any, (event: any) => {
-        console.log("[RTC][MIC] onLocalAudioStateChanged:", JSON.stringify(event));
+        // console.log("[RTC][MIC] onLocalAudioStateChanged:", JSON.stringify(event));
       });
 
       // User start/stop audio capture
       engine.on(VERTC.events.onUserStartAudioCapture as any, (event: any) => {
-        console.log("[RTC][MIC] onUserStartAudioCapture:", JSON.stringify(event));
+        // console.log("[RTC][MIC] onUserStartAudioCapture:", JSON.stringify(event));
       });
       engine.on(VERTC.events.onUserStopAudioCapture as any, (event: any) => {
-        console.log("[RTC][MIC] onUserStopAudioCapture:", JSON.stringify(event));
+        // console.log("[RTC][MIC] onUserStopAudioCapture:", JSON.stringify(event));
       });
 
       // Audio device warning (mic blocked, no permission, etc.)
       engine.on(VERTC.events.onAudioDeviceStateChanged as any, (event: any) => {
-        console.log("[RTC][DEV] onAudioDeviceStateChanged:", JSON.stringify(event));
+        // console.log("[RTC][DEV] onAudioDeviceStateChanged:", JSON.stringify(event));
       });
 
       // Debug: user message (non-binary)
       engine.on(VERTC.events.onUserMessageReceived, (event: any) => {
-        console.log("[RTC] onUserMessageReceived:", JSON.stringify(event).substring(0, 300));
+        // console.log("[RTC] onUserMessageReceived:", JSON.stringify(event).substring(0, 300));
       });
 
       // Debug: room message (non-binary)
       engine.on(VERTC.events.onRoomMessageReceived, (event: any) => {
-        console.log("[RTC] onRoomMessageReceived:", JSON.stringify(event).substring(0, 300));
+        // console.log("[RTC] onRoomMessageReceived:", JSON.stringify(event).substring(0, 300));
       });
 
       engine.on(VERTC.events.onError, (error) => {
-        console.error("[RTC] onError event:", JSON.stringify(error));
+        // console.error("[RTC] onError event:", JSON.stringify(error));
+        void error;
         handleEndCall();
       });
 
       // 详细诊断日志
-      console.log("[RTC] joinRoom params:", {
-        token: token.substring(0, 30) + "...",
-        tokenLength: token.length,
-        tokenPrefix: token.substring(0, 10),
-        room_id,
-        user_id,
-        app_id,
-      });
+      // console.log("[RTC] joinRoom params:", {
+      //   token: token.substring(0, 30) + "...",
+      //   tokenLength: token.length,
+      //   tokenPrefix: token.substring(0, 10),
+      //   room_id,
+      //   user_id,
+      //   app_id,
+      // });
 
       // Join room
       try {
@@ -447,60 +571,49 @@ function Call({ interview }: InterviewProps) {
             roomProfileType: RoomProfileType.chat,
           },
         );
-        console.log("[RTC] joinRoom succeeded");
+        // console.log("[RTC] joinRoom succeeded");
       } catch (joinErr: any) {
-        console.error("[RTC] joinRoom FAILED:", joinErr);
-        console.error("[RTC] joinRoom error code:", joinErr?.code);
-        console.error("[RTC] joinRoom error message:", joinErr?.message);
-        console.error("[RTC] joinRoom error name:", joinErr?.name);
-        console.error("[RTC] joinRoom full error:", JSON.stringify(joinErr, Object.getOwnPropertyNames(joinErr)));
+        // console.error("[RTC] joinRoom FAILED:", joinErr);
+        // console.error("[RTC] joinRoom error code:", joinErr?.code);
+        // console.error("[RTC] joinRoom error message:", joinErr?.message);
+        // console.error("[RTC] joinRoom error name:", joinErr?.name);
+        // console.error("[RTC] joinRoom full error:", JSON.stringify(joinErr, Object.getOwnPropertyNames(joinErr)));
         throw joinErr;
       }
 
       // Enable audio properties report (fires onLocal/RemoteAudioPropertiesReport periodically)
       try {
         (engine as any).enableAudioPropertiesReport?.({ interval: 500 });
-        console.log("[RTC] audio properties report enabled (500ms)");
+        // console.log("[RTC] audio properties report enabled (500ms)");
       } catch (e) {
-        console.warn("[RTC] enableAudioPropertiesReport failed:", e);
+        // console.warn("[RTC] enableAudioPropertiesReport failed:", e);
+        void e;
       }
 
       // List audio input devices (mic)
       try {
-        const devices = await (VERTC as any).enumerateAudioCaptureDevices?.();
-        console.log("[RTC][DEV] mic devices:", devices?.length ?? "N/A",
-          (devices ?? []).map((d: any) => ({ label: d.label, deviceId: d.deviceId?.slice(0, 8) })));
+        await (VERTC as any).enumerateAudioCaptureDevices?.();
+        // console.log("[RTC][DEV] mic devices:", devices?.length ?? "N/A",
+        //   (devices ?? []).map((d: any) => ({ label: d.label, deviceId: d.deviceId?.slice(0, 8) })));
       } catch (e) {
-        console.warn("[RTC][DEV] enumerateAudioCaptureDevices failed:", e);
+        // console.warn("[RTC][DEV] enumerateAudioCaptureDevices failed:", e);
+        void e;
       }
 
       // Start microphone and publish audio
-      console.log("[RTC] starting audio capture...");
+      // console.log("[RTC] starting audio capture...");
       try {
         await engine.startAudioCapture();
-        console.log("[RTC][MIC] startAudioCapture OK");
+        // console.log("[RTC][MIC] startAudioCapture OK");
       } catch (e) {
-        console.error("[RTC][MIC] startAudioCapture FAILED:", e);
+        // console.error("[RTC][MIC] startAudioCapture FAILED:", e);
         throw e;
       }
       engine.publishStream(MediaType.AUDIO);
-      console.log("[RTC] audio published");
-
-      // Start camera (local only, not published to server)
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 320, height: 320 } });
-        cameraStreamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        console.log("[CAM] camera started (local preview only)");
-      } catch (camErr) {
-        console.warn("[CAM] camera access denied or unavailable:", camErr);
-      }
+      // console.log("[RTC] audio published");
 
       startTimeRef.current = Date.now();
       setIsCalling(true);
-      setIsStarted(true);
     } catch (err: any) {
       console.error("Error starting conversation:", err);
       const detail = err?.response?.data?.error || err?.message || "";
@@ -656,16 +769,23 @@ function Call({ interview }: InterviewProps) {
                     </div>
                     <div className="flex flex-col mx-auto justify-center items-center align-middle">
                       {interviewerImg ? (
-                        <Image
+                        <img
                           src={interviewerImg}
                           alt="Image of the interviewer"
                           width={120}
                           height={120}
-                          className={`object-cover object-center mx-auto my-auto ${
-                            activeTurn === "agent"
-                              ? `border-4 border-[${interview.theme_color}] rounded-full`
-                              : ""
+                          className={`w-[120px] h-[120px] object-cover object-center rounded-full mx-auto my-auto ${
+                            activeTurn === "agent" ? "border-4" : ""
                           }`}
+                          style={
+                            activeTurn === "agent"
+                              ? { borderColor: interview.theme_color ?? "#4F46E5" }
+                              : undefined
+                          }
+                          onError={(e) => {
+                            // console.error("[Call] interviewer image failed to load:", interviewerImg);
+                            (e.currentTarget as HTMLImageElement).style.display = "none";
+                          }}
                         />
                       ) : (
                         <div className="w-[120px] h-[120px] bg-gray-200 rounded-full animate-pulse mx-auto" />

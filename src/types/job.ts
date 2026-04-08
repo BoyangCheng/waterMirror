@@ -15,6 +15,7 @@ export interface Interviewee {
   name: string | null;
   company: string | null;
   position: string | null;
+  phone: string | null;
   summary: string | null;
   score: number;
   resume_url: string | null;

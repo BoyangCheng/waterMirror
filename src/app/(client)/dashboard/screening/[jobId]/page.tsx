@@ -193,6 +193,9 @@ function JobDetailPage() {
               <th className="px-4 py-3 text-sm font-medium text-gray-600">
                 {t("screening.position")}
               </th>
+              <th className="px-4 py-3 text-sm font-medium text-gray-600">
+                {t("screening.phone")}
+              </th>
               <th className="px-4 py-3 text-sm font-medium text-gray-600 max-w-xs">
                 {t("screening.highlightSummary")}
               </th>
@@ -238,6 +241,13 @@ function JobDetailPage() {
                     <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
                   ) : (
                     interviewee.position || "-"
+                  )}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600">
+                  {interviewee.status === "pending" ? (
+                    <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+                  ) : (
+                    interviewee.phone || "-"
                   )}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 max-w-xs">

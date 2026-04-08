@@ -57,13 +57,18 @@ const updateInterview = async (payload: any, id: string) => {
 };
 
 const deleteInterview = async (id: string) => {
+  console.log("[deleteInterview][server] called → id:", id);
   try {
-    await sql`DELETE FROM interview WHERE id = ${id}`;
+    const result = await sql`DELETE FROM interview WHERE id = ${id} RETURNING id`;
+    console.log("[deleteInterview][server] SQL RETURNING:", result);
+    if (!result || result.length === 0) {
+      console.warn("[deleteInterview][server] WARNING: no row deleted — id may not exist or RLS blocked it");
+    }
     invalidateCache("interviews:");
     invalidateCache(`interview:${id}`);
     return null;
   } catch (error) {
-    console.log(error);
+    console.error("[deleteInterview][server] ERROR:", error);
     return [];
   }
 };

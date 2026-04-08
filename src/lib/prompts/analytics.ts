@@ -51,6 +51,7 @@ Based on this transcript and the provided main interview questions, generate the
    - If a main interview question is found in the transcript but an answer couldn't be found, output the main question and give the summary as "Not Answered"
    - If found and answered, provide a cohesive paragraph encompassing all related information for each main question
 4. Create a 10 to 15 words summary regarding the soft skills considering factors such as confidence, leadership, adaptability, critical thinking and decision making.
+5. Job Tendency: Assess the candidate's overall tendency towards this job based on their responses, enthusiasm, and engagement. Choose exactly one of: "positive" (clearly enthusiastic and eager), "optimistic" (generally open and willing but not strongly eager), "negative" (disinterested, reluctant, or unenthusiastic).
 
 Ensure the output is in valid JSON format with the following structure:
 {
@@ -58,7 +59,8 @@ Ensure the output is in valid JSON format with the following structure:
   "overallFeedback": string,
   "communication": { "score": number, "feedback": string },
   "questionSummaries": [{ "question": string, "summary": string }],
-  "softSkillSummary": string
+  "softSkillSummary": string,
+  "jobTendency": "positive" | "optimistic" | "negative"
 }
 
 IMPORTANT: Only use the main questions provided. Do not generate or infer additional questions such as follow-up questions.${langInstruction}`;

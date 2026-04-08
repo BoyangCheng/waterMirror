@@ -12,6 +12,20 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { ThemeProviderProps } from "next-themes/dist/types";
 import React, { useState } from "react";
 
+// IMPORTANT: compose() must be called once at module scope, not inside the
+// render function. If it is called inside the component body, a brand-new
+// component type is produced on every render, which causes React to unmount
+// and remount the entire provider subtree (and everything below it). This
+// would wipe out state in children like the Call component, leaving the RTC
+// engine orphaned while the UI snaps back to its initial state.
+const ComposedProviders = compose([
+  InterviewProvider,
+  InterviewerProvider,
+  ResponseProvider,
+  ClientProvider,
+  JobsProvider,
+]);
+
 const providers = ({ children }: ThemeProviderProps) => {
   // 用 useState 初始化，确保每个客户端会话独立的缓存实例
   const [queryClient] = useState(
@@ -28,19 +42,11 @@ const providers = ({ children }: ThemeProviderProps) => {
       }),
   );
 
-  const Provider = compose([
-    InterviewProvider,
-    InterviewerProvider,
-    ResponseProvider,
-    ClientProvider,
-    JobsProvider,
-  ]);
-
   return (
     <I18nProvider>
       <NextThemesProvider attribute="class" defaultTheme="light">
         <QueryClientProvider client={queryClient}>
-          <Provider>{children}</Provider>
+          <ComposedProviders>{children}</ComposedProviders>
         </QueryClientProvider>
       </NextThemesProvider>
     </I18nProvider>

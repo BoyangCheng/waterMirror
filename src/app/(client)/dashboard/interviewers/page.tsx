@@ -47,6 +47,7 @@ function Interviewers() {
             <h3 className=" text-sm tracking-tight text-gray-600 font-medium ">
               {t("interviewerSettings.getToKnow")}
             </h3>
+            <p className="text-xs text-gray-400 mt-0.5">{t("interviewerSettings.maxCount")}</p>
           </div>
         </div>
         <div className="relative flex items-center mt-2 ">

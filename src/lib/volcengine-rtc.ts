@@ -184,7 +184,7 @@ async function callRTCAPI(action: string, version: string, body: Record<string, 
   });
 
   const text = await res.text();
-  console.log(`[RTC] callRTCAPI ${action} status=${res.status} body=${text.substring(0, 500)}`);
+  // console.log(`[RTC] callRTCAPI ${action} status=${res.status} body=${text.substring(0, 500)}`);
 
   if (!res.ok) {
     throw new Error(`Volcengine RTC API error [${action}]: ${res.status} ${text}`);
@@ -306,7 +306,7 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
   };
 
   const result = await callRTCAPI("StartVoiceChat", "2024-12-01", body);
-  console.log("[RTC] StartVoiceChat response:", JSON.stringify(result));
+  // console.log("[RTC] StartVoiceChat response:", JSON.stringify(result));
   return result;
 }
 
@@ -352,13 +352,14 @@ export function buildInterviewerPrompt(data: {
 
 【提问节奏（硬性规则，必须遵守）】
 1. **一次只问一个问题**。严禁在同一轮回复中同时抛出主问题和追问，也严禁一次性列举多个问题。
-2. 说完一个问题后立即停止发言，等待被面试者回答，再决定下一步。
+2. 说完一个问题后立即结束本轮回复并保持沉默，**绝对不要说出"等待你的回答""请回答""我在听"之类的提示语**——这只是内部行为指令，不要朗读出来。
 3. 针对同一个主问题，最多追问 1~2 次。满足以下任一条件即结束追问，切到下一个主问题：
    - 被面试者的回答已具体、有例子、足以判断能力；
    - 已连续追问 2 次；
    - 被面试者重复、含糊或明确表示"没有更多"。
 4. 切换到下一个主问题时，用简短自然过渡（如"好的，我们看下一个问题"），然后**只**问下一个主问题。
 5. 所有主问题问完后，简短致谢并结束面试。
+6. **时间到提示（最高优先级）**：如果收到任何包含 `[TIME_UP]` 的消息，立刻停止追问和提问，用**一句话**自然致谢并结束面试（例如"感谢你今天的分享，面试就到这里，祝你顺利！"），不要再提任何新问题，不要再追问，不要解释自己为什么结束。
 
 【禁止重复（硬性规则）】
 - 面试过程中绝对不能重复开场白或再次要求被面试者自我介绍。
@@ -394,13 +395,14 @@ Reference questions (ask these in order as "main questions"): ${data.questions}.
 
 [Pacing rules — MUST follow strictly]
 1. **Ask ONE question at a time.** Never combine a main question with a follow-up, and never list multiple questions in a single turn.
-2. After asking a question, stop and wait for the candidate's answer before deciding what to say next.
+2. After asking a question, end your turn and stay silent. **Never say things like "I'll wait for your answer", "please respond", or "I'm listening"** — that is an internal instruction, do not speak it aloud.
 3. For each main question, ask at most 1–2 follow-ups. Move on to the next main question whenever ANY of these is true:
    - the answer is concrete, contains an example, and is enough to judge the skill;
    - you have already asked 2 follow-ups;
    - the candidate repeats, stalls, or says they have nothing more to add.
 4. When switching to the next main question, use a short transition (e.g. "Okay, let's move on to the next question."), then ask ONLY that next main question.
 5. Once all main questions are covered, briefly thank the candidate and end the interview.
+6. **Time-up signal (highest priority)**: If you receive any message containing `[TIME_UP]`, immediately stop asking and probing. Reply with ONE single sentence to thank the candidate and naturally close the interview (e.g. "Thanks for sharing today, that's all for the interview — best of luck!"). Do NOT ask any new questions, do NOT explain why you are ending.
 
 [No repeating — STRICT rule]
 - NEVER repeat the opening greeting or ask the candidate to introduce themselves again.
@@ -462,16 +464,16 @@ export function parseSubtitleMessage(
 ): SubtitleMessage | null {
   try {
     const { type, value } = tlv2String(buffer);
-    console.log("[RTC] binary message type:", type, "length:", buffer.byteLength);
+    // console.log("[RTC] binary message type:", type, "length:", buffer.byteLength);
 
     // Only handle subtitle messages ("subv")
     if (type !== "subv") {
-      console.log("[RTC] non-subtitle message type:", type, "value:", value);
+      // console.log("[RTC] non-subtitle message type:", type, "value:", value);
       return null;
     }
 
     const parsed = JSON.parse(value);
-    console.log("[RTC] subtitle parsed:", JSON.stringify(parsed).substring(0, 200));
+    // console.log("[RTC] subtitle parsed:", JSON.stringify(parsed).substring(0, 200));
 
     // Subtitle data is nested under data[0]
     // Structure: { data: [{ text, definite, userId, paragraph }] }
@@ -495,7 +497,7 @@ export function parseSubtitleMessage(
         if (bytes[i] === 0x7b) { jsonStart = i; break; }
       }
       const jsonStr = new TextDecoder("utf-8").decode(buffer.slice(jsonStart));
-      console.log("[RTC] fallback JSON parse:", jsonStr.substring(0, 200));
+      // console.log("[RTC] fallback JSON parse:", jsonStr.substring(0, 200));
       const data = JSON.parse(jsonStr);
       const item = data.data?.[0] ?? data;
       const text: string = item.text ?? item.content ?? "";
@@ -505,7 +507,7 @@ export function parseSubtitleMessage(
       const role: "agent" | "user" = msgUserId === agentUserId ? "agent" : "user";
       return { role, text, isFinal };
     } catch {
-      console.warn("[RTC] failed to parse binary message, length:", buffer.byteLength);
+      // console.warn("[RTC] failed to parse binary message, length:", buffer.byteLength);
       return null;
     }
   }

@@ -26,9 +26,7 @@ function InterviewerDetailsModal({ interviewer }: Props) {
   const presetKey = interviewer?.image ? PRESET_INTERVIEWER_MAP[interviewer.image] : undefined;
   const preset = presetKey ? INTERVIEWERS[presetKey] : undefined;
 
-  const displayName = preset
-    ? t(`interviewers.${preset.i18nKey}.name` as any)
-    : interviewer?.name;
+  const displayName = interviewer?.name;
 
   const displayDescription = preset
     ? t(`interviewers.${preset.i18nKey}.description` as any)

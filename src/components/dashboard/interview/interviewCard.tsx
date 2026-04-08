@@ -1,6 +1,5 @@
 "use client";
 
-import MiniLoader from "@/components/loaders/mini-loader/miniLoader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,12 +13,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { useInterviews } from "@/contexts/interviews.context";
+import { useAuth, useOrg } from "@/contexts/auth.context";
 import { useI18n } from "@/i18n";
-import { deleteInterview } from "@/services/interviews.service";
+import { useDeleteInterviewMutation } from "@/hooks/useInterviewsQuery";
 import { getInterviewer } from "@/services/interviewers.service";
-import { getAllResponses } from "@/services/responses.service";
-import axios from "axios";
 import { ArrowUpRight, Copy, Trash2 } from "lucide-react";
 import { CopyCheck } from "lucide-react";
 import Image from "next/image";
@@ -32,90 +29,69 @@ interface Props {
   id: string;
   url: string;
   readableSlug: string;
+  responseCount: number;
+  timeDuration?: string;
 }
 
 const base_url = process.env.NEXT_PUBLIC_LIVE_URL;
 
-function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
+function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCount, timeDuration }: Props) {
   const [copied, setCopied] = useState(false);
-  const [responseCount, setResponseCount] = useState<number | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
   const [img, setImg] = useState("");
+  const [interviewerName, setInterviewerName] = useState("");
+  const [imgError, setImgError] = useState(false);
+  const [fetched, setFetched] = useState(false);
   const { t } = useI18n();
-  const { fetchInterviews } = useInterviews();
+  const { user } = useAuth();
+  const { organization } = useOrg();
+  const deleteInterviewMutation = useDeleteInterviewMutation(user?.id, organization?.id);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const fetchInterviewer = async () => {
-      const interviewer = await getInterviewer(interviewerId);
-      if (interviewer) setImg(interviewer.image);
+      try {
+        const interviewer = await getInterviewer(interviewerId);
+        if (interviewer) {
+          if (interviewer.image) setImg(interviewer.image);
+          if (interviewer.name) setInterviewerName(interviewer.name);
+        }
+      } finally {
+        setFetched(true);
+      }
     };
     fetchInterviewer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    const fetchResponses = async () => {
-      try {
-        const responses = await getAllResponses(id);
-        setResponseCount(responses.length);
-        if (responses.length > 0) {
-          setIsFetching(true);
-          for (const response of responses) {
-            if (!response.is_analysed) {
-              try {
-                const result = await axios.post("/api/get-call", {
-                  id: response.call_id,
-                });
-
-                if (result.status !== 200) {
-                  throw new Error(`HTTP error! status: ${result.status}`);
-                }
-              } catch (error) {
-                console.error(
-                  `Failed to call api/get-call for response id ${response.call_id}:`,
-                  error,
-                );
-              }
-            }
-          }
-          setIsFetching(false);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchResponses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleDelete = async (event: React.MouseEvent) => {
+  const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
-    await deleteInterview(id);
-    fetchInterviews();
+    console.log("[InterviewCard] handleDelete → id:", id, "| userId:", user?.id, "| orgId:", organization?.id);
+    deleteInterviewMutation.mutate(id);
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard
-      .writeText(readableSlug ? `${base_url}/call/${readableSlug}` : `${base_url}/call/${id}`)
-      .then(
-        () => {
-          setCopied(true);
-          toast.success(t("interview.linkCopied"), {
-            position: "bottom-right",
-            duration: 3000,
-          });
-          setTimeout(() => {
-            setCopied(false);
-          }, 2000);
-        },
-        (err) => {
-          console.log("failed to copy", err.mesage);
-        },
-      );
+    const link = readableSlug ? `${base_url}/call/${readableSlug}` : `${base_url}/call/${id}`;
+    const message = t("interview.shareMessageTemplate", {
+      orgName: organization?.name ?? "",
+      duration: timeDuration ?? "",
+      link,
+    });
+    navigator.clipboard.writeText(message).then(
+      () => {
+        setCopied(true);
+        toast.success(t("interview.infoCopied"), {
+          position: "bottom-right",
+          duration: 3000,
+        });
+        setTimeout(() => {
+          setCopied(false);
+        }, 2000);
+      },
+      (err) => {
+        console.log("failed to copy", err.mesage);
+      },
+    );
   };
 
   const handleJumpToInterview = (event: React.MouseEvent) => {
@@ -126,47 +102,50 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
   };
 
   return (
-    <a
-      href={`/interviews/${id}`}
-      style={{
-        pointerEvents: isFetching ? "none" : "auto",
-        cursor: isFetching ? "default" : "pointer",
-      }}
-    >
+    <a href={`/interviews/${id}`}>
       <Card className="relative p-0 mt-4 inline-block cursor-pointer h-60 w-56 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md">
-        <CardContent className={`p-0 ${isFetching ? "opacity-60" : ""}`}>
+        <CardContent className="p-0">
           <div className="w-full h-40 overflow-hidden bg-indigo-600 flex items-center text-center">
             <CardTitle className="w-full mt-3 mx-2 text-white text-lg">
               {name}
-              {isFetching && (
-                <div className="z-100 mt-[-5px]">
-                  <MiniLoader />
-                </div>
-              )}
             </CardTitle>
           </div>
-          <div className="flex flex-row items-center mx-4 ">
+          <div className="flex flex-row items-center mx-4">
             <div className="w-full overflow-hidden">
-              {img ? (
+              {img && !imgError ? (
                 <Image
                   src={img}
                   alt="Picture of the interviewer"
                   width={70}
                   height={70}
-                  className="object-cover object-center"
+                  className="object-cover object-center rounded-full"
+                  onError={() => setImgError(true)}
                 />
+              ) : fetched ? (
+                <div className="w-[70px] h-[70px] rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl font-semibold">
+                  {(interviewerName || name || "?").trim().charAt(0).toUpperCase()}
+                </div>
               ) : (
                 <div className="w-[70px] h-[70px] bg-gray-200 rounded-full animate-pulse" />
               )}
             </div>
-            <div className="text-black text-sm font-semibold mt-2 mr-2 whitespace-nowrap">
-              {t("create.responses")} <span className="font-normal">{responseCount?.toString() || 0}</span>
+            <div className="mt-2 mr-2 whitespace-nowrap">
+              {responseCount > 0 ? (
+                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                  {t("create.interviewed")}
+                </span>
+              ) : (
+                <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                  {t("create.notInterviewed")}
+                </span>
+              )}
             </div>
           </div>
           <div className="absolute top-2 right-2 flex gap-1">
             <Button
               className="text-xs text-indigo-600 px-1 h-6"
               variant={"secondary"}
+              title={t("interview.testInterview")}
               onClick={handleJumpToInterview}
             >
               <ArrowUpRight size={16} />
@@ -176,6 +155,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
                 copied ? "bg-indigo-300 text-white" : ""
               }`}
               variant={"secondary"}
+              title={t("interview.shareInterviewInfo")}
               onClick={(event) => {
                 event.stopPropagation();
                 event.preventDefault();
@@ -189,6 +169,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
                 <Button
                   className="text-xs text-red-500 px-1 h-6"
                   variant={"secondary"}
+                  title={t("interview.deleteInterview")}
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
                 >
                   <Trash2 size={16} />

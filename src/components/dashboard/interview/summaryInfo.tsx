@@ -44,10 +44,10 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
   const [interviewer, setInterviewer] = useState<Interviewer>();
   const [totalDuration, setTotalDuration] = useState<number>(0);
   const [completedInterviews, setCompletedInterviews] = useState<number>(0);
-  const [sentimentCount, setSentimentCount] = useState({
+  const [tendencyCount, setTendencyCount] = useState({
     positive: 0,
+    optimistic: 0,
     negative: 0,
-    neutral: 0,
   });
   const [callCompletion, setCallCompletion] = useState({
     complete: 0,
@@ -84,7 +84,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
       return;
     }
     const interviewer = interviewers.find(
-      (interviewer) => interviewer.id === interview.interviewer_id,
+      (i) => Number(i.id) === Number(interview.interviewer_id),
     );
     setInterviewer(interviewer);
   }, [interviewers, interview]);
@@ -95,10 +95,10 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
       return;
     }
 
-    const sentimentCounter = {
+    const tendencyCounter = {
       positive: 0,
+      optimistic: 0,
       negative: 0,
-      neutral: 0,
     };
 
     const callCompletionCounter = {
@@ -118,13 +118,13 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
     };
 
     for (const response of responses) {
-      const sentiment = response.details?.call_analysis?.user_sentiment;
-      if (sentiment === "Positive") {
-        sentimentCounter.positive += 1;
-      } else if (sentiment === "Negative") {
-        sentimentCounter.negative += 1;
-      } else if (sentiment === "Neutral") {
-        sentimentCounter.neutral += 1;
+      const tendency = response.analytics?.jobTendency;
+      if (tendency === "positive") {
+        tendencyCounter.positive += 1;
+      } else if (tendency === "optimistic") {
+        tendencyCounter.optimistic += 1;
+      } else if (tendency === "negative") {
+        tendencyCounter.negative += 1;
       }
 
       const callCompletion = response.details?.call_analysis?.call_completion_rating;
@@ -147,7 +147,7 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
       }
     }
 
-    setSentimentCount(sentimentCounter);
+    setTendencyCount(tendencyCounter);
     setCallCompletion(callCompletionCounter);
     setTotalDuration(totalDuration);
     setCompletedInterviews(completedCount);
@@ -172,6 +172,24 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
           <p className="my-3 ml-2 text-sm">
             {t("summary.interviewDescription")} <span className="font-medium">{interview?.description}</span>
           </p>
+          <div className="ml-2 mb-3 flex items-center gap-2 text-sm">
+            <span className="text-gray-600">{t("summary.candidateSentiment")}：</span>
+            {tendencyCount.positive + tendencyCount.optimistic + tendencyCount.negative === 0 ? (
+              <span className="text-gray-400 text-xs">{t("summary.noSummary")}</span>
+            ) : (
+              <div className="flex gap-2">
+                <span className="bg-green-50 text-green-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                  {t("summary.positive")} {tendencyCount.positive}
+                </span>
+                <span className="bg-blue-50 text-blue-500 text-xs font-medium px-2 py-0.5 rounded-full">
+                  {t("summary.optimistic")} {tendencyCount.optimistic}
+                </span>
+                <span className="bg-red-50 text-red-500 text-xs font-medium px-2 py-0.5 rounded-full">
+                  {t("summary.negative")} {tendencyCount.negative}
+                </span>
+              </div>
+            )}
+          </div>
           <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-slate-50 shadow-md">
             <ScrollArea className="h-[250px]">
               <DataTable data={tableData} interviewId={interview?.id || ""} />
@@ -217,20 +235,20 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     data: [
                       {
                         id: 0,
-                        value: sentimentCount.positive,
-                        label: `${t("summary.positive")} (${sentimentCount.positive})`,
+                        value: tendencyCount.positive,
+                        label: `${t("summary.positive")} (${tendencyCount.positive})`,
                         color: "#22c55e",
                       },
                       {
                         id: 1,
-                        value: sentimentCount.neutral,
-                        label: `${t("summary.neutral")} (${sentimentCount.neutral})`,
-                        color: "#eab308",
+                        value: tendencyCount.optimistic,
+                        label: `${t("summary.optimistic")} (${tendencyCount.optimistic})`,
+                        color: "#60a5fa",
                       },
                       {
                         id: 2,
-                        value: sentimentCount.negative,
-                        label: `${t("summary.negative")} (${sentimentCount.negative})`,
+                        value: tendencyCount.negative,
+                        label: `${t("summary.negative")} (${tendencyCount.negative})`,
                         color: "#eb4444",
                       },
                     ],

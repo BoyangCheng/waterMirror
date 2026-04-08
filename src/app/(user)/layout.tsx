@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/watermirrorlogo.png",
-        width: 800,
+        width: 1200,
         height: 600,
       },
     ],

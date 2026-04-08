@@ -162,6 +162,8 @@ function Interviews() {
                   name={item.name}
                   url={item.url ?? ""}
                   readableSlug={item.readable_slug}
+                  responseCount={Number(item.response_count ?? 0)}
+                  timeDuration={item.time_duration ?? ""}
                 />
               ))}
             </>

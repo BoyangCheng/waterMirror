@@ -123,6 +123,25 @@ function InterviewHome({ params, searchParams }: Props) {
         const response = await getAllResponses(resolvedParams.interviewId);
         setResponses(response);
         setLoading(true);
+
+        // 异步更新 response_count 到面试表，不阻塞 UI
+        updateInterview(
+          { response_count: response.length },
+          resolvedParams.interviewId,
+        ).catch(console.error);
+
+        // 异步触发未分析回复的 get-call，不阻塞 UI
+        for (const r of response) {
+          if (!r.is_analysed) {
+            fetch("/api/get-call", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: r.call_id }),
+            }).catch((err) =>
+              console.error(`Failed get-call for ${r.call_id}:`, err),
+            );
+          }
+        }
       } catch (error) {
         console.error(error);
       } finally {

@@ -40,14 +40,12 @@ function Navbar() {
               <img
                 src="/watermirrorlogo.png"
                 alt="WaterMirror"
-                className="h-20 w-auto flex-none"
+                className="h-12 w-auto flex-none"
                 style={{ background: "transparent" }}
               />
             </Link>
             {organization && (
-              <span className="my-auto text-sm font-medium text-gray-700">
-                {organization.name}
-              </span>
+              <span className="my-auto text-sm font-medium text-gray-700">{organization.name}</span>
             )}
           </div>
 
@@ -85,7 +83,10 @@ function Navbar() {
                   <button
                     type="button"
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 transition-colors"
-                    onClick={() => { setDropdownOpen(false); setShowOrgModal(true); }}
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      setShowOrgModal(true);
+                    }}
                   >
                     <Building2 size={15} />
                     {t("userMenu.orgManagement")}
@@ -93,7 +94,10 @@ function Navbar() {
                   <hr className="my-1" />
                   <button
                     type="button"
-                    onClick={() => { setDropdownOpen(false); signOut(); }}
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      signOut();
+                    }}
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <LogOut size={15} />

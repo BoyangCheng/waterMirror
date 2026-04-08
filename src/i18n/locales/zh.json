@@ -83,7 +83,13 @@
     "statusNowInactive": "面试现已停用。",
     "themeUpdated": "主题颜色已更新",
     "themeUpdateFailed": "更新主题颜色失败。",
-    "upgradeToReactivate": "请升级计划以重新启用"
+    "upgradeToReactivate": "请升级计划以重新启用",
+    "testInterview": "测试面试",
+    "copyInterviewLink": "复制面试链接",
+    "shareInterviewInfo": "分享面试信息",
+    "shareMessageTemplate": "水滴AI 邀请你参加由【{{orgName}}】发起的AI 面试， 面试时长 ：{{duration}}分钟，有效期：3天。面试链接：{{link}}。 我们珍重你的知识和经验，祝你面试顺利。",
+    "infoCopied": "面试信息已复制",
+    "deleteInterview": "删除面试"
   },
   "response": {
     "backToSummary": "返回概要",
@@ -131,6 +137,7 @@
     "namePlaceholder": "例如：共情小王",
     "selectAvatar": "选择头像",
     "getToKnow": "点击头像了解他们。",
+    "maxCount": "面试官上限为4人",
     "createNew": "创建面试官",
     "description": "描述",
     "descriptionPlaceholder": "例如：我是一位温暖的面试官...",
@@ -176,6 +183,8 @@
     "descriptionPlaceholderShort": "请输入面试描述。",
     "deleteFailed": "删除面试失败。",
     "responses": "回复数：",
+    "interviewed": "已面试",
+    "notInterviewed": "未面试",
     "tabManual": "未添加职位简历",
     "tabFromJob": "已添加职位简历",
     "selectJob": "选择职位：",
@@ -192,12 +201,13 @@
     "averageDurationTooltip": "用户完成面试的平均时长",
     "completionRate": "面试完成率",
     "completionRateTooltip": "成功完成面试的百分比",
-    "candidateSentiment": "候选人情感",
-    "candidateSentimentTooltip": "面试中用户情感的分布",
+    "candidateSentiment": "候选人倾向",
+    "candidateSentimentTooltip": "候选人对该岗位的倾向分布（由AI根据面试内容分析得出）",
     "candidateStatus": "候选人状态",
     "candidateStatusTooltip": "候选人筛选状态分布",
     "totalResponses": "总回复数：",
     "positive": "积极",
+    "optimistic": "乐观",
     "neutral": "中立",
     "negative": "消极",
     "overallScore": "综合评分",
@@ -247,7 +257,8 @@
     "createFailed": "职位创建失败",
     "addResumeSuccess": "简历追加成功",
     "addResumeFailed": "简历追加失败",
-    "deleteConfirm": "此操作不可撤销，将永久删除此职位及所有候选人数据。"
+    "deleteConfirm": "此操作不可撤销，将永久删除此职位及所有候选人数据。",
+    "phone": "电话"
   },
   "tabSwitch": {
     "title": "警告：切换标签页",
@@ -281,6 +292,20 @@
     "phonePlaceholder": "请输入您的电话号码",
     "saveSuccess": "个人信息更新成功。",
     "saveFailed": "更新个人信息失败。"
+  },
+  "bugReport": {
+    "title": "报告 Bug",
+    "description": "问题描述",
+    "descriptionPlaceholder": "请描述你遇到的问题...",
+    "solution": "建议解决方案",
+    "solutionPlaceholder": "你认为应该如何修复？",
+    "email": "邮箱",
+    "emailPlaceholder": "your@email.com",
+    "optional": "选填",
+    "required": "此项为必填",
+    "submit": "提交",
+    "thankYou": "感谢反馈！",
+    "logged": "已记录到控制台"
   },
   "orgManagement": {
     "title": "组织管理",

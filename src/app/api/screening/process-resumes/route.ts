@@ -83,6 +83,7 @@ async function analyzeResume(
   name: string;
   company: string;
   position: string;
+  phone: string | null;
   summary: string;
   score: number;
 }> {
@@ -154,6 +155,7 @@ export async function POST(req: Request) {
           name: result.name || "未知",
           company: result.company || "未知",
           position: result.position || "未知",
+          phone: result.phone || null,
           summary: result.summary || "",
           score: Math.min(100, Math.max(0, result.score || 0)),
           status: "analyzed",

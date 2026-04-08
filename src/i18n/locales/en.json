@@ -83,7 +83,13 @@
     "statusNowInactive": "The interview is now inactive.",
     "themeUpdated": "Theme color updated",
     "themeUpdateFailed": "Failed to update the theme color.",
-    "upgradeToReactivate": "Upgrade your plan to reactivate"
+    "upgradeToReactivate": "Upgrade your plan to reactivate",
+    "testInterview": "Test Interview",
+    "copyInterviewLink": "Copy Interview Link",
+    "shareInterviewInfo": "Share Interview Info",
+    "shareMessageTemplate": "WaterMirror AI invites you to an AI interview hosted by [{{orgName}}]. Duration: {{duration}} minutes. Valid for 3 days. Interview link: {{link}}. We value your knowledge and experience, and wish you the best of luck.",
+    "infoCopied": "Interview info copied",
+    "deleteInterview": "Delete Interview"
   },
   "response": {
     "backToSummary": "Back to Summary",
@@ -131,6 +137,7 @@
     "namePlaceholder": "e.g. Empathetic Bob",
     "selectAvatar": "Select an Avatar",
     "getToKnow": "Get to know them by clicking the profile.",
+    "maxCount": "Maximum 4 interviewers",
     "createNew": "Create Interviewer",
     "description": "Description",
     "descriptionPlaceholder": "e.g. I'm a warm and curious interviewer...",
@@ -176,6 +183,8 @@
     "descriptionPlaceholderShort": "Enter your interview description.",
     "deleteFailed": "Failed to delete the interview.",
     "responses": "Responses:",
+    "interviewed": "Interviewed",
+    "notInterviewed": "Not Interviewed",
     "tabManual": "Without Job Resumes",
     "tabFromJob": "With Job Resumes",
     "selectJob": "Select Position:",
@@ -192,12 +201,13 @@
     "averageDurationTooltip": "Average time users took to complete an interview",
     "completionRate": "Interview Completion Rate",
     "completionRateTooltip": "Percentage of interviews completed successfully",
-    "candidateSentiment": "Candidate Sentiment",
-    "candidateSentimentTooltip": "Distribution of user sentiments during interviews",
+    "candidateSentiment": "Candidate Tendency",
+    "candidateSentimentTooltip": "Candidate's tendency towards this position, analyzed by AI from interview content",
     "candidateStatus": "Candidate Status",
     "candidateStatusTooltip": "Breakdown of the candidate selection status",
     "totalResponses": "Total Responses:",
     "positive": "Positive",
+    "optimistic": "Optimistic",
     "neutral": "Neutral",
     "negative": "Negative",
     "overallScore": "Overall Score",
@@ -247,7 +257,8 @@
     "createFailed": "Failed to create position",
     "addResumeSuccess": "Resumes added successfully",
     "addResumeFailed": "Failed to add resumes",
-    "deleteConfirm": "This action cannot be undone. This will permanently delete this position and all candidate data."
+    "deleteConfirm": "This action cannot be undone. This will permanently delete this position and all candidate data.",
+    "phone": "Phone"
   },
   "tabSwitch": {
     "title": "Warning: Tab Switching",
@@ -281,6 +292,20 @@
     "phonePlaceholder": "Enter your phone number",
     "saveSuccess": "Profile updated successfully.",
     "saveFailed": "Failed to update profile."
+  },
+  "bugReport": {
+    "title": "Report a Bug",
+    "description": "Problem Description",
+    "descriptionPlaceholder": "Describe the issue you encountered...",
+    "solution": "Suggested Solution",
+    "solutionPlaceholder": "How do you think it should be fixed?",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "optional": "optional",
+    "required": "This field is required",
+    "submit": "Submit",
+    "thankYou": "Thanks for your feedback!",
+    "logged": "Logged to console"
   },
   "orgManagement": {
     "title": "Organization",

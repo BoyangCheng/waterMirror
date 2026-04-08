@@ -66,6 +66,7 @@ const updateInterviewee = async (
     name?: string;
     company?: string;
     position?: string;
+    phone?: string | null;
     summary?: string;
     score?: number;
     status?: string;

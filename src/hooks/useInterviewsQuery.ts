@@ -36,21 +36,38 @@ export function useDeleteInterviewMutation(
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => deleteInterview(id),
+    mutationFn: async (id: string) => {
+      console.log("[deleteInterviewMutation] mutationFn start → id:", id);
+      const result = await deleteInterview(id);
+      console.log("[deleteInterviewMutation] mutationFn result:", result);
+      return result;
+    },
     onMutate: async (id) => {
-      if (!userId || !orgId) return;
+      console.log("[deleteInterviewMutation] onMutate → userId:", userId, "orgId:", orgId, "id:", id);
+      if (!userId || !orgId) {
+        console.warn("[deleteInterviewMutation] onMutate SKIP — userId or orgId missing");
+        return;
+      }
       const key = queryKeys.interviews.all(userId, orgId);
       await qc.cancelQueries({ queryKey: key });
       const previous = qc.getQueryData<Interview[]>(key);
       qc.setQueryData<Interview[]>(key, (old) => old?.filter((i) => i.id !== id) ?? []);
       return { previous };
     },
-    onError: (_err, _id, ctx) => {
+    onSuccess: (data, id) => {
+      console.log("[deleteInterviewMutation] onSuccess → id:", id, "data:", data);
+    },
+    onError: (err, id, ctx) => {
+      console.error("[deleteInterviewMutation] onError → id:", id, "error:", err);
       if (!userId || !orgId || !ctx?.previous) return;
       qc.setQueryData(queryKeys.interviews.all(userId, orgId), ctx.previous);
     },
-    onSettled: () => {
-      if (!userId || !orgId) return;
+    onSettled: (data, error, id) => {
+      console.log("[deleteInterviewMutation] onSettled → userId:", userId, "orgId:", orgId, "id:", id, "error:", error);
+      if (!userId || !orgId) {
+        console.warn("[deleteInterviewMutation] onSettled SKIP — userId or orgId missing, UI will NOT refresh");
+        return;
+      }
       qc.invalidateQueries({ queryKey: queryKeys.interviews.all(userId, orgId) });
     },
   });
