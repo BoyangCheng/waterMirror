@@ -4,6 +4,7 @@ import {
   generateRTCToken,
   startVoiceChat,
 } from "@/lib/volcengine-rtc";
+import { getCachedOrganizationById } from "@/services/clients.service";
 import { getInterviewer } from "@/services/interviewers.service";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
@@ -18,9 +19,13 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { dynamic_data, interviewer_id } = body;
+    const { dynamic_data, interviewer_id, organization_id } = body;
 
-    const interviewer = await getInterviewer(interviewer_id);
+    const [interviewer, organization] = await Promise.all([
+      getInterviewer(interviewer_id),
+      organization_id ? getCachedOrganizationById(organization_id) : Promise.resolve(null),
+    ]);
+    const orgName = organization?.name?.trim() || "";
 
     // Unique IDs for this call session
     const roomId = nanoid();
@@ -73,8 +78,8 @@ export async function POST(req: Request) {
 
     const welcomeMessage =
       dynamic_data.language === "en"
-        ? `Hello ${dynamic_data.name !== "not provided" ? dynamic_data.name : ""}! I'm your interviewer today. Please start by introducing yourself.`
-        : `你好${dynamic_data.name !== "not provided" ? ` ${dynamic_data.name}` : ""}！我是你今天的面试官，请先介绍一下你自己。`;
+        ? `Hello${dynamic_data.name !== "not provided" ? ` ${dynamic_data.name}` : ""}! My name is Cheng, I'll be your interviewer today. I've been working in HR${orgName ? ` at ${orgName}` : ""} for two years, mainly handling personnel management, recruitment, and day-to-day HR coordination. Please relax — let's just have a casual chat. Could you start by briefly walking me through your background?`
+        : `你好${dynamic_data.name !== "not provided" ? `，${dynamic_data.name}` : ""}，我姓程，是今天的面试官。我在${orgName || "本公司"}从事 HR 工作两年，主要负责人事管理、招聘配置及日常人事事务统筹。接下来不用紧张，咱们就轻松聊一聊。你可以先简单介绍一下自己的过往经历。`;
 
     // Start the AI voice agent in the RTC room
     await startVoiceChat({
@@ -105,8 +110,13 @@ export async function POST(req: Request) {
       { status: 200 },
     );
   } catch (err) {
-    logger.error("Error registering RTC call");
-    console.error(err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    logger.error(`Error registering RTC call: ${message}`);
+    console.error("[register-call] error:", err);
+    return NextResponse.json(
+      { error: message, stack },
+      { status: 500 },
+    );
   }
 }

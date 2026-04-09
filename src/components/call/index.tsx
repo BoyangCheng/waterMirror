@@ -395,6 +395,7 @@ function Call({ interview }: InterviewProps) {
       const registerRes: RegisterCallResponse = await axios.post("/api/register-call", {
         dynamic_data: data,
         interviewer_id: interview?.interviewer_id,
+        organization_id: interview?.organization_id,
       });
 
       const {
