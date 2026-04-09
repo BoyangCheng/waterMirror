@@ -70,7 +70,7 @@ const getOrganizationById = async (organization_id?: string, organization_name?:
     return data ? data[0] : null;
   } catch (error) {
     console.log(error);
-    return [];
+    return null;
   }
 };
 

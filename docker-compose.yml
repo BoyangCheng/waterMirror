@@ -13,8 +13,10 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # 可选：构建时注入环境变量
+        # NEXT_PUBLIC_* 变量会被 Next.js 内联到客户端 bundle，必须在 build 时传入
         NEXT_PUBLIC_LIVE_URL: ${NEXT_PUBLIC_LIVE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+        NEXT_PUBLIC_AUTHING_APP_HOST: ${NEXT_PUBLIC_AUTHING_APP_HOST:-}
 
     # 容器名称
     container_name: watermirror
