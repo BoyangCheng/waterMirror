@@ -88,6 +88,10 @@ function Call({ interview }: InterviewProps) {
   const transcriptRef = useRef<TranscriptEntry[]>([]);
   const startTimeRef = useRef<number>(0);
 
+  // Accumulate agent sentences within one turn
+  const agentAccumulatedRef = useRef("");
+  const wasAgentTurnRef = useRef(false);
+
   // Timer
   const [time, setTime] = useState(0);
   const [currentTimeDuration, setCurrentTimeDuration] = useState("0");
@@ -493,12 +497,27 @@ function Call({ interview }: InterviewProps) {
         if (!parsed) return;
 
         if (parsed.role === "agent") {
+          // Reset accumulation at the start of a new agent turn
+          if (!wasAgentTurnRef.current) {
+            agentAccumulatedRef.current = "";
+            wasAgentTurnRef.current = true;
+          }
           setActiveTurn("agent");
-          setLastInterviewerResponse(parsed.text);
           if (parsed.isFinal) {
+            agentAccumulatedRef.current +=
+              (agentAccumulatedRef.current ? " " : "") + parsed.text;
+            setLastInterviewerResponse(agentAccumulatedRef.current);
             transcriptRef.current.push({ role: "agent", content: parsed.text });
+          } else {
+            // Show accumulated + in-progress partial text
+            setLastInterviewerResponse(
+              agentAccumulatedRef.current +
+                (agentAccumulatedRef.current ? " " : "") +
+                parsed.text
+            );
           }
         } else {
+          wasAgentTurnRef.current = false;
           setActiveTurn("user");
           setLastUserResponse(parsed.text);
           if (parsed.isFinal) {

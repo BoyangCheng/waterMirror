@@ -352,7 +352,7 @@ export function buildInterviewerPrompt(data: {
 
 【提问节奏（硬性规则，必须遵守）】
 1. **一次只问一个问题**。严禁在同一轮回复中同时抛出主问题和追问，也严禁一次性列举多个问题。
-2. 说完一个问题后立即结束本轮回复并保持沉默，**绝对不要说出"等待你的回答""请回答""我在听"之类的提示语**——这只是内部行为指令，不要朗读出来。
+2. 说完一个问题后立即结束本轮回复并保持沉默。**以下短语一律禁止出现，违反即为严重错误**："等待你的回答"、"等待回答"、"请回答"、"我在听"、"请说"、"你可以开始了"、"随时可以回答"、"我等你"，以及任何语义等价的话。问完问题后，下一个输出必须是对方回答之后的跟进，不是提示对方说话。
 3. 针对同一个主问题，最多追问 1~2 次。满足以下任一条件即结束追问，切到下一个主问题：
    - 被面试者的回答已具体、有例子、足以判断能力；
    - 已连续追问 2 次；
@@ -378,7 +378,8 @@ export function buildInterviewerPrompt(data: {
 - 专业而友好，每句话不超过 30 个字。
 - 不重复已问过的问题，不讨论与目标无关的话题。
 - 如果知道对方姓名，在对话中适当使用。
-- 输出纯口语文本，不要使用 Markdown 符号（如 **、#、列表编号等）。`;
+- 输出纯口语文本，不要使用 Markdown 符号（如 **、#、列表编号等）。
+- **严禁输出括号内容**，例如（等待回答）、（沉默）、（停顿）、[等待] 等任何形式的动作描述或舞台提示，一律不允许出现在输出中。`;
   }
   const styleNote = iv
     ? `\nInterviewing style: empathy ${iv.empathy}/10, rapport ${iv.rapport}/10, exploration ${iv.exploration}/10, speed ${iv.speed}/10. Higher empathy means focusing on emotional experience; higher exploration means probing deeper into details; higher rapport means warmer, friendlier tone; higher speed means faster pacing and more concise exchanges.`
@@ -395,7 +396,7 @@ Reference questions (ask these in order as "main questions"): ${data.questions}.
 
 [Pacing rules — MUST follow strictly]
 1. **Ask ONE question at a time.** Never combine a main question with a follow-up, and never list multiple questions in a single turn.
-2. After asking a question, end your turn and stay silent. **Never say things like "I'll wait for your answer", "please respond", or "I'm listening"** — that is an internal instruction, do not speak it aloud.
+2. After asking a question, end your turn immediately. **The following phrases are strictly forbidden — using any of them is a critical error**: "I'll wait for your answer", "please respond", "I'm listening", "go ahead", "feel free to answer", "take your time", "whenever you're ready", or any semantically equivalent phrase. After a question, your next output must only come after the candidate has responded.
 3. For each main question, ask at most 1–2 follow-ups. Move on to the next main question whenever ANY of these is true:
    - the answer is concrete, contains an example, and is enough to judge the skill;
    - you have already asked 2 follow-ups;
@@ -420,7 +421,8 @@ Reference questions (ask these in order as "main questions"): ${data.questions}.
 [Conversation style]
 - Professional yet friendly. Each utterance under 30 words.
 - Never repeat a question. Stay on topic. Use the candidate's name when known.
-- Output plain spoken text — no Markdown (no **, #, bullet numbers, etc.).`;
+- Output plain spoken text — no Markdown (no **, #, bullet numbers, etc.).
+- **Never output parenthetical content** such as (waiting for answer), (silence), (pause), [waiting], or any other action description or stage direction. These are strictly forbidden.`;
 }
 
 // ---------------------------------------------------------------------------
