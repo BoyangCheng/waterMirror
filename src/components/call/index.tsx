@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useResponses } from "@/contexts/responses.context";
 import { useI18n } from "@/i18n";
-import { parseSubtitleMessage } from "@/lib/volcengine-rtc";
+import { buildAgentCtrlMessage, parseSubtitleMessage } from "@/lib/volcengine-rtc";
 import { isLightColor, testEmail } from "@/lib/utils";
 import { submitFeedback } from "@/services/feedback.service";
 import { getInterviewer } from "@/services/interviewers.service";
@@ -178,12 +178,25 @@ function Call({ interview }: InterviewProps) {
       const engine = engineRef.current;
       const targetAgent = agentUserIdRef.current;
       if (engine && targetAgent) {
+        // 通过 ctrl TLV 向 AIGC agent 注入 ExternalTextToLLM 指令，
+        // agent 会把 Message 作为"用户消息"喂给 LLM，触发 system prompt 里的时间到规则。
+        // InterruptMode: 2 = MEDIUM，等当前交互结束后再处理，避免打断候选人正在说话。
         try {
-          (engine as any).sendUserMessage?.(
-            targetAgent,
+          const tlv = buildAgentCtrlMessage(
+            "ExternalTextToLLM",
             "[TIME_UP] 面试时间快到了，请立刻用一句话向被面试者表示感谢并自然结束面试，不要再提新问题。",
+            2,
           );
-        } catch { /* ignore */ }
+          (engine as any).sendUserBinaryMessage(targetAgent, tlv.buffer);
+          console.log("[Call] TIME_UP ExternalTextToLLM sent to agent:", targetAgent);
+        } catch (err) {
+          console.warn("[Call] failed to send TIME_UP:", err);
+        }
+      } else {
+        console.warn("[Call] TIME_UP skipped — engine or agent not ready", {
+          hasEngine: !!engine,
+          agent: targetAgent,
+        });
       }
       // 时间到时延迟一段时间再真正断开，留给 AI 播报致谢
       if (endTimeoutRef.current) clearTimeout(endTimeoutRef.current);
@@ -765,7 +778,7 @@ function Call({ interview }: InterviewProps) {
               <div className="flex flex-row p-2 grow">
                 <div className="border-x-2 border-grey w-[50%] my-auto min-h-[70%]">
                   <div className="flex flex-col justify-evenly">
-                    <div className="text-[22px] w-[80%] md:text-[26px] mt-4 min-h-[250px] mx-auto px-6">
+                    <div className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 h-[250px] mx-auto px-6 overflow-y-auto">
                       {lastInterviewerResponse}
                     </div>
                     <div className="flex flex-col mx-auto justify-center items-center align-middle">
@@ -799,7 +812,7 @@ function Call({ interview }: InterviewProps) {
                 <div className="flex flex-col justify-evenly w-[50%]">
                   <div
                     ref={lastUserResponseRef}
-                    className="text-[22px] w-[80%] md:text-[26px] mt-4 mx-auto h-[250px] px-6 overflow-y-auto"
+                    className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 mx-auto h-[250px] px-6 overflow-y-auto"
                   >
                     {lastUserResponse}
                   </div>

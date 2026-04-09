@@ -436,6 +436,48 @@ export interface SubtitleMessage {
   isFinal: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// String → TLV (browser): 4-byte type (ASCII) + 4-byte length (big-endian) + UTF-8 value
+// Ref: https://github.com/volcengine/rtc-aigc-demo/blob/main/src/utils/utils.ts
+// 用于向 AIGC agent 发送 "ctrl" 指令（例如 ExternalTextToLLM）
+// ---------------------------------------------------------------------------
+export function string2tlv(str: string, type: string): Uint8Array {
+  const typeBuffer = new Uint8Array(4);
+  for (let i = 0; i < type.length && i < 4; i++) {
+    typeBuffer[i] = type.charCodeAt(i);
+  }
+  const valueBuffer = new TextEncoder().encode(str);
+  const len = valueBuffer.length;
+  const tlv = new Uint8Array(8 + len);
+  tlv.set(typeBuffer, 0);
+  // big-endian uint32 length
+  tlv[4] = (len >> 24) & 0xff;
+  tlv[5] = (len >> 16) & 0xff;
+  tlv[6] = (len >> 8) & 0xff;
+  tlv[7] = len & 0xff;
+  tlv.set(valueBuffer, 8);
+  return tlv;
+}
+
+/**
+ * 构造向 AIGC agent 发送的 "ctrl" 控制消息（TLV 二进制）。
+ * 通过 engine.sendUserBinaryMessage(agentUserId, buffer) 发送。
+ *
+ * @param command        指令类型（常用：interrupt / ExternalTextToLLM / ExternalTextToSpeech）
+ * @param message        文本内容（ExternalTextToLLM 时作为"用户消息"注入 LLM 上下文）
+ * @param interruptMode  1=HIGH 立即打断, 2=MEDIUM 等当前交互结束, 3=LOW 丢弃
+ */
+export function buildAgentCtrlMessage(
+  command: "interrupt" | "ExternalTextToLLM" | "ExternalTextToSpeech",
+  message: string,
+  interruptMode: 1 | 2 | 3 = 2,
+): Uint8Array {
+  return string2tlv(
+    JSON.stringify({ Command: command, InterruptMode: interruptMode, Message: message }),
+    "ctrl",
+  );
+}
+
 /**
  * Decode a TLV binary message into { type, value }
  */
