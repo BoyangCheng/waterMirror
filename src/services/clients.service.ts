@@ -16,6 +16,29 @@ const updateOrganization = async (payload: any, id: string) => {
   }
 };
 
+/**
+ * 仅按 id 读取组织信息，命中 5 分钟缓存。
+ * 与 getOrganizationById 不同：不做 upsert，纯读，可被服务端任意路由复用。
+ */
+const getCachedOrganizationById = async (
+  organization_id: string,
+): Promise<{ id: string; name: string | null } | null> => {
+  if (!organization_id) return null;
+  try {
+    return await cachedQuery(
+      `org:${organization_id}`,
+      async () => {
+        const data = await sql`SELECT id, name FROM organization WHERE id = ${organization_id}`;
+        return data && data.length > 0 ? (data[0] as { id: string; name: string | null }) : null;
+      },
+      ORG_TTL,
+    );
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
 const getClientById = async (
   id: string,
   email?: string | null,
@@ -141,6 +164,7 @@ export {
   updateOrganization,
   getClientById,
   getOrganizationById,
+  getCachedOrganizationById,
   updateUser,
   getUserById,
   getUsersByOrgId,

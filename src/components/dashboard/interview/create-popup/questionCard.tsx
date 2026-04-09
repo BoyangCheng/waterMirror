@@ -22,9 +22,9 @@ const questionCard = ({
       <Card className=" shadow-md mb-5 pb-3 ">
         <CardContent className="p-2 mx-5">
           <div className="flex flex-row justify-between mt-3 items-baseline ">
-            <CardTitle className="text-lg">Question {questionNumber}</CardTitle>
+            <CardTitle className="text-lg">问题 {questionNumber}</CardTitle>
             <div className="flex flex-row items-start space-x-1">
-              <h3 className="text-base font-semibold mr-2">Depth Level: </h3>
+              <h3 className="text-base font-semibold mr-2">追问深度：</h3>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -39,11 +39,11 @@ const questionCard = ({
                         })
                       }
                     >
-                      Low
+                      浅
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-zinc-200">
-                    <p className="text-zinc-800">Brief follow-up</p>
+                    <p className="text-zinc-800">简短追问</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -62,11 +62,11 @@ const questionCard = ({
                         })
                       }
                     >
-                      Medium
+                      中
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-zinc-200">
-                    <p className="text-zinc-800">Moderate follow-up</p>
+                    <p className="text-zinc-800">适度追问</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -85,11 +85,11 @@ const questionCard = ({
                         })
                       }
                     >
-                      High
+                      深
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent className="bg-zinc-200">
-                    <p className="text-zinc-800">In-depth follow-up</p>
+                    <p className="text-zinc-800">深度追问</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -99,7 +99,7 @@ const questionCard = ({
             <textarea
               value={questionData?.question}
               className="h-fit mt-3 pt-1 border-2 rounded-md w-full px-2 border-gray-400"
-              placeholder="e.g. Can you tell me about a challenging project you’ve worked on?"
+              placeholder="例如：能聊聊你做过的一个最具挑战的项目吗？"
               rows={3}
               onChange={(e) =>
                 onQuestionChange(questionData.id, {

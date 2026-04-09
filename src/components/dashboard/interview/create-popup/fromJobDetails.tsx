@@ -134,27 +134,48 @@ function FromJobDetails({
       context: "",
     };
 
-    const generatedQuestions = (await axios.post("/api/generate-interview-questions", data)) as any;
-    const generatedQuestionsResponse = JSON.parse(generatedQuestions?.data?.response);
+    try {
+      const generatedQuestions = (await axios.post(
+        "/api/generate-interview-questions",
+        data,
+      )) as any;
 
-    const updatedQuestions = generatedQuestionsResponse.questions.map((question: Question) => ({
-      id: uuidv4(),
-      question: question.question.trim(),
-      follow_up_count: 1,
-    }));
+      const rawResponse = generatedQuestions?.data?.response;
+      console.log("[generate-questions] raw response:", rawResponse);
 
-    const updatedInterviewData = {
-      ...interviewData,
-      name: name.trim(),
-      objective: objective.trim(),
-      questions: updatedQuestions,
-      interviewer_id: selectedInterviewer,
-      question_count: Number(numQuestions),
-      time_duration: duration,
-      description: generatedQuestionsResponse.description,
-      is_anonymous: isAnonymous,
-    };
-    setInterviewData(updatedInterviewData);
+      const generatedQuestionsResponse = JSON.parse(rawResponse);
+
+      if (!Array.isArray(generatedQuestionsResponse?.questions)) {
+        throw new Error(
+          `Invalid response shape — missing "questions" array: ${rawResponse}`,
+        );
+      }
+
+      const updatedQuestions = generatedQuestionsResponse.questions.map((question: Question) => ({
+        id: uuidv4(),
+        question: question.question.trim(),
+        follow_up_count: 1,
+      }));
+
+      const updatedInterviewData = {
+        ...interviewData,
+        name: name.trim(),
+        objective: objective.trim(),
+        questions: updatedQuestions,
+        interviewer_id: selectedInterviewer,
+        question_count: Number(numQuestions),
+        time_duration: duration,
+        description: generatedQuestionsResponse.description,
+        is_anonymous: isAnonymous,
+      };
+      setInterviewData(updatedInterviewData);
+    } catch (err) {
+      console.error("[generate-questions] failed:", err);
+      setLoading(false);
+      alert(
+        `生成面试问题失败：${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   };
 
   const onManual = () => {

@@ -359,7 +359,7 @@ export function buildInterviewerPrompt(data: {
    - 被面试者重复、含糊或明确表示"没有更多"。
 4. 切换到下一个主问题时，用简短自然过渡（如"好的，我们看下一个问题"），然后**只**问下一个主问题。
 5. 所有主问题问完后，简短致谢并结束面试。
-6. **时间到提示（最高优先级）**：如果收到任何包含 `[TIME_UP]` 的消息，立刻停止追问和提问，用**一句话**自然致谢并结束面试（例如"感谢你今天的分享，面试就到这里，祝你顺利！"），不要再提任何新问题，不要再追问，不要解释自己为什么结束。
+6. **时间到提示（最高优先级）**：如果收到任何包含 \`[TIME_UP]\` 的消息，立刻停止追问和提问，用**一句话**自然致谢并结束面试（例如"感谢你今天的分享，面试就到这里，祝你顺利！"），不要再提任何新问题，不要再追问，不要解释自己为什么结束。
 
 【禁止重复（硬性规则）】
 - 面试过程中绝对不能重复开场白或再次要求被面试者自我介绍。
@@ -402,7 +402,7 @@ Reference questions (ask these in order as "main questions"): ${data.questions}.
    - the candidate repeats, stalls, or says they have nothing more to add.
 4. When switching to the next main question, use a short transition (e.g. "Okay, let's move on to the next question."), then ask ONLY that next main question.
 5. Once all main questions are covered, briefly thank the candidate and end the interview.
-6. **Time-up signal (highest priority)**: If you receive any message containing `[TIME_UP]`, immediately stop asking and probing. Reply with ONE single sentence to thank the candidate and naturally close the interview (e.g. "Thanks for sharing today, that's all for the interview — best of luck!"). Do NOT ask any new questions, do NOT explain why you are ending.
+6. **Time-up signal (highest priority)**: If you receive any message containing \`[TIME_UP]\`, immediately stop asking and probing. Reply with ONE single sentence to thank the candidate and naturally close the interview (e.g. "Thanks for sharing today, that's all for the interview — best of luck!"). Do NOT ask any new questions, do NOT explain why you are ending.
 
 [No repeating — STRICT rule]
 - NEVER repeat the opening greeting or ask the candidate to introduce themselves again.
