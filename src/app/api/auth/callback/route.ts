@@ -1,12 +1,19 @@
 import { SignJWT } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
+// 反向代理后面 request.url 的 host 可能是上游（127.0.0.1:3000），
+// 用 NEXT_PUBLIC_SITE_URL 作为 base 保证重定向指向公网域名。
+function baseUrlOf(request: NextRequest): string {
+  return process.env.NEXT_PUBLIC_SITE_URL || request.url;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
+  const baseUrl = baseUrlOf(request);
 
   if (!code) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    return NextResponse.redirect(new URL("/sign-in", baseUrl));
   }
 
   // 用 code 换 token
@@ -23,7 +30,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!tokenRes.ok) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    return NextResponse.redirect(new URL("/sign-in", baseUrl));
   }
 
   const tokens = await tokenRes.json();
@@ -47,7 +54,7 @@ export async function GET(request: NextRequest) {
     .setExpirationTime("7d")
     .sign(secret);
 
-  const response = NextResponse.redirect(new URL("/dashboard", request.url));
+  const response = NextResponse.redirect(new URL("/dashboard", baseUrl));
   response.cookies.set("idaas_access_token", internalToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

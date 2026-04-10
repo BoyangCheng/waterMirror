@@ -13,6 +13,13 @@ const publicRoutes = [
 
 const publicPrefixes = ["/call/", "/interview/"];
 
+// 反向代理后面 request.url 的 host 可能是上游（127.0.0.1:3000），
+// 用 NEXT_PUBLIC_SITE_URL 作为 base 保证重定向指向公网域名。
+function buildRedirectUrl(path: string, request: NextRequest): URL {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || request.url;
+  return new URL(path, baseUrl);
+}
+
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -29,7 +36,7 @@ export default async function middleware(request: NextRequest) {
   // 验证 JWT token
   const token = request.cookies.get("idaas_access_token")?.value;
   if (!token) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    return NextResponse.redirect(buildRedirectUrl("/sign-in", request));
   }
 
   try {
@@ -37,7 +44,7 @@ export default async function middleware(request: NextRequest) {
     await jwtVerify(token, secret);
     return NextResponse.next();
   } catch {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    return NextResponse.redirect(buildRedirectUrl("/sign-in", request));
   }
 }
 
