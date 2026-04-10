@@ -1,7 +1,8 @@
 export interface User {
   id: string;
   created_at: Date;
-  user_id: string;
-  image_url: string;
-  organization_id: string;
+  email: string | null;
+  name: string | null;
+  phone: string | null;
+  organization_id: string | null;
 }

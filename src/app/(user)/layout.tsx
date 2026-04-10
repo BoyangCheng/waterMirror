@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "../globals.css";
 import Providers from "@/components/providers";
+import ErrorReporterInit from "@/components/error-reporter-init";
 import { AuthProvider } from "@/contexts/auth.context";
 import { Toaster } from "sonner";
 
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="font-sans">
         <AuthProvider>
           <Providers>
+            <ErrorReporterInit />
             {children}
             <Toaster
               toastOptions={{

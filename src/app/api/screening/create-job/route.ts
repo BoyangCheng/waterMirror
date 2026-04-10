@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logger";
 import { uploadToOSS, getResumeObjectKey } from "@/lib/oss";
-import { createJob } from "@/services/jobs.service";
+import { createJob, deleteJob } from "@/services/jobs.service";
 import { createInterviewee } from "@/services/interviewees.service";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
@@ -33,8 +33,10 @@ export async function POST(req: Request) {
     const jobId = nanoid();
     logger.info("Creating screening job", { jobId, name });
 
-    // Create job record
-    await createJob({
+    // Create job record —— 服务层把异常吞成 { error }，这里必须检查，
+    // 否则后续 interviewee 插入会因为 job 不存在而触发 FK 违规，
+    // 并且接口还会返回 200 让前端误以为创建成功。
+    const jobResult = await createJob({
       id: jobId,
       name,
       description,
@@ -43,18 +45,40 @@ export async function POST(req: Request) {
       status: "processing",
     });
 
+    if (jobResult?.error) {
+      logger.error("Failed to create job record");
+      console.error(jobResult.error);
+      return NextResponse.json(
+        { error: "Failed to create job record" },
+        { status: 500 },
+      );
+    }
+
     // Upload files to OSS and create interviewee records
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const objectKey = getResumeObjectKey(jobId, file.name);
       const resumeUrl = await uploadToOSS(buffer, objectKey);
 
-      await createInterviewee({
+      const interviewee = await createInterviewee({
         job_id: jobId,
         resume_url: resumeUrl,
         original_filename: file.name,
         status: "pending",
       });
+
+      if (!interviewee) {
+        logger.error("Failed to create interviewee record", {
+          jobId,
+          filename: file.name,
+        });
+        // 回滚 job 避免留下孤立的空 job
+        await deleteJob(jobId);
+        return NextResponse.json(
+          { error: "Failed to create interviewee record" },
+          { status: 500 },
+        );
+      }
     }
 
     logger.info("Job created, triggering async resume processing", { jobId });

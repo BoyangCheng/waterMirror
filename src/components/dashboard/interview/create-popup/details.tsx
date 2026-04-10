@@ -23,6 +23,7 @@ interface Props {
   setLoading: (loading: boolean) => void;
   interviewData: InterviewBase;
   setInterviewData: (interviewData: InterviewBase) => void;
+  setExtraQuestions: (questions: Question[]) => void;
   isUploaded: boolean;
   setIsUploaded: (isUploaded: boolean) => void;
   fileName: string;
@@ -34,6 +35,7 @@ function DetailsPopup({
   setLoading,
   interviewData,
   setInterviewData,
+  setExtraQuestions,
   isUploaded,
   setIsUploaded,
   fileName,
@@ -104,11 +106,16 @@ function DetailsPopup({
         );
       }
 
-      const updatedQuestions = generatedQuestionsResponse.questions.map((question: Question) => ({
+      const allQuestions = generatedQuestionsResponse.questions.map((question: Question) => ({
         id: uuidv4(),
         question: question.question.trim(),
         follow_up_count: 1,
       }));
+
+      const primaryCount = Number(numQuestions);
+      const updatedQuestions = allQuestions.slice(0, primaryCount);
+      const extras = allQuestions.slice(primaryCount);
+      setExtraQuestions(extras);
 
       const updatedInterviewData = {
         ...interviewData,
@@ -116,7 +123,7 @@ function DetailsPopup({
         objective: objective.trim(),
         questions: updatedQuestions,
         interviewer_id: selectedInterviewer,
-        question_count: Number(numQuestions),
+        question_count: primaryCount,
         time_duration: duration,
         description: generatedQuestionsResponse.description,
         is_anonymous: isAnonymous,

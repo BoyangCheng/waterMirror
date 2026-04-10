@@ -3,7 +3,7 @@ import FromJobDetails from "@/components/dashboard/interview/create-popup/fromJo
 import QuestionsPopup from "@/components/dashboard/interview/create-popup/questions";
 import LoaderWithLogo from "@/components/loaders/loader-with-logo/loaderWithLogo";
 import { useI18n } from "@/i18n";
-import type { InterviewBase } from "@/types/interview";
+import type { InterviewBase, Question } from "@/types/interview";
 import React, { useEffect, useState } from "react";
 
 interface Props {
@@ -32,6 +32,7 @@ function CreateInterviewModal({ open, setOpen }: Props) {
   const [loading, setLoading] = useState(false);
   const [proceed, setProceed] = useState(false);
   const [interviewData, setInterviewData] = useState<InterviewBase>(CreateEmptyInterviewData());
+  const [extraQuestions, setExtraQuestions] = useState<Question[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>("manual");
   const { t } = useI18n();
 
@@ -52,6 +53,7 @@ function CreateInterviewModal({ open, setOpen }: Props) {
       setLoading(false);
       setProceed(false);
       setInterviewData(CreateEmptyInterviewData());
+      setExtraQuestions([]);
       setActiveTab("manual");
       // Below for File Upload
       setIsUploaded(false);
@@ -104,6 +106,7 @@ function CreateInterviewModal({ open, setOpen }: Props) {
               setLoading={setLoading}
               interviewData={interviewData}
               setInterviewData={setInterviewData}
+              setExtraQuestions={setExtraQuestions}
               // Below for File Upload
               isUploaded={isUploaded}
               setIsUploaded={setIsUploaded}
@@ -116,11 +119,17 @@ function CreateInterviewModal({ open, setOpen }: Props) {
               setLoading={setLoading}
               interviewData={interviewData}
               setInterviewData={setInterviewData}
+              setExtraQuestions={setExtraQuestions}
             />
           )}
         </div>
       ) : (
-        <QuestionsPopup interviewData={interviewData} setProceed={setProceed} setOpen={setOpen} />
+        <QuestionsPopup
+          interviewData={interviewData}
+          extraQuestions={extraQuestions}
+          setProceed={setProceed}
+          setOpen={setOpen}
+        />
       )}
     </>
   );

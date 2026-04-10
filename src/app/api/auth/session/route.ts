@@ -8,22 +8,27 @@ export async function GET() {
     return NextResponse.json({});
   }
 
-  // 获取最新的 org 信息（JWT 里的 org_name 可能在用户首次登录后还是空的，
-  // 用户在 OrgManagementModal 里创建/更新组织后，需从 DB 取最新值，
-  // 否则分享面试信息里的【组织名】会一直是空的）。
+  // 获取最新的 org / user 信息（JWT 里的字段可能在首次登录后还是空的，
+  // 用户在 OrgManagementModal 里更新过 name / phone / 组织后需从 DB 取最新）。
   let orgId = session.orgId;
   let orgName = session.orgName;
   let orgImage = session.orgImage;
+  let name: string | null = null;
+  let phone: string | null = null;
 
   try {
     const user = await getUserById(session.userId);
-    const dbOrgId = (user as { organization_id?: string } | null)?.organization_id ?? session.orgId;
-    if (dbOrgId) {
-      orgId = dbOrgId;
-      const org = await getOrganizationById(dbOrgId);
-      if (org) {
-        orgName = (org as { name?: string }).name ?? orgName;
-        orgImage = (org as { image_url?: string }).image_url ?? orgImage;
+    if (user) {
+      name = user.name ?? null;
+      phone = user.phone ?? null;
+      const dbOrgId = user.organization_id ?? session.orgId;
+      if (dbOrgId) {
+        orgId = dbOrgId;
+        const org = await getOrganizationById(dbOrgId);
+        if (org) {
+          orgName = (org as { name?: string }).name ?? orgName;
+          orgImage = (org as { image_url?: string }).image_url ?? orgImage;
+        }
       }
     }
   } catch {
@@ -34,6 +39,8 @@ export async function GET() {
     userId: session.userId,
     orgId,
     email: session.email,
+    name,
+    phone,
     orgName,
     orgImage,
   });

@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar";
 import Providers from "@/components/providers";
 import SideMenu from "@/components/sideMenu";
 import BugReportButton from "@/components/bug-report/BugReportButton";
+import ErrorReporterInit from "@/components/error-reporter-init";
 import { AuthProvider } from "@/contexts/auth.context";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -47,6 +48,7 @@ export default function RootLayout({
       <body className={cn("font-sans antialiased overflow-hidden min-h-screen")}>
         <AuthProvider>
           <Providers>
+            <ErrorReporterInit />
             {isAuthRoute ? (
               children
             ) : (

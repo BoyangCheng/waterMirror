@@ -16,7 +16,10 @@ export default function JoinOrgPage() {
   useEffect(() => {
     if (!isLoaded) return;
     if (!user) {
-      router.replace(`/sign-in`);
+      // 把 invite 路径带进 sign-in → login → Authing 的 state，
+      // callback 里可以直接识别是邀请登录并闭环处理。
+      const next = encodeURIComponent(`/join/${orgId}`);
+      router.replace(`/sign-in?next=${next}`);
       return;
     }
 

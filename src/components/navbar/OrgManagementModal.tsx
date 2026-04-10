@@ -25,7 +25,9 @@ export default function OrgManagementModal({ onClose }: Props) {
 
   const [orgName, setOrgName] = useState(organization?.name ?? "");
   const [orgImage, setOrgImage] = useState(organization?.imageUrl ?? "");
-  const [members, setMembers] = useState<{ id: string; email: string; name: string }[]>([]);
+  const [members, setMembers] = useState<
+    { id: string; email: string | null; name: string | null; phone: string | null }[]
+  >([]);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const [newOrgName, setNewOrgName] = useState("");
@@ -222,17 +224,25 @@ export default function OrgManagementModal({ onClose }: Props) {
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">{t("orgManagement.members")}</p>
               <div className="border rounded-md divide-y max-h-40 overflow-y-auto">
-                {members.map((m) => (
-                  <div key={m.id} className="flex items-center px-3 py-2 text-sm gap-2">
-                    <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-medium shrink-0">
-                      {(m.name || m.email || "?")[0].toUpperCase()}
+                {members.map((m) => {
+                  // 显示优先级：name > id（email 只作为副标题展示）
+                  const display = m.name || m.id;
+                  return (
+                    <div key={m.id} className="flex items-center px-3 py-2 text-sm gap-2">
+                      <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-medium shrink-0">
+                        {display[0]?.toUpperCase() ?? "?"}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-medium truncate">{display}</span>
+                        {m.email && (
+                          <span className="text-gray-500 truncate text-xs">
+                            {m.email}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-col min-w-0">
-                      {m.name && <span className="font-medium truncate">{m.name}</span>}
-                      <span className="text-gray-500 truncate text-xs">{m.email}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

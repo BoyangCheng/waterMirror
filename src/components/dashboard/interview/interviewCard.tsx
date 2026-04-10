@@ -63,10 +63,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCou
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleDelete = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    console.log("[InterviewCard] handleDelete → id:", id, "| userId:", user?.id, "| orgId:", organization?.id);
+  const handleDelete = () => {
     deleteInterviewMutation.mutate(id);
   };
 
@@ -94,109 +91,101 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCou
     );
   };
 
-  const handleJumpToInterview = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
+  const handleJumpToInterview = () => {
     const interviewUrl = readableSlug ? `/call/${readableSlug}` : `/call/${id}`;
     window.open(interviewUrl, "_blank");
   };
 
+  // 按钮不再挂在 <a> 内部 —— 按钮和 <a> 是同级兄弟，避免冒泡 / 默认导航冲突。
+  // 这个结构和 src/components/dashboard/screening/jobCard.tsx 对齐。
   return (
-    <a href={`/interviews/${id}`}>
-      <Card className="relative p-0 mt-4 inline-block cursor-pointer h-60 w-56 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md">
-        <CardContent className="p-0">
-          <div className="w-full h-40 overflow-hidden bg-indigo-600 flex items-center text-center">
-            <CardTitle className="w-full mt-3 mx-2 text-white text-lg">
-              {name}
-            </CardTitle>
-          </div>
-          <div className="flex flex-row items-center mx-4">
-            <div className="w-full overflow-hidden">
-              {img && !imgError ? (
-                <Image
-                  src={img}
-                  alt="Picture of the interviewer"
-                  width={70}
-                  height={70}
-                  className="object-cover object-center rounded-full"
-                  onError={() => setImgError(true)}
-                />
-              ) : fetched ? (
-                <div className="w-[70px] h-[70px] rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl font-semibold">
-                  {(interviewerName || name || "?").trim().charAt(0).toUpperCase()}
-                </div>
-              ) : (
-                <div className="w-[70px] h-[70px] bg-gray-200 rounded-full animate-pulse" />
-              )}
+    <div className="relative inline-block mt-4 ml-1 mr-3">
+      <a href={`/interviews/${id}`}>
+        <Card className="p-0 cursor-pointer h-60 w-56 rounded-xl shrink-0 overflow-hidden shadow-md">
+          <CardContent className="p-0">
+            <div className="w-full h-40 overflow-hidden bg-indigo-600 flex items-center text-center">
+              <CardTitle className="w-full mt-3 mx-2 text-white text-lg">
+                {name}
+              </CardTitle>
             </div>
-            <div className="mt-2 mr-2 whitespace-nowrap">
-              {responseCount > 0 ? (
-                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                  {t("create.interviewed")}
-                </span>
-              ) : (
-                <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                  {t("create.notInterviewed")}
-                </span>
-              )}
+            <div className="flex flex-row items-center mx-4">
+              <div className="w-full overflow-hidden">
+                {img && !imgError ? (
+                  <Image
+                    src={img}
+                    alt="Picture of the interviewer"
+                    width={70}
+                    height={70}
+                    className="object-cover object-center rounded-full"
+                    onError={() => setImgError(true)}
+                  />
+                ) : fetched ? (
+                  <div className="w-[70px] h-[70px] rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl font-semibold">
+                    {(interviewerName || name || "?").trim().charAt(0).toUpperCase()}
+                  </div>
+                ) : (
+                  <div className="w-[70px] h-[70px] bg-gray-200 rounded-full animate-pulse" />
+                )}
+              </div>
+              <div className="mt-2 mr-2 whitespace-nowrap">
+                {responseCount > 0 ? (
+                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                    {t("create.interviewed")}
+                  </span>
+                ) : (
+                  <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                    {t("create.notInterviewed")}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="absolute top-2 right-2 flex gap-1">
+          </CardContent>
+        </Card>
+      </a>
+      <div className="absolute top-2 right-2 flex gap-1 z-10">
+        <Button
+          className="text-xs text-indigo-600 px-1 h-6"
+          variant={"secondary"}
+          title={t("interview.testInterview")}
+          onClick={handleJumpToInterview}
+        >
+          <ArrowUpRight size={16} />
+        </Button>
+        <Button
+          className={`text-xs text-indigo-600 px-1 h-6  ${
+            copied ? "bg-indigo-300 text-white" : ""
+          }`}
+          variant={"secondary"}
+          title={t("interview.shareInterviewInfo")}
+          onClick={copyToClipboard}
+        >
+          {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
             <Button
-              className="text-xs text-indigo-600 px-1 h-6"
+              className="text-xs text-red-500 px-1 h-6"
               variant={"secondary"}
-              title={t("interview.testInterview")}
-              onClick={handleJumpToInterview}
+              title={t("interview.deleteInterview")}
             >
-              <ArrowUpRight size={16} />
+              <Trash2 size={16} />
             </Button>
-            <Button
-              className={`text-xs text-indigo-600 px-1 h-6  ${
-                copied ? "bg-indigo-300 text-white" : ""
-              }`}
-              variant={"secondary"}
-              title={t("interview.shareInterviewInfo")}
-              onClick={(event) => {
-                event.stopPropagation();
-                event.preventDefault();
-                copyToClipboard();
-              }}
-            >
-              {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  className="text-xs text-red-500 px-1 h-6"
-                  variant={"secondary"}
-                  title={t("interview.deleteInterview")}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // 不能 preventDefault —— Radix 检查 defaultPrevented 决定是否开弹窗
-                  }}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t("common.areYouSure")}</AlertDialogTitle>
-                  <AlertDialogDescription>{t("interview.deleteConfirm")}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={(e) => { e.stopPropagation(); }}>
-                    {t("common.cancel")}
-                  </AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>
-                    {t("common.continue")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </CardContent>
-      </Card>
-    </a>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("common.areYouSure")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("interview.deleteConfirm")}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>
+                {t("common.continue")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
   );
 }
 

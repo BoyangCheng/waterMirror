@@ -5,6 +5,8 @@ import React, { createContext, useContext, useEffect, useState, type ReactNode }
 
 interface AuthUser {
   id: string;
+  name: string | null;
+  phone: string | null;
   emailAddresses: Array<{ emailAddress: string }>;
 }
 
@@ -40,6 +42,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.userId) {
           setUser({
             id: data.userId,
+            name: data.name ?? null,
+            phone: data.phone ?? null,
             emailAddresses: [{ emailAddress: data.email ?? "" }],
           });
         }

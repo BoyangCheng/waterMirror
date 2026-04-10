@@ -379,7 +379,21 @@ export function buildInterviewerPrompt(data: {
 - 不重复已问过的问题，不讨论与目标无关的话题。
 - 如果知道对方姓名，在对话中适当使用。
 - 输出纯口语文本，不要使用 Markdown 符号（如 **、#、列表编号等）。
-- **严禁输出括号内容**，例如（等待回答）、（沉默）、（停顿）、[等待] 等任何形式的动作描述或舞台提示，一律不允许出现在输出中。`;
+- **严禁输出任何括号及其中的内容**。禁止出现的符号包括：全角圆括号 （），半角圆括号 ()，方括号 [] 和 【】，花括号 {}。里面的动作描述、舞台提示、情绪标注一律不允许出现在输出中。
+
+【括号示范（严格遵守，照此修正）】
+错误示例：这个项目你负责了多久？（等待回答）
+正确示例：这个项目你负责了多久？
+错误示例：嗯，了解了。（停顿）那下一个问题。
+正确示例：嗯，了解了。那下一个问题。
+错误示例：（微笑）说得很好。
+正确示例：说得很好。
+错误示例：好的，我们进入下一个话题。【切换主问题】
+正确示例：好的，我们进入下一个话题。
+错误示例：(thinking) 这个回答挺有意思。
+正确示例：这个回答挺有意思。
+
+凡是你准备说出的任何一段话，**在输出前先自检一遍**：如果里面出现 （）、()、[]、【】、{} 任何一种括号，必须把括号连同里面的内容整段删掉再输出。`;
   }
   const styleNote = iv
     ? `\nInterviewing style: empathy ${iv.empathy}/10, rapport ${iv.rapport}/10, exploration ${iv.exploration}/10, speed ${iv.speed}/10. Higher empathy means focusing on emotional experience; higher exploration means probing deeper into details; higher rapport means warmer, friendlier tone; higher speed means faster pacing and more concise exchanges.`
@@ -422,7 +436,21 @@ Reference questions (ask these in order as "main questions"): ${data.questions}.
 - Professional yet friendly. Each utterance under 30 words.
 - Never repeat a question. Stay on topic. Use the candidate's name when known.
 - Output plain spoken text — no Markdown (no **, #, bullet numbers, etc.).
-- **Never output parenthetical content** such as (waiting for answer), (silence), (pause), [waiting], or any other action description or stage direction. These are strictly forbidden.`;
+- **Never output any bracket and its contents**. Forbidden symbols include: full-width parentheses （）, half-width parentheses (), square brackets [], Chinese square brackets 【】, and curly braces {}. Any action descriptions, stage directions, or emotional labels inside them are strictly forbidden.
+
+[Bracket examples — strictly follow]
+WRONG: How long did you work on that project? (waiting for answer)
+RIGHT: How long did you work on that project?
+WRONG: Got it. (pause) Let's move on to the next question.
+RIGHT: Got it. Let's move on to the next question.
+WRONG: (smiles) That's a great point.
+RIGHT: That's a great point.
+WRONG: Okay, moving on. [next main question]
+RIGHT: Okay, moving on.
+WRONG: （思考）That answer was interesting.
+RIGHT: That answer was interesting.
+
+**Self-check rule**: Before emitting any sentence, verify it contains none of （）、()、[]、【】、{}. If any bracket appears, remove the bracket AND everything inside it before speaking.`;
 }
 
 // ---------------------------------------------------------------------------

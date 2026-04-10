@@ -15,11 +15,12 @@ import { v4 as uuidv4 } from "uuid";
 
 interface Props {
   interviewData: InterviewBase;
+  extraQuestions?: Question[];
   setProceed: (proceed: boolean) => void;
   setOpen: (open: boolean) => void;
 }
 
-function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
+function QuestionsPopup({ interviewData, extraQuestions = [], setProceed, setOpen }: Props) {
   const { user } = useAuth();
   const { organization } = useOrg();
   const [isClicked, setIsClicked] = useState(false);
@@ -31,6 +32,7 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
 
   const endOfListRef = useRef<HTMLDivElement>(null);
   const prevQuestionLengthRef = useRef(questions.length);
+  const extraCursorRef = useRef(0);
 
   const handleInputChange = (id: string, newQuestion: Question) => {
     setQuestions(
@@ -57,7 +59,16 @@ function QuestionsPopup({ interviewData, setProceed, setOpen }: Props) {
 
   const handleAddQuestion = () => {
     if (questions.length < interviewData.question_count) {
-      setQuestions([...questions, { id: uuidv4(), question: "", follow_up_count: 1 }]);
+      let nextQuestionText = "";
+      if (extraQuestions.length > 0) {
+        const nextExtra = extraQuestions[extraCursorRef.current % extraQuestions.length];
+        nextQuestionText = nextExtra?.question ?? "";
+        extraCursorRef.current += 1;
+      }
+      setQuestions([
+        ...questions,
+        { id: uuidv4(), question: nextQuestionText, follow_up_count: 1 },
+      ]);
     }
   };
 

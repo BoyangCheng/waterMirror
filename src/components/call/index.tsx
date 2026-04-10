@@ -15,6 +15,15 @@ import {
 import { useResponses } from "@/contexts/responses.context";
 import { useI18n } from "@/i18n";
 import { buildAgentCtrlMessage, parseSubtitleMessage } from "@/lib/volcengine-rtc";
+import {
+  TIME_UP_GRACE_MS,
+  TIME_UP_PROMPT,
+  TIME_UP_WARNING_LEAD_SECS,
+  computeEndDelayMs,
+  parseInterviewDurationMinutes,
+  shouldForceEnd,
+  shouldSendTimeUpWarning,
+} from "@/lib/interview-timing";
 import { isLightColor, testEmail } from "@/lib/utils";
 import { submitFeedback } from "@/services/feedback.service";
 import { getInterviewer } from "@/services/interviewers.service";
@@ -142,10 +151,9 @@ function Call({ interview }: InterviewProps) {
 
   // 时间到结束流程：先给 AI 推一条 [TIME_UP] 提示让它说结束语，
   // 再延迟 ~15s 真正断开 RTC，留给 AI 播报致谢的时间。
+  // 常量和纯逻辑在 @/lib/interview-timing 中，便于 unit test。
   const timeUpWarningSentRef = useRef(false);
   const endTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const TIME_UP_WARNING_LEAD_SECS = 20; // 距离结束多少秒发送提示
-  const TIME_UP_GRACE_MS = 15000;       // 收到提示后留多少 ms 给 AI 播报
 
   // -------------------------------------------------------------------------
   // Scroll latest user response into view
@@ -169,14 +177,16 @@ function Call({ interview }: InterviewProps) {
     const seconds = Math.floor(time / 100);
     setCurrentTimeDuration(String(seconds));
 
-    const totalSeconds = Number(interviewTimeDuration) * 60;
+    const totalSeconds = parseInterviewDurationMinutes(interviewTimeDuration);
 
-    // 距离结束 ~20s：给 AI 推一条 [TIME_UP] 提示，让它在剩余时间里说结束语
+    // 距离结束 ~10s：给 AI 推一条 [TIME_UP] 提示，让它在剩余时间里说结束语
     if (
-      isCalling &&
-      !timeUpWarningSentRef.current &&
-      totalSeconds > TIME_UP_WARNING_LEAD_SECS &&
-      seconds >= totalSeconds - TIME_UP_WARNING_LEAD_SECS
+      shouldSendTimeUpWarning({
+        isCalling,
+        alreadySent: timeUpWarningSentRef.current,
+        elapsedSeconds: seconds,
+        totalSeconds,
+      })
     ) {
       timeUpWarningSentRef.current = true;
       const engine = engineRef.current;
@@ -186,11 +196,7 @@ function Call({ interview }: InterviewProps) {
         // agent 会把 Message 作为"用户消息"喂给 LLM，触发 system prompt 里的时间到规则。
         // InterruptMode: 2 = MEDIUM，等当前交互结束后再处理，避免打断候选人正在说话。
         try {
-          const tlv = buildAgentCtrlMessage(
-            "ExternalTextToLLM",
-            "[TIME_UP] 面试时间快到了，请立刻用一句话向被面试者表示感谢并自然结束面试，不要再提新问题。",
-            2,
-          );
+          const tlv = buildAgentCtrlMessage("ExternalTextToLLM", TIME_UP_PROMPT, 2);
           (engine as any).sendUserBinaryMessage(targetAgent, tlv.buffer);
           console.log("[Call] TIME_UP ExternalTextToLLM sent to agent:", targetAgent);
         } catch (err) {
@@ -206,14 +212,17 @@ function Call({ interview }: InterviewProps) {
       if (endTimeoutRef.current) clearTimeout(endTimeoutRef.current);
       endTimeoutRef.current = setTimeout(() => {
         handleEndCall();
-      }, TIME_UP_WARNING_LEAD_SECS * 1000 + TIME_UP_GRACE_MS);
+      }, computeEndDelayMs(TIME_UP_WARNING_LEAD_SECS, TIME_UP_GRACE_MS));
     }
 
     // 兜底：如果总时长太短（小于提示前置量）或一直没触发，时间真的到了就直接结束
     if (
-      isCalling &&
-      !endTimeoutRef.current &&
-      seconds >= totalSeconds
+      shouldForceEnd({
+        isCalling,
+        endScheduled: !!endTimeoutRef.current,
+        elapsedSeconds: seconds,
+        totalSeconds,
+      })
     ) {
       handleEndCall();
     }

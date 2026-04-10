@@ -23,6 +23,7 @@ interface Props {
   setLoading: (loading: boolean) => void;
   interviewData: InterviewBase;
   setInterviewData: (interviewData: InterviewBase) => void;
+  setExtraQuestions: (questions: Question[]) => void;
 }
 
 function FromJobDetails({
@@ -30,6 +31,7 @@ function FromJobDetails({
   setLoading,
   interviewData,
   setInterviewData,
+  setExtraQuestions,
 }: Props) {
   const { interviewers } = useInterviewers();
   const { jobs } = useJobs();
@@ -151,11 +153,16 @@ function FromJobDetails({
         );
       }
 
-      const updatedQuestions = generatedQuestionsResponse.questions.map((question: Question) => ({
+      const allQuestions = generatedQuestionsResponse.questions.map((question: Question) => ({
         id: uuidv4(),
         question: question.question.trim(),
         follow_up_count: 1,
       }));
+
+      const primaryCount = Number(numQuestions);
+      const updatedQuestions = allQuestions.slice(0, primaryCount);
+      const extras = allQuestions.slice(primaryCount);
+      setExtraQuestions(extras);
 
       const updatedInterviewData = {
         ...interviewData,
@@ -163,7 +170,7 @@ function FromJobDetails({
         objective: objective.trim(),
         questions: updatedQuestions,
         interviewer_id: selectedInterviewer,
-        question_count: Number(numQuestions),
+        question_count: primaryCount,
         time_duration: duration,
         description: generatedQuestionsResponse.description,
         is_anonymous: isAnonymous,

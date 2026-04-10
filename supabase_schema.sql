@@ -117,3 +117,31 @@ CREATE TABLE interviewee (
     original_filename TEXT,
     status TEXT DEFAULT 'pending'
 );
+
+-- ---------------------------------------------------------------------------
+-- error_log：运行时错误与失败 response 的持久化。
+-- 通过 src/lib/error-log.ts 的 recordError() 插入；API 路由可用 withErrorLogging() 包一层。
+-- 所有写入都是 fire-and-forget，失败只会走 console.error，不会阻塞主请求。
+-- ---------------------------------------------------------------------------
+CREATE TABLE error_log (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    level TEXT NOT NULL DEFAULT 'error',    -- 'error' | 'warn' | 'fatal'
+    source TEXT NOT NULL,                   -- 'api' | 'client' | 'service' | 'background'
+    route TEXT,                             -- e.g. '/api/screening/create-job' or 'call:timer'
+    message TEXT NOT NULL,
+    stack TEXT,
+    status_code INTEGER,
+    user_id TEXT,
+    org_id TEXT,
+    request_id TEXT,
+    environment TEXT,                       -- 'development' | 'production'
+    user_agent TEXT,
+    context JSONB,                          -- 任意附加字段（request body 摘要、headers 等）
+    resolved BOOLEAN DEFAULT false
+);
+
+CREATE INDEX IF NOT EXISTS idx_error_log_created_at ON error_log (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_error_log_level_source ON error_log (level, source);
+CREATE INDEX IF NOT EXISTS idx_error_log_route ON error_log (route);
+CREATE INDEX IF NOT EXISTS idx_error_log_unresolved ON error_log (created_at DESC) WHERE resolved = false;

@@ -62,11 +62,11 @@ describe("WaterMirror i18n system", () => {
     localStorage.removeItem("watermirror-locale");
   });
 
-  it("defaults to English locale", () => {
+  it("defaults to Chinese locale (DEFAULT_LOCALE = 'zh')", () => {
     renderWithI18n();
-    expect(screen.getByTestId("locale").textContent).toBe("en");
-    expect(screen.getByTestId("nav-interviews").textContent).toBe("Interviews");
-    expect(screen.getByTestId("common-save").textContent).toBe("Save");
+    expect(screen.getByTestId("locale").textContent).toBe("zh");
+    expect(screen.getByTestId("nav-interviews").textContent).toBe("面试");
+    expect(screen.getByTestId("common-save").textContent).toBe("保存");
   });
 
   it("switches to Chinese and shows translated text", async () => {
