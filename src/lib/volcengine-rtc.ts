@@ -67,7 +67,7 @@ class ByteBuf {
     this.ensureCapacity(2);
     this.buffer.writeUInt16LE(map.size, this.position);
     this.position += 2;
-    for (const [k, v] of map) {
+    for (const [k, v] of Array.from(map.entries())) {
       this.putUint16(k);
       this.putUint32(v);
     }

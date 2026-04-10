@@ -19,6 +19,7 @@ export interface Interviewee {
   summary: string | null;
   score: number;
   resume_url: string | null;
+  resume_text: string | null;
   original_filename: string | null;
   status: "pending" | "analyzed" | "error";
 }

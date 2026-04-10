@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const rows = await sql`
+    const rows = await sql<{ id: number; created_at: string; email: string | null; feedback: string | null }[]>`
       SELECT id, created_at, email, feedback
       FROM feedback
       WHERE satisfaction = -1
@@ -12,7 +12,7 @@ export async function GET() {
     `;
 
     const items = rows
-      .map((row: { id: number; created_at: string; email: string | null; feedback: string | null }) => {
+      .map((row) => {
         let parsed: Record<string, unknown> | null = null;
         try {
           parsed = row.feedback ? JSON.parse(row.feedback) : null;

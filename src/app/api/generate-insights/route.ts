@@ -12,6 +12,10 @@ export async function POST(req: Request) {
   const responses = await getAllResponses(body.interviewId);
   const interview = await getInterviewById(body.interviewId);
 
+  if (!interview) {
+    return NextResponse.json({ error: "Interview not found" }, { status: 404 });
+  }
+
   // Use call_summary if available (Retell), fall back to plain transcript (Volcengine RTC)
   let callSummaries = "";
   if (responses) {
@@ -26,7 +30,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const language: "zh" | "en" = interview?.language === "en" ? "en" : "zh";
+  const language: "zh" | "en" = interview.language === "en" ? "en" : "zh";
 
   try {
     const prompt = createUserPrompt(

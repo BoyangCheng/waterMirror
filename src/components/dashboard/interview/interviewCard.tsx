@@ -170,7 +170,10 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCou
                   className="text-xs text-red-500 px-1 h-6"
                   variant={"secondary"}
                   title={t("interview.deleteInterview")}
-                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // 不能 preventDefault —— Radix 检查 defaultPrevented 决定是否开弹窗
+                  }}
                 >
                   <Trash2 size={16} />
                 </Button>
@@ -181,7 +184,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCou
                   <AlertDialogDescription>{t("interview.deleteConfirm")}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+                  <AlertDialogCancel onClick={(e) => { e.stopPropagation(); }}>
                     {t("common.cancel")}
                   </AlertDialogCancel>
                   <AlertDialogAction onClick={handleDelete}>

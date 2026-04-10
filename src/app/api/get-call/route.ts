@@ -8,12 +8,13 @@ export async function POST(req: Request) {
   logger.info("get-call request received");
   const body = await req.json();
 
-  const callDetails: Response = await getResponseByCallId(body.id);
-  const callResponse = callDetails?.details;
+  const callDetails: Response | null = await getResponseByCallId(body.id);
 
   if (!callDetails) {
     return NextResponse.json({ error: "Call not found" }, { status: 404 });
   }
+
+  const callResponse = callDetails.details;
 
   if (callDetails.is_analysed) {
     return NextResponse.json(

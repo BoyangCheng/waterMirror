@@ -134,6 +134,13 @@ export async function POST(req: Request) {
         let resumeText = (interviewee.resume_text || "").trim();
 
         if (!resumeText) {
+          if (!interviewee.resume_url) {
+            await updateInterviewee(interviewee.id, {
+              status: "error",
+              summary: "缺少简历文件",
+            });
+            continue;
+          }
           logger.info(
             `No pre-extracted text for interviewee ${interviewee.id}, fetching from OSS`,
           );

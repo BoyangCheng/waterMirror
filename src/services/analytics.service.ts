@@ -18,6 +18,10 @@ export const generateInterviewAnalytics = async (payload: {
     const response = await getResponseByCallId(callId);
     const interview = await getInterviewById(interviewId);
 
+    if (!response) {
+      return { error: "response not found", status: 404 };
+    }
+
     if (response.analytics) {
       return { analytics: response.analytics as Analytics, status: 200 };
     }

@@ -549,7 +549,7 @@ function Call({ interview }: InterviewProps) {
       });
 
       // Local audio state (capture / device change)
-      engine.on(VERTC.events.onLocalAudioStateChanged as any, (event: any) => {
+      engine.on((VERTC.events as any).onLocalAudioStateChanged, (event: any) => {
         // console.log("[RTC][MIC] onLocalAudioStateChanged:", JSON.stringify(event));
       });
 

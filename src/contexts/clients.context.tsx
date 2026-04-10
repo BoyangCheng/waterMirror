@@ -43,7 +43,7 @@ export function ClientProvider({ children }: { children: ReactNode }) {
   });
 
   return (
-    <ClientContext.Provider value={{ client }}>
+    <ClientContext.Provider value={{ client: client ?? undefined }}>
       {children}
     </ClientContext.Provider>
   );

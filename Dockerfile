@@ -9,9 +9,10 @@ FROM node:22-alpine AS base
 
 WORKDIR /app
 
-# 设置环境变量
-ENV NODE_ENV=production \
-    NODE_OPTIONS=--max-old-space-size=1024
+# 注意：NODE_ENV 只在 runner 阶段设为 production。
+# 如果在 base 阶段就设 production，deps 阶段 yarn install 会跳过 devDependencies，
+# 导致 builder 阶段 next build 找不到 autoprefixer / postcss / tailwindcss 等 build-time 依赖。
+ENV NODE_OPTIONS=--max-old-space-size=1024
 
 # -------------------- 依赖安装阶段 --------------------
 FROM base AS deps
