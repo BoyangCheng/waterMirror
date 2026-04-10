@@ -81,6 +81,7 @@ function Call({ interview }: InterviewProps) {
   const [name, setName] = useState("");
   const [isValidEmail, setIsValidEmail] = useState(false);
   const [isOldUser, setIsOldUser] = useState(false);
+  const [isInterviewFull, setIsInterviewFull] = useState(false);
 
   // RTC session info
   const [callId, setCallId] = useState("");
@@ -400,6 +401,14 @@ function Call({ interview }: InterviewProps) {
     }
     try {
       const oldUserEmails: string[] = (await getAllEmails(interview.id)).map((item) => item.email);
+
+      // Limit: same interview cannot be taken more than 10 times
+      if (oldUserEmails.length >= 10) {
+        setIsInterviewFull(true);
+        setLoading(false);
+        return;
+      }
+
       const isOld =
         oldUserEmails.includes(email) ||
         (interview?.respondents && !interview?.respondents.includes(email));
@@ -929,12 +938,28 @@ function Call({ interview }: InterviewProps) {
             )}
 
             {/* Already responded */}
-            {isOldUser && (
+            {isOldUser && !isInterviewFull && (
               <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
                     <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500" />
                     <p className="text-lg font-semibold text-center">{t("interview.alreadyResponded")}</p>
+                    <p className="text-center">
+                      {"\n"}
+                      {t("interview.closeTab")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Interview full (max 10 participants) */}
+            {isInterviewFull && (
+              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+                <div>
+                  <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
+                    <XCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-red-500" />
+                    <p className="text-lg font-semibold text-center">{t("interview.interviewFull")}</p>
                     <p className="text-center">
                       {"\n"}
                       {t("interview.closeTab")}

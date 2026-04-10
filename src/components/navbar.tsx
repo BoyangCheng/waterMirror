@@ -60,7 +60,7 @@ function Navbar() {
               >
                 <User size={16} />
                 <span className="max-w-[160px] truncate">
-                  {user?.name || user?.id}
+                  {user?.phone || user?.emailAddresses?.[0]?.emailAddress || user?.name || user?.id}
                 </span>
                 <ChevronDown
                   size={14}

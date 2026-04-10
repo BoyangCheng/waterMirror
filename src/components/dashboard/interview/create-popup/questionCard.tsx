@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Question } from "@/types/interview";
-import { Trash2 } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, Trash2 } from "lucide-react";
 
 interface QuestionCardProps {
   questionNumber: number;
@@ -17,12 +19,37 @@ const questionCard = ({
   onQuestionChange,
   onDelete,
 }: QuestionCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: questionData.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <>
-      <Card className=" shadow-md mb-5 pb-3 ">
+    <div ref={setNodeRef} style={style}>
+      <Card className="shadow-md mb-5 pb-3">
         <CardContent className="p-2 mx-5">
-          <div className="flex flex-row justify-between mt-3 items-baseline ">
-            <CardTitle className="text-lg">问题 {questionNumber}</CardTitle>
+          <div className="flex flex-row justify-between mt-3 items-baseline">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className="cursor-grab active:cursor-grabbing touch-none text-gray-400 hover:text-gray-600"
+                {...attributes}
+                {...listeners}
+              >
+                <GripVertical size={18} />
+              </button>
+              <CardTitle className="text-lg">问题 {questionNumber}</CardTitle>
+            </div>
             <div className="flex flex-row items-start space-x-1">
               <h3 className="text-base font-semibold mr-2">追问深度：</h3>
               <TooltipProvider>
@@ -123,7 +150,7 @@ const questionCard = ({
           </div>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 };
 export default questionCard;

@@ -20,6 +20,8 @@ import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
 import { updateInterview, deleteInterview } from "@/services/interviews.service";
 import type { Interview, Question } from "@/types/interview";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { Plus, SaveIcon, TrashIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
@@ -79,6 +81,15 @@ function EditInterview({ interview }: EditInterviewProps) {
   const handleAddQuestion = () => {
     if (questions.length < numQuestions) {
       setQuestions([...questions, { id: uuidv4(), question: "", follow_up_count: 1 }]);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = questions.findIndex((q) => q.id === active.id);
+      const newIndex = questions.findIndex((q) => q.id === over.id);
+      setQuestions(arrayMove(questions, oldIndex, newIndex));
     }
   };
 
@@ -323,15 +334,19 @@ function EditInterview({ interview }: EditInterviewProps) {
         </div>
         <p className="mt-3 mb-1 ml-2 font-medium">{t("interview.questions")}</p>
         <ScrollArea className="flex ml-2 p-2 pr-4 mb-4 flex-col justify-center items-center w-[75%] max-h-[500px] bg-slate-100 rounded-md text-sm mt-3">
-          {questions.map((question, index) => (
-            <QuestionCard
-              key={question.id}
-              questionNumber={index + 1}
-              questionData={question}
-              onDelete={handleDeleteQuestion}
-              onQuestionChange={handleInputChange}
-            />
-          ))}
+          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={questions.map((q) => q.id)} strategy={verticalListSortingStrategy}>
+              {questions.map((question, index) => (
+                <QuestionCard
+                  key={question.id}
+                  questionNumber={index + 1}
+                  questionData={question}
+                  onDelete={handleDeleteQuestion}
+                  onQuestionChange={handleInputChange}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           <div ref={endOfListRef} />
           {questions.length < numQuestions ? (
             <button

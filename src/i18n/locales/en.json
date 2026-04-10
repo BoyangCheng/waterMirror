@@ -59,6 +59,7 @@
     "thankYouConsidering": "Thank you very much for considering.",
     "closeTab": "You can close this tab now.",
     "alreadyResponded": "You have already responded in this interview or you are not eligible to respond. Thank you!",
+    "interviewFull": "This interview has reached its maximum number of participants. Thank you for your interest!",
     "provideFeedback": "Provide Feedback",
     "invalidUrl": "Invalid URL",
     "invalidUrlMessage": "The interview link you're trying to access is invalid. Please check the URL and try again.",

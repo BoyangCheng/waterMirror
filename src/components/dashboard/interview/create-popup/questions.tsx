@@ -7,6 +7,8 @@ import { useAuth, useOrg } from "@/contexts/auth.context";
 import { useInterviews } from "@/contexts/interviews.context";
 import { useI18n } from "@/i18n";
 import type { InterviewBase, Question } from "@/types/interview";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import axios from "axios";
 import { Plus } from "lucide-react";
 import { ChevronLeft } from "lucide-react";
@@ -72,6 +74,15 @@ function QuestionsPopup({ interviewData, extraQuestions = [], setProceed, setOpe
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = questions.findIndex((q) => q.id === active.id);
+      const newIndex = questions.findIndex((q) => q.id === over.id);
+      setQuestions(arrayMove(questions, oldIndex, newIndex));
+    }
+  };
+
   const onSave = async () => {
     try {
       interviewData.user_id = user?.id || "";
@@ -131,15 +142,19 @@ function QuestionsPopup({ interviewData, extraQuestions = [], setProceed, setOpe
           {t("openingHint")}
         </div>
         <ScrollArea className="flex flex-col justify-center items-center w-full mt-3">
-          {questions.map((question, index) => (
-            <QuestionCard
-              key={question.id}
-              questionNumber={index + 1}
-              questionData={question}
-              onDelete={handleDeleteQuestion}
-              onQuestionChange={handleInputChange}
-            />
-          ))}
+          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={questions.map((q) => q.id)} strategy={verticalListSortingStrategy}>
+              {questions.map((question, index) => (
+                <QuestionCard
+                  key={question.id}
+                  questionNumber={index + 1}
+                  questionData={question}
+                  onDelete={handleDeleteQuestion}
+                  onQuestionChange={handleInputChange}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           <div ref={endOfListRef} />
         </ScrollArea>
         {questions.length < interviewData.question_count ? (

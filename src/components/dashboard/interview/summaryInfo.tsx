@@ -14,6 +14,7 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import { Info, SmileIcon, UserCircleIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
+import { getInterviewer } from "@/services/interviewers.service";
 
 type SummaryProps = {
   responses: Response[];
@@ -80,13 +81,23 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
   };
 
   useEffect(() => {
-    if (!interviewers || !interview) {
-      return;
-    }
-    const interviewer = interviewers.find(
+    if (!interview) return;
+
+    // Try to find the interviewer in the local context first
+    const found = interviewers?.find(
       (i) => Number(i.id) === Number(interview.interviewer_id),
     );
-    setInterviewer(interviewer);
+    if (found) {
+      setInterviewer(found);
+      return;
+    }
+
+    // Fallback: fetch directly by ID (e.g. interviewer not in current org list)
+    if (interview.interviewer_id) {
+      getInterviewer(interview.interviewer_id).then((result) => {
+        if (result) setInterviewer(result);
+      });
+    }
   }, [interviewers, interview]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>

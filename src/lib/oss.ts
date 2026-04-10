@@ -24,7 +24,9 @@ export async function uploadToOSS(
 ): Promise<string> {
   const client = getOSSClient();
   const result = await client.put(objectKey, buffer);
-  return result.url;
+  // ali-oss returns HTTP URLs by default; force HTTPS to avoid
+  // mixed-content blocks when the site is served over HTTPS
+  return result.url.replace(/^http:\/\//, "https://");
 }
 
 /**

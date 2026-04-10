@@ -16,7 +16,7 @@ export function formatTimestampToDateHHMM(timestamp: string): string {
   const date = new Date(timestamp);
 
   // Format date to YYYY-MM-DD
-  const datePart = `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getFullYear()}`;
+  const datePart = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 
   // Format time to HH:MM
   const hours = date.getHours().toString().padStart(2, "0");

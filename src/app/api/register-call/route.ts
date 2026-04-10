@@ -5,7 +5,7 @@ import {
   startVoiceChat,
 } from "@/lib/volcengine-rtc";
 import { getCachedOrganizationById } from "@/services/clients.service";
-import { getInterviewer } from "@/services/interviewers.service";
+import { getInterviewer, getAllInterviewers } from "@/services/interviewers.service";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
@@ -21,10 +21,20 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { dynamic_data, interviewer_id, organization_id } = body;
 
-    const [interviewer, organization] = await Promise.all([
-      getInterviewer(interviewer_id),
+    let [interviewer, organization] = await Promise.all([
+      interviewer_id ? getInterviewer(interviewer_id) : Promise.resolve(null),
       organization_id ? getCachedOrganizationById(organization_id) : Promise.resolve(null),
     ]);
+
+    // If the interviewer was deleted, fall back to the first available one
+    if (!interviewer) {
+      const allInterviewers = await getAllInterviewers();
+      if (allInterviewers.length > 0) {
+        interviewer = allInterviewers[0];
+        logger.info(`Interviewer ${interviewer_id} not found, falling back to ${interviewer.name} (id=${interviewer.id})`);
+      }
+    }
+
     const orgName = organization?.name?.trim() || "";
 
     // Unique IDs for this call session
