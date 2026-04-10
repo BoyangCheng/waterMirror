@@ -4,11 +4,13 @@ import { dbCache } from "@/lib/cache";
 const connectionString = process.env.DATABASE_URL!;
 
 // 生产环境使用连接池，开发环境单连接
+// 注意：当前 PolarDB 集群没开 SSL，两端都 ssl:false。
+// 如果后续在阿里云控制台启用了 SSL，再改回 { rejectUnauthorized: false }。
 const sql = postgres(connectionString, {
   max: process.env.NODE_ENV === "production" ? 10 : 5,
   idle_timeout: 20,
-  connect_timeout: 10,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+  connect_timeout: 30,
+  ssl: false,
 });
 
 /**
