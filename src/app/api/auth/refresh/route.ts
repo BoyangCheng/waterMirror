@@ -27,7 +27,10 @@ export async function GET(request: NextRequest) {
     .sign(secret);
 
   const redirectTo = request.nextUrl.searchParams.get("redirectTo") ?? "/dashboard";
-  const response = NextResponse.redirect(new URL(redirectTo, request.url));
+  // 反向代理后面 request.url 里的 host 是上游（127.0.0.1:3000），
+  // 用 NEXT_PUBLIC_SITE_URL 作为 base 保证重定向到公网域名。
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || request.url;
+  const response = NextResponse.redirect(new URL(redirectTo, baseUrl));
   response.cookies.set("idaas_access_token", internalToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
