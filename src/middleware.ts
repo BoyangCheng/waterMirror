@@ -9,9 +9,10 @@ const publicRoutes = [
   "/api/auth/login",
   "/api/auth/logout",
   "/api/auth/session",
+  "/api/auth/refresh",
 ];
 
-const publicPrefixes = ["/call/", "/interview/"];
+const publicPrefixes = ["/call/", "/interview/", "/join/"];
 
 // 反向代理后面 request.url 的 host 可能是上游（127.0.0.1:3000），
 // 用 NEXT_PUBLIC_SITE_URL 作为 base 保证重定向指向公网域名。
