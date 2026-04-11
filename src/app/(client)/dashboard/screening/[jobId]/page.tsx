@@ -279,7 +279,7 @@ function JobDetailPage() {
                 <td className="px-4 py-3 text-center">
                   {interviewee.resume_url && (
                     <a
-                      href={interviewee.resume_url}
+                      href={interviewee.resume_url.replace(/^http:\/\//, "https://")}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-indigo-600 hover:text-indigo-800 inline-flex items-center"
