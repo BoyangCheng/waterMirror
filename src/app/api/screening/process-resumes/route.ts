@@ -144,7 +144,7 @@ export async function POST(req: Request) {
           logger.info(
             `No pre-extracted text for interviewee ${interviewee.id}, fetching from OSS`,
           );
-          resumeText = await fetchAndParsePdf(interviewee.resume_url.replace(/^http:\/\//, "https://"));
+          resumeText = await fetchAndParsePdf(interviewee.resume_url);
         }
 
         if (!resumeText.trim()) {

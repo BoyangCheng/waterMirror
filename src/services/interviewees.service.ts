@@ -5,6 +5,14 @@ import type { Interviewee } from "@/types/job";
 
 const INTERVIEWEES_TTL = 15_000; // 15 秒（AI 处理中频繁更新）
 
+/** DB 里的旧数据可能是 http，统一转 https */
+function normalizeResumeUrl(row: Interviewee): Interviewee {
+  if (row.resume_url) {
+    row.resume_url = row.resume_url.replace(/^http:\/\//, "https://");
+  }
+  return row;
+}
+
 const createInterviewee = async (payload: {
   job_id: string;
   resume_url: string;
@@ -33,7 +41,7 @@ const getIntervieweesByJobId = async (
           WHERE job_id = ${jobId}
           ORDER BY score DESC, created_at ASC
         `;
-        return data ? Array.from(data) : [];
+        return data ? Array.from(data).map(normalizeResumeUrl) : [];
       },
       INTERVIEWEES_TTL,
     );
@@ -55,7 +63,7 @@ const getPendingIntervieweesByJobId = async (
           WHERE job_id = ${jobId} AND status = 'pending'
           ORDER BY created_at ASC
         `;
-        return data ? Array.from(data) : [];
+        return data ? Array.from(data).map(normalizeResumeUrl) : [];
       },
       INTERVIEWEES_TTL,
     );

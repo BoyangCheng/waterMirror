@@ -116,17 +116,30 @@ export async function GET(request: NextRequest) {
           ON CONFLICT (id) DO NOTHING
         `;
       }
-      // Upsert user。注意：邀请命中时 EXCLUDED.organization_id 会强制覆盖，
-      // 这是期望行为（邀请赢过 Authing 默认 org）。
-      await sql`
-        INSERT INTO "user" (id, email, name, phone, organization_id)
-        VALUES (${userId}, ${email || null}, ${userName || null}, ${phone || null}, ${finalOrgId})
-        ON CONFLICT (id) DO UPDATE SET
-          email = COALESCE(EXCLUDED.email, "user".email),
-          name = COALESCE(EXCLUDED.name, "user".name),
-          phone = COALESCE(EXCLUDED.phone, "user".phone),
-          organization_id = EXCLUDED.organization_id
-      `;
+      // Upsert user。
+      // - 邀请流：强制覆盖 organization_id（邀请赢过一切）
+      // - 普通登录：COALESCE 保留已有 org，只在用户无 org 或 org 为 'default' 时才更新
+      if (inviteOrgId) {
+        await sql`
+          INSERT INTO "user" (id, email, name, phone, organization_id)
+          VALUES (${userId}, ${email || null}, ${userName || null}, ${phone || null}, ${inviteOrgId})
+          ON CONFLICT (id) DO UPDATE SET
+            email = COALESCE(EXCLUDED.email, "user".email),
+            name = COALESCE(EXCLUDED.name, "user".name),
+            phone = COALESCE(EXCLUDED.phone, "user".phone),
+            organization_id = EXCLUDED.organization_id
+        `;
+      } else {
+        await sql`
+          INSERT INTO "user" (id, email, name, phone, organization_id)
+          VALUES (${userId}, ${email || null}, ${userName || null}, ${phone || null}, ${finalOrgId})
+          ON CONFLICT (id) DO UPDATE SET
+            email = COALESCE(EXCLUDED.email, "user".email),
+            name = COALESCE(EXCLUDED.name, "user".name),
+            phone = COALESCE(EXCLUDED.phone, "user".phone),
+            organization_id = COALESCE(NULLIF("user".organization_id, 'default'), EXCLUDED.organization_id)
+        `;
+      }
     } catch (err) {
       // 写库失败不阻断登录，但必须留痕——后续排障能看到。
       console.error("Failed to upsert user/org in OIDC callback", err);
