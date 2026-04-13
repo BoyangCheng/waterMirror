@@ -686,7 +686,7 @@ function Call({ interview }: InterviewProps) {
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       {isStarted && <TabSwitchWarning />}
       <div className="bg-white rounded-md md:w-[80%] w-[90%]">
-        <Card className="h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all md:block dark:border-white">
+        <Card className="min-h-[88vh] md:h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all dark:border-white">
           <div>
             {/* Progress bar */}
             <div className="m-4 h-[15px] rounded-lg border-[1px] border-black">
@@ -725,7 +725,7 @@ function Call({ interview }: InterviewProps) {
 
             {/* Pre-call form */}
             {!isStarted && !isEnded && !isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[600px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
+              <div className="w-[90%] md:w-fit md:min-w-[400px] max-w-[600px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
                 <div>
                   <div className="flex justify-end p-1">
                     <LanguageSwitcher />
@@ -812,20 +812,21 @@ function Call({ interview }: InterviewProps) {
 
             {/* Active call UI */}
             {isStarted && !isEnded && !isOldUser && (
-              <div className="flex flex-row p-2 grow">
-                <div className="border-x-2 border-grey w-[50%] my-auto min-h-[70%]">
+              <div className="flex flex-col md:flex-row p-2 grow">
+                {/* Interviewer — top on mobile, left on desktop */}
+                <div className="border-b-2 md:border-b-0 md:border-x-2 border-grey w-full md:w-[50%] my-auto md:min-h-[70%]">
                   <div className="flex flex-col justify-evenly">
-                    <div className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 h-[250px] mx-auto px-6 overflow-y-auto">
+                    <div className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 h-[150px] md:h-[250px] mx-auto px-4 md:px-6 overflow-y-auto">
                       {lastInterviewerResponse}
                     </div>
-                    <div className="flex flex-col mx-auto justify-center items-center align-middle">
+                    <div className="flex flex-col mx-auto justify-center items-center align-middle pb-2 md:pb-0">
                       {interviewerImg ? (
                         <img
                           src={interviewerImg}
                           alt="Image of the interviewer"
                           width={120}
                           height={120}
-                          className={`w-[120px] h-[120px] object-cover object-center rounded-full mx-auto my-auto ${
+                          className={`w-[80px] h-[80px] md:w-[120px] md:h-[120px] object-cover object-center rounded-full mx-auto my-auto ${
                             activeTurn === "agent" ? "border-4" : ""
                           }`}
                           style={
@@ -834,22 +835,22 @@ function Call({ interview }: InterviewProps) {
                               : undefined
                           }
                           onError={(e) => {
-                            // console.error("[Call] interviewer image failed to load:", interviewerImg);
                             (e.currentTarget as HTMLImageElement).style.display = "none";
                           }}
                         />
                       ) : (
-                        <div className="w-[120px] h-[120px] bg-gray-200 rounded-full animate-pulse mx-auto" />
+                        <div className="w-[80px] h-[80px] md:w-[120px] md:h-[120px] bg-gray-200 rounded-full animate-pulse mx-auto" />
                       )}
-                      <div className="font-semibold">{t("interview.interviewer")}</div>
+                      <div className="font-semibold text-sm md:text-base">{t("interview.interviewer")}</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col justify-evenly w-[50%]">
+                {/* Interviewee — bottom on mobile, right on desktop */}
+                <div className="flex flex-col justify-evenly w-full md:w-[50%] mt-2 md:mt-0">
                   <div
                     ref={lastUserResponseRef}
-                    className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 mx-auto h-[250px] px-6 overflow-y-auto"
+                    className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 mx-auto h-[150px] md:h-[250px] px-4 md:px-6 overflow-y-auto"
                   >
                     {lastUserResponse}
                   </div>
@@ -859,14 +860,14 @@ function Call({ interview }: InterviewProps) {
                       autoPlay
                       playsInline
                       muted
-                      className={`w-[120px] h-[120px] object-cover rounded-full mx-auto my-auto ${
+                      className={`w-[80px] h-[80px] md:w-[120px] md:h-[120px] object-cover rounded-full mx-auto my-auto ${
                         activeTurn === "user"
                           ? `border-4 border-[${interview.theme_color}]`
                           : ""
                       }`}
                       style={{ transform: "scaleX(-1)" }}
                     />
-                    <div className="font-semibold">{t("interview.you")}</div>
+                    <div className="font-semibold text-sm md:text-base">{t("interview.you")}</div>
                   </div>
                 </div>
               </div>
@@ -906,7 +907,7 @@ function Call({ interview }: InterviewProps) {
 
             {/* Post-call thank you */}
             {isEnded && !isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+              <div className="w-[90%] md:w-fit md:min-w-[400px] md:max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
                     <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500" />
@@ -939,7 +940,7 @@ function Call({ interview }: InterviewProps) {
 
             {/* Already responded */}
             {isOldUser && !isInterviewFull && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+              <div className="w-[90%] md:w-fit md:min-w-[400px] md:max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
                     <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500" />
@@ -955,7 +956,7 @@ function Call({ interview }: InterviewProps) {
 
             {/* Interview full (max 10 participants) */}
             {isInterviewFull && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
+              <div className="w-[90%] md:w-fit md:min-w-[400px] md:max-w-[400px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
                 <div>
                   <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
                     <XCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-red-500" />

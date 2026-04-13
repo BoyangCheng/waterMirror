@@ -26,11 +26,11 @@ export async function POST(req: Request) {
       organization_id ? getCachedOrganizationById(organization_id) : Promise.resolve(null),
     ]);
 
-    // If the interviewer was deleted, fall back to the first available one
-    if (!interviewer) {
-      const allInterviewers = await getAllInterviewers();
-      if (allInterviewers.length > 0) {
-        interviewer = allInterviewers[0];
+    // If the interviewer was deleted, fall back to the first available one in the same org
+    if (!interviewer && organization_id) {
+      const orgInterviewers = await getAllInterviewers(organization_id);
+      if (orgInterviewers.length > 0) {
+        interviewer = orgInterviewers[0];
         logger.info(`Interviewer ${interviewer_id} not found, falling back to ${interviewer.name} (id=${interviewer.id})`);
       }
     }

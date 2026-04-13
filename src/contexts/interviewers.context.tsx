@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/contexts/auth.context";
+import { useOrg } from "@/contexts/auth.context";
 import {
   useInterviewersQuery,
   useCreateInterviewerMutation,
@@ -30,19 +30,19 @@ export const InterviewerContext = React.createContext<InterviewerContextProps>({
 });
 
 export function InterviewerProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { organization } = useOrg();
 
   const {
     data: interviewers = [],
     isLoading: interviewersLoading,
     refetch,
-  } = useInterviewersQuery(user?.id);
+  } = useInterviewersQuery(organization?.id);
 
-  const createMutation = useCreateInterviewerMutation(user?.id);
-  const deleteMutation = useDeleteInterviewerMutation(user?.id);
+  const createMutation = useCreateInterviewerMutation(organization?.id);
+  const deleteMutation = useDeleteInterviewerMutation(organization?.id);
 
   const createInterviewer = async (payload: any) => {
-    await createMutation.mutateAsync(payload);
+    await createMutation.mutateAsync({ ...payload, organization_id: organization?.id });
   };
 
   const deleteInterviewer = async (id: bigint) => {

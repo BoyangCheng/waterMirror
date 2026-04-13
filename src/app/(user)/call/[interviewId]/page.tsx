@@ -98,46 +98,26 @@ function InterviewInterface({ params }: Props) {
   }, [getInterviewById, resolvedParams.interviewId]);
 
   return (
-    <div>
-      <div className="hidden md:block p-8 mx-auto form-container">
-        {!interview ? (
-          interviewNotFound ? (
-            <PopUpMessage
-              title={t("interview.invalidUrl")}
-              description={t("interview.invalidUrlMessage")}
-              image="/invalid-url.png"
-            />
-          ) : (
-            <PopupLoader />
-          )
-        ) : !isActive ? (
+    <div className="p-4 md:p-8 mx-auto form-container">
+      {!interview ? (
+        interviewNotFound ? (
           <PopUpMessage
-            title={t("interview.unavailable")}
-            description={t("interview.unavailableMessage")}
-            image="/closed.png"
+            title={t("interview.invalidUrl")}
+            description={t("interview.invalidUrlMessage")}
+            image="/invalid-url.png"
           />
         ) : (
-          <Call interview={interview} />
-        )}
-      </div>
-      <div className=" md:hidden flex flex-col items-center md:h-[0px] justify-center  my-auto">
-        <div className="mt-48 px-3">
-          <p className="text-center my-5 text-md font-semibold">{interview?.name}</p>
-          <p className="text-center text-gray-600 my-5">
-            {t("interview.usePc")}
-          </p>
-        </div>
-        <div className="flex justify-center my-5">
-          <Image
-            src="/watermirrorlogo.png"
-            alt="WaterMirror"
-            width={180}
-            height={50}
-            className="h-12 w-auto"
-            style={{ background: "transparent" }}
-          />
-        </div>
-      </div>
+          <PopupLoader />
+        )
+      ) : !isActive ? (
+        <PopUpMessage
+          title={t("interview.unavailable")}
+          description={t("interview.unavailableMessage")}
+          image="/closed.png"
+        />
+      ) : (
+        <Call interview={interview} />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 export interface Interviewer {
   id: bigint;
-  user_id: string;
+  organization_id: string;
   created_at: Date;
   name: string;
   rapport: number;

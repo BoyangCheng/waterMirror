@@ -10,6 +10,7 @@ const publicRoutes = [
   "/api/auth/logout",
   "/api/auth/session",
   "/api/auth/refresh",
+  "/api/auth/dev-login",
 ];
 
 const publicPrefixes = ["/call/", "/interview/", "/join/"];
