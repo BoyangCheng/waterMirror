@@ -454,7 +454,9 @@ git push origin feature/your-feature
 
 ## 📄 许可证
 
-MIT License，详见 [LICENSE](LICENSE)。
+本项目基于 [Foloup](https://github.com/Foloup) 的开源项目 fork 而来，原始代码采用 MIT License，详见 [LICENSE-FOLO](LICENSE-FOLO)。
+
+本项目的新增代码以 **GNU Affero General Public License v3.0 (AGPL-3.0)** 发布，详见 [LICENSE](LICENSE)。
 
 ---
 
@@ -467,11 +469,7 @@ MIT License，详见 [LICENSE](LICENSE)。
 
 ## 🙏 致谢
 
-- 豆包（Volcengine）实时音视频服务
-- OpenAI GPT 模型
-- Supabase 数据库
-- Clerk 认证服务
-- Next.js / React 社区
+- [Foloup](https://github.com/Foloup) — 本项目 fork 自 Foloup，感谢其开源贡献
 
 ---
 
