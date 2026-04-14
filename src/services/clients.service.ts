@@ -55,7 +55,7 @@ const getClientById = async (
       VALUES (${id}, ${email || null}, ${organization_id || null})
       ON CONFLICT (id) DO UPDATE SET
         email = COALESCE(EXCLUDED.email, "user".email),
-        organization_id = COALESCE(EXCLUDED.organization_id, "user".organization_id)
+        organization_id = COALESCE(NULLIF("user".organization_id, 'default'), EXCLUDED.organization_id)
     `;
     invalidateCache(`user:${id}`);
 
