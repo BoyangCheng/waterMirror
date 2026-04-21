@@ -181,10 +181,7 @@ function JobDetailPage() {
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-100 text-left">
-              <th className="px-4 py-3 text-sm font-medium text-gray-600 w-12">
-                {t("screening.rank")}
-              </th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">
+              <th className="px-4 py-3 text-sm font-medium text-gray-600 w-40">
                 {t("screening.candidateName")}
               </th>
               <th className="px-4 py-3 text-sm font-medium text-gray-600 w-28">
@@ -215,14 +212,7 @@ function JobDetailPage() {
                   interviewee.status === "pending" ? "opacity-50" : ""
                 }`}
               >
-                <td className="px-4 py-3 text-sm text-gray-800 text-center">
-                  {interviewee.status === "pending" ? (
-                    <Loader2 size={14} className="animate-spin mx-auto" />
-                  ) : (
-                    index + 1
-                  )}
-                </td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-800">
+                <td className="px-4 py-3 text-sm font-medium text-gray-800 w-40">
                   {interviewee.status === "pending" ? (
                     <div className="h-4 w-16 animate-pulse rounded bg-gray-200" />
                   ) : (

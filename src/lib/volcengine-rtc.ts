@@ -260,8 +260,7 @@ export async function startVoiceChat(params: StartVoiceChatParams) {
           StreamMode: 2,
         },
         VADConfig: {
-          // 用户停顿超过 6 秒才认为是说完，给候选人留思考时间
-          SilenceTime: 6000,
+          SilenceTime: 1000,
         },
         InterruptConfig: {
           InterruptSpeechDuration: 300,

@@ -684,7 +684,7 @@ function Call({ interview }: InterviewProps) {
   // -------------------------------------------------------------------------
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      {isStarted && <TabSwitchWarning />}
+      {isStarted && !isEnded && <TabSwitchWarning />}
       <div className="bg-white rounded-md md:w-[80%] w-[90%]">
         <Card className="min-h-[88vh] md:h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all dark:border-white">
           <div>

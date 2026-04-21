@@ -60,6 +60,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
   const [tabSwitchCount, setTabSwitchCount] = useState<number>();
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const summaryRef = useRef<HTMLDivElement | null>(null);
+  const questionSummaryRef = useRef<HTMLDivElement | null>(null);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -119,8 +120,24 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
       const agentReplacement = "**AI interviewer:**";
       const userReplacement = `**${name}:**`;
 
-      // Replace "Agent:" with "AI interviewer:" and "User:" with the variable `${name}:`
-      let updatedTranscript = transcript
+      // 先合并连续的 Agent: 行，避免同一句话被拆成多条
+      const lines = transcript.split(/\r?\n/);
+      const mergedLines: string[] = [];
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        if (trimmed.startsWith("Agent:") && mergedLines.length > 0) {
+          const last = mergedLines[mergedLines.length - 1].trim();
+          if (last.startsWith("Agent:")) {
+            mergedLines[mergedLines.length - 1] += trimmed.slice("Agent:".length);
+            continue;
+          }
+        }
+        mergedLines.push(trimmed);
+      }
+
+      let updatedTranscript = mergedLines
+        .join("\n")
         .replace(/Agent:/g, agentReplacement)
         .replace(/User:/g, userReplacement);
 
@@ -158,36 +175,49 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
       ]);
       const JsPDF = (jsPDFModule as any).jsPDF || (jsPDFModule as any).default;
 
-      const canvas = await html2canvas(summaryRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        windowWidth: summaryRef.current.scrollWidth,
-      });
+      const renderSection = async (el: HTMLElement) => {
+        return html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          windowWidth: el.scrollWidth,
+        });
+      };
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new JsPDF({ orientation: "p", unit: "pt", format: "a4" });
-      // PDF 内嵌标题（部分阅读器会显示在标签栏/属性页）
-      try {
-        pdf.setProperties({ title: titleText });
-      } catch { /* ignore if not supported */ }
+      const addCanvasToPdf = (pdf: any, canvas: HTMLCanvasElement, isFirst: boolean) => {
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 24;
+        const usableW = pageWidth - margin * 2;
+        const imgHeight = (canvas.height * usableW) / canvas.width;
+        const imgData = canvas.toDataURL("image/png");
 
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 24;
-      const usableW = pageWidth - margin * 2;
-      const imgHeight = (canvas.height * usableW) / canvas.width;
+        if (!isFirst) pdf.addPage();
 
-      let heightLeft = imgHeight;
-      let position = margin;
-      pdf.addImage(imgData, "PNG", margin, position, usableW, imgHeight);
-      heightLeft -= pageHeight - margin * 2;
-
-      while (heightLeft > 0) {
-        pdf.addPage();
-        position = margin - (imgHeight - heightLeft);
+        let heightLeft = imgHeight;
+        let position = margin;
         pdf.addImage(imgData, "PNG", margin, position, usableW, imgHeight);
         heightLeft -= pageHeight - margin * 2;
+
+        while (heightLeft > 0) {
+          pdf.addPage();
+          position = margin - (imgHeight - heightLeft);
+          pdf.addImage(imgData, "PNG", margin, position, usableW, imgHeight);
+          heightLeft -= pageHeight - margin * 2;
+        }
+      };
+
+      const pdf = new JsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      try { pdf.setProperties({ title: titleText }); } catch { /* ignore */ }
+
+      // 第一页：总体概要
+      const canvas1 = await renderSection(summaryRef.current!);
+      addCanvasToPdf(pdf, canvas1, true);
+
+      // 第二页起：问题概要（如有）
+      if (questionSummaryRef.current) {
+        const canvas2 = await renderSection(questionSummaryRef.current);
+        addCanvasToPdf(pdf, canvas2, false);
       }
 
       const safeName = (name || "candidate").replace(/[^\w\u4e00-\u9fa5-]+/g, "_");
@@ -373,7 +403,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
             {/* <div>{call.}</div> */}
           </div>
           <div ref={summaryRef}>
-          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+          <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3" id="general-summary-section">
             <p className="font-semibold my-2">{t("response.generalSummary")}</p>
 
             <div className="grid grid-cols-3 gap-4 my-2 mt-4 ">
@@ -490,8 +520,9 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
               </div>
             </div>
           </div>
+          </div>
           {analytics?.questionSummaries && analytics.questionSummaries.length > 0 && (
-            <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
+            <div ref={questionSummaryRef} className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
               <p className="font-semibold my-2 mb-4">{t("response.questionSummary")}</p>
               <ScrollArea className="rounded-md h-72 text-sm mt-3 py-3 leading-6 overflow-y-scroll whitespace-pre-line px-2">
                 {analytics?.questionSummaries.map((qs, index) => (
@@ -505,7 +536,6 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
               </ScrollArea>
             </div>
           )}
-          </div>
           <div className="bg-slate-200 rounded-2xl min-h-[150px] max-h-[500px] p-4 px-5 mb-[150px]">
             <p className="font-semibold my-2 mb-4">{t("response.transcript")}</p>
             <ScrollArea className="rounded-2xl text-sm h-96  overflow-y-auto whitespace-pre-line px-2">
