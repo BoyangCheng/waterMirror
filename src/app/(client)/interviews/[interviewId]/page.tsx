@@ -264,7 +264,7 @@ function InterviewHome({ params, searchParams }: Props) {
         </div>
       ) : (
         <>
-          <div className="flex flex-row p-3 pt-4 justify-center gap-6 items-center sticky top-2 bg-white">
+          <div className="flex flex-row p-3 pt-4 justify-center gap-6 items-center bg-white">
             <div className="font-bold text-md">{interview?.name}</div>
 
             <div

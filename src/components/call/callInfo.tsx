@@ -524,7 +524,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
           {analytics?.questionSummaries && analytics.questionSummaries.length > 0 && (
             <div ref={questionSummaryRef} className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
               <p className="font-semibold my-2 mb-4">{t("response.questionSummary")}</p>
-              <ScrollArea className="rounded-md h-72 text-sm mt-3 py-3 leading-6 overflow-y-scroll whitespace-pre-line px-2">
+              <div className="text-sm mt-3 py-3 leading-6 whitespace-pre-line px-2">
                 {analytics?.questionSummaries.map((qs, index) => (
                   <QuestionAnswerCard
                     key={qs.question}
@@ -533,7 +533,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
                     answer={qs.summary}
                   />
                 ))}
-              </ScrollArea>
+              </div>
             </div>
           )}
           <div className="bg-slate-200 rounded-2xl min-h-[150px] max-h-[500px] p-4 px-5 mb-[150px]">
