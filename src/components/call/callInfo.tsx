@@ -25,16 +25,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { CandidateStatus } from "@/lib/enum";
+import { getInterviewById } from "@/services/interviews.service";
 import { getResponseByCallId, deleteResponse, updateResponse } from "@/services/responses.service";
 import type { Analytics, CallData } from "@/types/response";
 import { CircularProgress } from "@nextui-org/react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import axios from "axios";
-import { DownloadIcon, TrashIcon } from "lucide-react";
+import { DownloadIcon, FileTextIcon, TrashIcon } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactAudioPlayer from "react-audio-player";
 import { toast } from "sonner";
 
@@ -55,7 +56,10 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
   const [transcript, setTranscript] = useState("");
   const [candidateStatus, setCandidateStatus] = useState<string>("");
   const [interviewId, setInterviewId] = useState<string>("");
+  const [interviewName, setInterviewName] = useState<string>("");
   const [tabSwitchCount, setTabSwitchCount] = useState<number>();
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const summaryRef = useRef<HTMLDivElement | null>(null);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -91,6 +95,14 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
         setCandidateStatus(response.candidate_status);
         setInterviewId(response.interview_id);
         setTabSwitchCount(response.tab_switch_count);
+        // 取面试名称用于 PDF 标题
+        if (response.interview_id) {
+          getInterviewById(response.interview_id)
+            .then((iv) => {
+              if (iv?.name) setInterviewName(iv.name);
+            })
+            .catch(() => {});
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -122,6 +134,73 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
       setTranscript(replaceAgentAndUser(call?.transcript as string, name));
     }
   }, [call, name]);
+
+  // 把面试总结导出成 PDF。
+  // 用 html2canvas + jsPDF 的组合：浏览器原生渲染中文，再把渲染好的图像贴进 PDF，
+  // 不依赖第三方字体文件，对国内常用浏览器字体（PingFang/微软雅黑等）天然兼容。
+  // 只导出"总体概要 + 问题概要"，并在最上面加一行"面试名称 - 候选人姓名"标题。
+  const onDownloadPdf = async () => {
+    if (!summaryRef.current || isDownloadingPdf) return;
+    setIsDownloadingPdf(true);
+
+    // 临时注入一个 PDF 标题，截完图后再移除，不影响页面 UI
+    const titleText = `${interviewName || t("response.generalSummary")} - ${name || t("summary.anonymous")}`;
+    const headerEl = document.createElement("div");
+    headerEl.style.cssText =
+      "background:#ffffff;padding:16px 20px 8px 20px;font-size:18px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb;margin-bottom:8px;";
+    headerEl.textContent = titleText;
+    summaryRef.current.prepend(headerEl);
+
+    try {
+      const [{ default: html2canvas }, jsPDFModule] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const JsPDF = (jsPDFModule as any).jsPDF || (jsPDFModule as any).default;
+
+      const canvas = await html2canvas(summaryRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        windowWidth: summaryRef.current.scrollWidth,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new JsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      // PDF 内嵌标题（部分阅读器会显示在标签栏/属性页）
+      try {
+        pdf.setProperties({ title: titleText });
+      } catch { /* ignore if not supported */ }
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 24;
+      const usableW = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * usableW) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = margin;
+      pdf.addImage(imgData, "PNG", margin, position, usableW, imgHeight);
+      heightLeft -= pageHeight - margin * 2;
+
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = margin - (imgHeight - heightLeft);
+        pdf.addImage(imgData, "PNG", margin, position, usableW, imgHeight);
+        heightLeft -= pageHeight - margin * 2;
+      }
+
+      const safeName = (name || "candidate").replace(/[^\w\u4e00-\u9fa5-]+/g, "_");
+      pdf.save(`interview-summary-${safeName}-${call_id}.pdf`);
+      toast.success(t("response.pdfDownloaded"));
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      toast.error(t("response.pdfFailed"));
+    } finally {
+      headerEl.remove();
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const onDeleteResponseClick = async () => {
     try {
@@ -194,6 +273,14 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
                     </div>
                   </div>
                   <div className="flex flex-row mr-2 items-center gap-3">
+                    <Button
+                      onClick={onDownloadPdf}
+                      disabled={isDownloadingPdf}
+                      className="bg-indigo-600 hover:bg-indigo-800 font-semibold"
+                    >
+                      <FileTextIcon size={16} className="mr-1" />
+                      {isDownloadingPdf ? t("common.loading") : t("response.downloadPdf")}
+                    </Button>
                     <Select
                       value={candidateStatus}
                       onValueChange={async (newValue: string) => {
@@ -285,6 +372,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
             </div>
             {/* <div>{call.}</div> */}
           </div>
+          <div ref={summaryRef}>
           <div className="bg-slate-200 rounded-2xl min-h-[120px] p-4 px-5 my-3">
             <p className="font-semibold my-2">{t("response.generalSummary")}</p>
 
@@ -359,20 +447,26 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
                 <div className="flex flex-row gap-2  align-middle">
                   <p className="my-auto">{t("response.userSentiment")} </p>
                   <p className="font-medium my-auto">
-                    {call?.call_analysis?.user_sentiment === undefined ? (
+                    {analytics?.jobTendency === undefined ? (
                       <Skeleton className="w-[200px] h-[20px]" />
+                    ) : analytics.jobTendency === "positive" ? (
+                      t("summary.positive")
+                    ) : analytics.jobTendency === "optimistic" ? (
+                      t("summary.optimistic")
+                    ) : analytics.jobTendency === "negative" ? (
+                      t("summary.negative")
                     ) : (
-                      call?.call_analysis?.user_sentiment
+                      "-"
                     )}
                   </p>
 
                   <div
                     className={`${
-                      call?.call_analysis?.user_sentiment === "Neutral"
-                        ? "text-yellow-500"
-                        : call?.call_analysis?.user_sentiment === "Negative"
+                      analytics?.jobTendency === "optimistic"
+                        ? "text-blue-500"
+                        : analytics?.jobTendency === "negative"
                           ? "text-red-500"
-                          : call?.call_analysis?.user_sentiment === "Positive"
+                          : analytics?.jobTendency === "positive"
                             ? "text-green-500"
                             : "text-transparent"
                     } text-xl`}
@@ -383,14 +477,16 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
                 <div className="">
                   <div className="font-medium  ">
                     <span className="font-normal">{t("response.callSummary")} </span>
-                    {call?.call_analysis?.call_summary === undefined ? (
+                    {analytics === null || analytics === undefined ? (
                       <Skeleton className="w-[200px] h-[20px]" />
                     ) : (
-                      call?.call_analysis?.call_summary
+                      analytics.callSummary ||
+                      analytics.softSkillSummary ||
+                      call?.call_analysis?.call_summary ||
+                      t("summary.noSummary")
                     )}
                   </div>
                 </div>
-                <p className="font-medium ">{call?.call_analysis?.call_completion_rating_reason}</p>
               </div>
             </div>
           </div>
@@ -409,6 +505,7 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
               </ScrollArea>
             </div>
           )}
+          </div>
           <div className="bg-slate-200 rounded-2xl min-h-[150px] max-h-[500px] p-4 px-5 mb-[150px]">
             <p className="font-semibold my-2 mb-4">{t("response.transcript")}</p>
             <ScrollArea className="rounded-2xl text-sm h-96  overflow-y-auto whitespace-pre-line px-2">

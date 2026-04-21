@@ -106,7 +106,10 @@
     "transcript": "Transcript",
     "deleteSuccess": "Response deleted successfully.",
     "deleteFailed": "Failed to delete the response.",
-    "deleteConfirm": "This action cannot be undone. This will permanently delete this response."
+    "deleteConfirm": "This action cannot be undone. This will permanently delete this response.",
+    "downloadPdf": "Download PDF Summary",
+    "pdfDownloaded": "PDF downloaded",
+    "pdfFailed": "Failed to generate PDF, please retry"
   },
   "candidate": {
     "noStatus": "No Status",

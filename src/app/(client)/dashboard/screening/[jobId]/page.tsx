@@ -187,16 +187,16 @@ function JobDetailPage() {
               <th className="px-4 py-3 text-sm font-medium text-gray-600">
                 {t("screening.candidateName")}
               </th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">
+              <th className="px-4 py-3 text-sm font-medium text-gray-600 w-28">
                 {t("screening.company")}
               </th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">
+              <th className="px-4 py-3 text-sm font-medium text-gray-600 w-28">
                 {t("screening.position")}
               </th>
               <th className="px-4 py-3 text-sm font-medium text-gray-600">
                 {t("screening.phone")}
               </th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600 max-w-xs">
+              <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[28rem]">
                 {t("screening.highlightSummary")}
               </th>
               <th className="px-4 py-3 text-sm font-medium text-gray-600 w-16 text-center">
@@ -229,18 +229,18 @@ function JobDetailPage() {
                     interviewee.name || "-"
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-4 py-3 text-sm text-gray-600 w-28">
                   {interviewee.status === "pending" ? (
                     <div className="h-4 w-20 animate-pulse rounded bg-gray-200" />
                   ) : (
-                    interviewee.company || "-"
+                    <span className="line-clamp-2 break-words">{interviewee.company || "-"}</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-4 py-3 text-sm text-gray-600 w-28">
                   {interviewee.status === "pending" ? (
                     <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
                   ) : (
-                    interviewee.position || "-"
+                    <span className="line-clamp-2 break-words">{interviewee.position || "-"}</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600">
@@ -250,11 +250,11 @@ function JobDetailPage() {
                     interviewee.phone || "-"
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600 max-w-xs">
+                <td className="px-4 py-3 text-sm text-gray-600 min-w-[28rem]">
                   {interviewee.status === "pending" ? (
                     <div className="h-4 w-40 animate-pulse rounded bg-gray-200" />
                   ) : (
-                    <span className="line-clamp-2">
+                    <span className="line-clamp-3">
                       {interviewee.summary || "-"}
                     </span>
                   )}

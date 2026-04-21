@@ -120,7 +120,13 @@ function FromJobDetails({
   const buildObjective = () => {
     const jd = selectedJob?.description || "";
     const summary = selectedInterviewee?.summary || "";
-    return `职位描述: ${jd}\n\n候选人亮点: ${summary}`;
+    const resumeText = (selectedInterviewee?.resume_text || "").trim();
+    // 把简历正文也带进 objective，给 AI 在面试中做追问时可参考具体经历。
+    // 简历可能很长，截断到 4000 字防止把 system prompt 撑爆。
+    const resumeSection = resumeText
+      ? `\n\n候选人简历原文（用于结合具体经历追问）:\n${resumeText.slice(0, 4000)}`
+      : "";
+    return `职位描述: ${jd}\n\n候选人亮点: ${summary}${resumeSection}`;
   };
 
   const onGenrateQuestions = async () => {

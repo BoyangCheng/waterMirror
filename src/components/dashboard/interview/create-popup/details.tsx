@@ -64,6 +64,18 @@ function DetailsPopup({
     if (locale === "en" || locale === "zh") setLanguage(locale);
   }, [locale]);
 
+  // auto-select first interviewer if none chosen yet
+  useEffect(() => {
+    if (
+      open &&
+      interviewers &&
+      interviewers.length > 0 &&
+      (!selectedInterviewer || selectedInterviewer === BigInt(0))
+    ) {
+      setSelectedInterviewer(interviewers[0].id);
+    }
+  }, [open, interviewers, selectedInterviewer]);
+
   const slideLeft = (id: string, value: number) => {
     const slider = document.getElementById(`${id}`);
     if (slider) {
@@ -175,7 +187,9 @@ function DetailsPopup({
       <div className="text-center w-[38rem]">
         <div className="flex flex-col justify-center items-start mt-2 ml-10 mr-8">
           <div className="flex flex-row justify-center items-center">
-            <h3 className="text-sm font-medium">{t("create.interviewName")}</h3>
+            <h3 className="text-sm font-medium">
+              {t("create.interviewName")}<span className="text-red-500 ml-0.5">*</span>
+            </h3>
             <input
               type="text"
               className="border-b-2 focus:outline-none border-gray-500 px-2 w-96 py-0.5 ml-3"
@@ -185,7 +199,9 @@ function DetailsPopup({
               onBlur={(e) => setName(e.target.value.trim())}
             />
           </div>
-          <h3 className="text-sm mt-3 font-medium">{t("create.selectInterviewer")}</h3>
+          <h3 className="text-sm mt-3 font-medium">
+            {t("create.selectInterviewer")}<span className="text-red-500 ml-0.5">*</span>
+          </h3>
           <div className="relative flex items-center mt-1">
             <div
               id="slider-3"
@@ -249,7 +265,9 @@ function DetailsPopup({
               <></>
             )}
           </div>
-          <h3 className="text-sm font-medium">{t("create.objectiveLabel")}</h3>
+          <h3 className="text-sm font-medium">
+            {t("create.objectiveLabel")}<span className="text-red-500 ml-0.5">*</span>
+          </h3>
           <Textarea
             value={objective}
             className="h-24 mt-2 border-2 border-gray-500 w-[33.2rem]"
@@ -287,7 +305,9 @@ function DetailsPopup({
           </div>
           <div className="flex flex-row gap-3 justify-between w-full mt-3">
             <div className="flex flex-row justify-center items-center ">
-              <h3 className="text-sm font-medium ">{t("create.numberOfQuestions")}</h3>
+              <h3 className="text-sm font-medium ">
+                {t("create.numberOfQuestions")}<span className="text-red-500 ml-0.5">*</span>
+              </h3>
               <input
                 type="number"
                 step="1"
@@ -307,7 +327,9 @@ function DetailsPopup({
               />
             </div>
             <div className="flex flex-row justify-center items-center">
-              <h3 className="text-sm font-medium ">{t("interview.duration")}</h3>
+              <h3 className="text-sm font-medium ">
+                {t("interview.duration")}<span className="text-red-500 ml-0.5">*</span>
+              </h3>
               <input
                 type="number"
                 step="1"
@@ -328,7 +350,9 @@ function DetailsPopup({
             </div>
           </div>
           <div className="flex flex-col mt-4 w-full">
-            <span className="text-sm font-medium">{t("create.interviewLanguage")}</span>
+            <span className="text-sm font-medium">
+              {t("create.interviewLanguage")}<span className="text-red-500 ml-0.5">*</span>
+            </span>
             <div className="flex gap-4 mt-1.5">
               <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                 <input

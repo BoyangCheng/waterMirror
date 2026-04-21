@@ -106,7 +106,10 @@
     "transcript": "转录文本",
     "deleteSuccess": "回复已成功删除。",
     "deleteFailed": "删除回复失败。",
-    "deleteConfirm": "此操作不可撤销，将永久删除此回复。"
+    "deleteConfirm": "此操作不可撤销，将永久删除此回复。",
+    "downloadPdf": "下载 PDF 总结",
+    "pdfDownloaded": "PDF 已下载",
+    "pdfFailed": "PDF 生成失败，请重试"
   },
   "candidate": {
     "noStatus": "未标记",

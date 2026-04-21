@@ -21,6 +21,8 @@ export interface Analytics {
   communication: { score: number; feedback: string };
   generalIntelligence: string;
   softSkillSummary: string;
+  // 面试通话整体概要（60-100 字），新增字段，老数据可能为空
+  callSummary?: string;
   jobTendency: "positive" | "optimistic" | "negative";
   questionSummaries: Array<{
     question: string;
