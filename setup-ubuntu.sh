@@ -127,66 +127,61 @@ https://download.docker.com/linux/ubuntu ${UBUNTU_CODENAME} stable" | \
 # -------------------- 配置 Docker 镜像加速 --------------------
 
 configure_docker_mirror() {
-  step "配置 Docker 镜像加速"
+  step "配置 Docker 镜像加速（多 mirror 自动 fallback）"
 
-  info "可选的镜像加速器："
-  echo "  1. 阿里云镜像加速（推荐，需要个人账户）"
-  echo "  2. 官方镜像（不加速）"
-  echo ""
-  read -p "选择 (1-2，默认 2): " mirror_choice
-  mirror_choice=${mirror_choice:-2}
+  # 阿里云免费 mirror（xxx.mirror.aliyuncs.com）从 2024 年起对常见镜像
+  # 经常返回 404（如 python:3.12-slim），这里改用多个公益 mirror 串联，
+  # docker daemon 会自动 fallback 到下一个。
+  CANDIDATE_MIRRORS=(
+    "https://docker.m.daocloud.io"
+    "https://dockerproxy.com"
+    "https://docker.nju.edu.cn"
+    "https://mirror.baidubce.com"
+    "https://docker.1panel.live"
+  )
 
-  case "$mirror_choice" in
-    1)
-      echo ""
-      warn "请获取你的阿里云镜像加速器地址："
-      echo "  1. 登录 https://cr.console.aliyun.com/"
-      echo "  2. 左侧菜单 → 镜像加速器"
-      echo "  3. 复制你的加速器地址（形如 https://xxx.mirror.aliyuncs.com）"
-      echo ""
-      read -p "输入加速器地址: " MIRROR_URL
-      if [ -z "$MIRROR_URL" ]; then
-        warn "未输入加速器地址，跳过配置"
-        return 0
-      fi
-      ;;
-    *)
-      log "使用官方镜像源"
-      MIRROR_URL=""
-      ;;
-  esac
+  info "探测候选 mirror 可达性 ..."
+  declare -a OK_MIRRORS=()
+  declare -a FAILED_MIRRORS=()
+  for m in "${CANDIDATE_MIRRORS[@]}"; do
+    host=${m#https://}
+    if curl -fsS -m 5 "$m/v2/" -o /dev/null 2>&1; then
+      log "  ✓ $host"
+      OK_MIRRORS+=("$m")
+    else
+      warn "  ✗ $host"
+      FAILED_MIRRORS+=("$m")
+    fi
+  done
+
+  # 通的排前面，未通的排后面（兜底，万一恢复）
+  FINAL_MIRRORS=("${OK_MIRRORS[@]}" "${FAILED_MIRRORS[@]}")
 
   # 创建 Docker 配置目录
   mkdir -p /etc/docker
 
-  # 生成 daemon.json
-  if [ -n "$MIRROR_URL" ]; then
-    cat > /etc/docker/daemon.json <<EOF
-{
-  "registry-mirrors": ["${MIRROR_URL}"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
-  }
-}
-EOF
-    log "已配置镜像加速器: ${MIRROR_URL}"
-  else
-    cat > /etc/docker/daemon.json <<'EOF'
-{
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
-  }
-}
-EOF
-    log "已配置 Docker 守护进程选项"
+  # 生成 daemon.json（用 jq 安全合并，没装 jq 就用模板覆盖）
+  if [ -f /etc/docker/daemon.json ]; then
+    cp /etc/docker/daemon.json "/etc/docker/daemon.json.bak.$(date +%Y%m%d-%H%M%S)"
   fi
+
+  # 用 python 拼 JSON（Ubuntu 自带 python3）
+  python3 - "${FINAL_MIRRORS[@]}" > /etc/docker/daemon.json <<'PY'
+import json, sys
+mirrors = sys.argv[1:]
+cfg = {
+    "registry-mirrors": mirrors,
+    "log-driver": "json-file",
+    "log-opts": {"max-size": "10m", "max-file": "3"},
+}
+print(json.dumps(cfg, indent=2, ensure_ascii=False))
+PY
+
+  log "已写入 ${#FINAL_MIRRORS[@]} 个 mirror（通的 ${#OK_MIRRORS[@]} 个排前面）"
 
   systemctl daemon-reload
   systemctl restart docker
+  sleep 2
 
   log "Docker 配置完成"
 }
