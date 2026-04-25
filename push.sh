@@ -9,8 +9,9 @@ set -euo pipefail
 # -------------------- 配置区（按需修改）--------------------
 
 # 阿里云 ACR 镜像仓库配置
-ACR_REGISTRY="registry.cn-hangzhou.aliyuncs.com"
-ACR_NAMESPACE="${1:-your-namespace}"          # ← 从命令行参数获取，或改为你的命名空间
+# 个人独立实例 endpoint（不是老的共享 registry.cn-hangzhou.aliyuncs.com）
+ACR_REGISTRY="${ACR_REGISTRY:-crpi-ynsvk82qr21rkkzo.cn-hangzhou.personal.cr.aliyuncs.com}"
+ACR_NAMESPACE="${1:-your-namespace}"          # ← 从命令行参数获取
 ACR_REPO="watermirror"
 ACR_IMAGE="${ACR_REGISTRY}/${ACR_NAMESPACE}/${ACR_REPO}"
 
@@ -56,8 +57,27 @@ build_image() {
   info "Tag: ${IMAGE_TAG}"
   info "Latest: ${IMAGE_LATEST}"
 
+  # NEXT_PUBLIC_* 在 build 时被烧进客户端 bundle，必须用生产值
+  # 优先从 .env.production 读取，缺失则用占位符
+  ENV_FILE="${BUILD_ENV_FILE:-.env.production}"
+  if [ ! -f "$ENV_FILE" ]; then
+    warn "未找到 $ENV_FILE，将用空 NEXT_PUBLIC_* 值构建（客户端 URL 可能错）"
+    LIVE_URL=""; SITE_URL=""; AUTHING_HOST=""
+  else
+    info "从 $ENV_FILE 读取 NEXT_PUBLIC_* build 参数"
+    LIVE_URL=$(grep '^NEXT_PUBLIC_LIVE_URL=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")
+    SITE_URL=$(grep '^NEXT_PUBLIC_SITE_URL=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")
+    AUTHING_HOST=$(grep '^NEXT_PUBLIC_AUTHING_APP_HOST=' "$ENV_FILE" | cut -d= -f2- | tr -d "'\"")
+    info "  NEXT_PUBLIC_LIVE_URL=$LIVE_URL"
+    info "  NEXT_PUBLIC_SITE_URL=$SITE_URL"
+    info "  NEXT_PUBLIC_AUTHING_APP_HOST=$AUTHING_HOST"
+  fi
+
   docker build \
     --platform linux/amd64 \
+    --build-arg NEXT_PUBLIC_LIVE_URL="$LIVE_URL" \
+    --build-arg NEXT_PUBLIC_SITE_URL="$SITE_URL" \
+    --build-arg NEXT_PUBLIC_AUTHING_APP_HOST="$AUTHING_HOST" \
     -t "${IMAGE_TAG}" \
     -t "${IMAGE_LATEST}" \
     -f Dockerfile \

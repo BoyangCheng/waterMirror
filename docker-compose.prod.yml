@@ -1,0 +1,59 @@
+# ============================================================
+#  WaterMirror — 生产部署 compose
+#  在 ECS 上拉预构建镜像跑（不本地 build），避免 ECS 内存不够 build 失败。
+#
+#  前置：
+#    1. 镜像已通过本地 ./push.sh watermirror 推送到阿里云 ACR
+#    2. ECS 已登录 ACR：docker login crpi-ynsvk82qr21rkkzo.cn-hangzhou.personal.cr.aliyuncs.com
+#    3. 当前目录有 .env（生产值，cp .env.production .env）
+#
+#  用法：
+#    docker compose -f docker-compose.prod.yml pull
+#    docker compose -f docker-compose.prod.yml up -d
+#    docker compose -f docker-compose.prod.yml logs -f
+#
+#  更新流程（开发机推 → ECS 拉）：
+#    本地: ./push.sh watermirror
+#    ECS:  docker compose -f docker-compose.prod.yml pull && \
+#          docker compose -f docker-compose.prod.yml up -d
+# ============================================================
+
+services:
+  watermirror:
+    image: crpi-ynsvk82qr21rkkzo.cn-hangzhou.personal.cr.aliyuncs.com/watermirror/watermirror:latest
+    container_name: watermirror
+
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+
+    # 只绑 127.0.0.1 — 由 nginx 反代访问，不暴露公网
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    # 资源限制 — 按需调整。如果 ECS 内存紧张可降到 1G/0.5G
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "watermirror=true"
