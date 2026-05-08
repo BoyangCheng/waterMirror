@@ -8,11 +8,10 @@ export async function GET() {
     return NextResponse.json({});
   }
 
-  // 获取最新的 org / user 信息（JWT 里的字段可能在首次登录后还是空的，
-  // 用户在 OrgManagementModal 里更新过 name / phone / 组织后需从 DB 取最新）。
+  // 组织信息全部从 DB 实拉（JWT 不再带 org_name/org_image，避免 cookie 膨胀）。
   let orgId = session.orgId;
-  let orgName = session.orgName;
-  let orgImage = session.orgImage;
+  let orgName = "";
+  let orgImage = "";
   let name: string | null = null;
   let phone: string | null = null;
 
@@ -26,13 +25,13 @@ export async function GET() {
         orgId = dbOrgId;
         const org = await getOrganizationById(dbOrgId);
         if (org) {
-          orgName = (org as { name?: string }).name ?? orgName;
-          orgImage = (org as { image_url?: string }).image_url ?? orgImage;
+          orgName = (org as { name?: string }).name ?? "";
+          orgImage = (org as { image_url?: string }).image_url ?? "";
         }
       }
     }
   } catch {
-    // 出错时回退到 JWT 里的值
+    // DB 读失败时返回空字符串，前端展示降级为占位符
   }
 
   return NextResponse.json({

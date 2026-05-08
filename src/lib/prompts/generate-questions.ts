@@ -43,7 +43,16 @@ ${body.context}
 同时，生成一段不超过 50 字的第二人称面试描述，展示给受访者。描述放在 'description' 字段中。
 描述不得直接使用目标原文。部分细节不对受访者展示。描述应简短清晰，让受访者了解面试内容。
 
-'questions' 字段为对象数组，共 ${totalCount} 个元素，每个对象包含 question 键。数组前 ${primaryCount} 项为主要问题，后 ${EXTRA_QUESTIONS_COUNT} 项为备用问题，顺序不可颠倒。
+'questions' 字段为对象数组，共 ${totalCount} 个元素，每个对象**必须**包含一个名为 \`question\`（小写，单词完整）的字符串字段，**禁止**使用 \`text\`、\`content\`、\`q\`、\`title\` 等其它键名。数组前 ${primaryCount} 项为主要问题，后 ${EXTRA_QUESTIONS_COUNT} 项为备用问题，顺序不可颠倒。
+
+输出示例（严格按照此 shape，键名一字不差）：
+{
+  "description": "本次面试将围绕你的项目经验展开。",
+  "questions": [
+    { "question": "请介绍一下你最有挑战的项目。" },
+    { "question": "你在这个项目里负责哪一块？" }
+  ]
+}
 
 严格只输出包含 'questions' 和 'description' 两个键的 JSON 对象，所有内容使用中文。`;
   }
@@ -72,7 +81,16 @@ Moreover generate a 50 word or less second-person description about the intervie
 Do not use the exact objective in the description. Remember that some details are not be shown to the user. It should be a small description for the
 user to understand what the content of the interview would be. Make sure it is clear to the respondent who's taking the interview.
 
-The field 'questions' should take the format of an array of objects with the following key: question. It must contain exactly ${totalCount} items: the first ${primaryCount} are the primary questions and the last ${EXTRA_QUESTIONS_COUNT} are the backup questions, in that order.
+The field 'questions' MUST be an array of objects, each with EXACTLY one string field named \`question\` (lowercase, full word). DO NOT use other keys like \`text\`, \`content\`, \`q\`, or \`title\`. It must contain exactly ${totalCount} items: the first ${primaryCount} are the primary questions and the last ${EXTRA_QUESTIONS_COUNT} are the backup questions, in that order.
+
+Output example (follow this shape exactly, key names must match):
+{
+  "description": "This interview will explore your project experience.",
+  "questions": [
+    { "question": "Tell me about your most challenging project." },
+    { "question": "What part did you own in that project?" }
+  ]
+}
 
 Strictly output only a JSON object with the keys 'questions' and 'description'.`;
 };

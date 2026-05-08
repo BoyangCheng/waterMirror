@@ -118,11 +118,25 @@ function DetailsPopup({
         );
       }
 
-      const allQuestions = generatedQuestionsResponse.questions.map((question: Question) => ({
-        id: uuidv4(),
-        question: question.question.trim(),
-        follow_up_count: 1,
-      }));
+      // LLM 偶尔会把每项写成 string、{text}、{content}、{q} 等不同 shape，
+      // 这里全部归一化为字符串再 trim，避免 .question.trim() 直接炸掉。
+      const allQuestions = generatedQuestionsResponse.questions
+        .map((item: any) => {
+          const text =
+            typeof item === "string"
+              ? item
+              : item?.question ?? item?.text ?? item?.content ?? item?.q ?? "";
+          return {
+            id: uuidv4(),
+            question: String(text).trim(),
+            follow_up_count: 1,
+          };
+        })
+        .filter((q: Question) => q.question.length > 0);
+
+      if (allQuestions.length === 0) {
+        throw new Error(`No valid questions parsed from response: ${rawResponse}`);
+      }
 
       const primaryCount = Number(numQuestions);
       const updatedQuestions = allQuestions.slice(0, primaryCount);

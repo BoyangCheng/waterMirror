@@ -14,15 +14,13 @@ export async function GET(request: NextRequest) {
   const userId = process.env.DEV_AUTH_USER_ID || "dev-user-local";
   const orgId = process.env.DEV_AUTH_ORG_ID || "default";
   const email = process.env.DEV_AUTH_EMAIL || "dev@localhost";
-  const orgName = process.env.DEV_AUTH_ORG_NAME || "Dev Org";
 
   const secret = new TextEncoder().encode(process.env.AUTH_SECRET!);
+  // org_name / org_image 不进 JWT，前端从 /api/auth/session 拿 DB 实时值
   const token = await new SignJWT({
     sub: userId,
     org_id: orgId,
     email,
-    org_name: orgName,
-    org_image: "",
   })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
