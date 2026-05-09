@@ -17,8 +17,7 @@ import { useAuth, useOrg } from "@/contexts/auth.context";
 import { useI18n } from "@/i18n";
 import { useDeleteInterviewMutation } from "@/hooks/useInterviewsQuery";
 import { getInterviewer } from "@/services/interviewers.service";
-import { ArrowUpRight, Copy, Trash2 } from "lucide-react";
-import { CopyCheck } from "lucide-react";
+import { ArrowUpRight, Check, Share2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -156,10 +155,10 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCou
             copied ? "bg-indigo-300 text-white" : ""
           }`}
           variant={"secondary"}
-          title={t("interview.shareInterviewInfo")}
+          title={t("interview.shareInterviewLink")}
           onClick={copyToClipboard}
         >
-          {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
+          {copied ? <Check size={16} /> : <Share2 size={16} />}
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>

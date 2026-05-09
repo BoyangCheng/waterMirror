@@ -87,3 +87,72 @@ export function parseInterviewDurationMinutes(input: unknown): number {
   if (!Number.isFinite(n) || n <= 0) return 0;
   return Math.round(n * 60);
 }
+
+// ---------------------------------------------------------------------------
+// 自动收尾：检测到 AI 已经说完结束语 → 等双方静默 N 秒 → 提前结束
+// ---------------------------------------------------------------------------
+
+/** 收到 [TIME_UP] 或检测到结束语后，双方静默多少毫秒就强制结束 */
+export const FINAL_SILENCE_MS = 5000;
+
+/**
+ * 结束语关键词——用于探测 AI 是否已经说出收尾性的话。
+ * 命中其中任何一个就把"等待静默→结束"的开关打开。
+ * 与 prompt 里 rule 5/6 的结束语示例对齐。
+ */
+export const CLOSING_PHRASE_MARKERS = [
+  // 中文
+  "面试就到这里",
+  "面试到此结束",
+  "今天的问题就到这里",
+  "感谢你今天的分享",
+  "感谢你今天的时间",
+  "祝你顺利",
+  "祝你好运",
+  "期待和你下次的沟通",
+  // 英文
+  "that's all for the interview",
+  "that's all for today",
+  "wraps up the interview",
+  "wraps up our interview",
+  "best of luck",
+  "thanks for sharing today",
+];
+
+/** 在 agent 字幕里大小写不敏感地匹配结束语关键词。 */
+export function detectClosingPhrase(text: string): boolean {
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  return CLOSING_PHRASE_MARKERS.some((m) => lower.includes(m.toLowerCase()));
+}
+
+/**
+ * 双方静默判定：
+ *   awaiting=true（已发 [TIME_UP] 或检测到结束语）
+ *   AND agent 上次说话距今 ≥ silenceMs
+ *   AND user 上次说话距今 ≥ silenceMs
+ * 任一方还在说话就不会结束，避免打断收尾交流。
+ *
+ * lastAgentAt 必须 > 0（agent 至少说过一次话）才会判定结束，
+ * 否则刚发完 [TIME_UP] 那一刻直接拿 0 减 → 立刻误判为静默。
+ * 调用方负责在发 [TIME_UP] 时把 lastAgentAt/lastUserAt 重置为 Date.now()，
+ * 给 AI 留时间说出结束语。
+ */
+export function shouldEndOnSilence(params: {
+  awaiting: boolean;
+  lastAgentAt: number;
+  lastUserAt: number;
+  now?: number;
+  silenceMs?: number;
+}): boolean {
+  const {
+    awaiting,
+    lastAgentAt,
+    lastUserAt,
+    now = Date.now(),
+    silenceMs = FINAL_SILENCE_MS,
+  } = params;
+  if (!awaiting) return false;
+  if (lastAgentAt <= 0) return false;
+  return now - lastAgentAt >= silenceMs && now - Math.max(lastUserAt, 0) >= silenceMs;
+}

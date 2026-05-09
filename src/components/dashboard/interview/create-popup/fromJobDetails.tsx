@@ -55,6 +55,9 @@ function FromJobDetails({
     interviewData.question_count === 0 ? "" : String(interviewData.question_count),
   );
   const [duration, setDuration] = useState(interviewData.time_duration);
+  const [isVideoEnabled, setIsVideoEnabled] = useState<boolean>(
+    interviewData.is_video_enabled ?? true,
+  );
 
   const completedJobs = jobs.filter((j) => j.status === "completed");
   const selectedJob = completedJobs.find((j) => j.id === selectedJobId);
@@ -96,6 +99,18 @@ function FromJobDetails({
       setDropdownOpen(false);
     }
   }, [open]);
+
+  // 弹窗打开时若未选则自动选第一位面试官（与 details.tsx 行为对齐）
+  useEffect(() => {
+    if (
+      open &&
+      interviewers &&
+      interviewers.length > 0 &&
+      (!selectedInterviewer || selectedInterviewer === BigInt(0))
+    ) {
+      setSelectedInterviewer(interviewers[0].id);
+    }
+  }, [open, interviewers, selectedInterviewer]);
 
   const slideLeft = (id: string, value: number) => {
     const slider = document.getElementById(`${id}`);
@@ -194,6 +209,9 @@ function FromJobDetails({
         time_duration: duration,
         description: generatedQuestionsResponse.description,
         is_anonymous: isAnonymous,
+        // 关键：把 job 关联带进 interview，后续 dashboard 按岗位分组、面试详情合并都要用
+        job_id: selectedJobId || null,
+        is_video_enabled: isVideoEnabled,
       };
       setInterviewData(updatedInterviewData);
     } catch (err) {
@@ -221,6 +239,9 @@ function FromJobDetails({
       time_duration: String(duration),
       description: "",
       is_anonymous: isAnonymous,
+      // 同上：把 job_id 一起塞进来
+      job_id: selectedJobId || null,
+      is_video_enabled: isVideoEnabled,
     };
     setInterviewData(updatedInterviewData);
   };
@@ -457,6 +478,26 @@ function FromJobDetails({
               className="font-light text-xs italic w-full text-left block"
             >
               {t("interview.anonymousNote")}
+            </span>
+          </div>
+
+          {/* Video toggle */}
+          <div className="flex-col w-full mt-3">
+            <div className="flex items-center cursor-pointer">
+              <span className="text-sm font-medium">
+                {t("interview.videoEnabledQuestion")}
+              </span>
+              <Switch
+                checked={isVideoEnabled}
+                className={`ml-4 mt-1 ${isVideoEnabled ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
+                onCheckedChange={(checked) => setIsVideoEnabled(checked)}
+              />
+            </div>
+            <span
+              style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
+              className="font-light text-xs italic w-full text-left block"
+            >
+              {t("interview.videoEnabledNote")}
             </span>
           </div>
 

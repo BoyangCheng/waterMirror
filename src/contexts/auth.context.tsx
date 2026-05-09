@@ -59,9 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => setIsLoaded(true));
   }, []);
 
-  const signOut = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/sign-in";
+  const signOut = () => {
+    // 必须用 navigate（GET）而不是 fetch，让浏览器跟着完整的重定向链：
+    //   /api/auth/logout → Authing /oidc/session/end → /sign-in
+    // 用 fetch + 然后跳 /sign-in 不行——Authing 那边 SSO session 没清，
+    // /sign-in 会被立刻静默重定向回 callback 再登一次，看起来从来没退出。
+    window.location.href = "/api/auth/logout";
   };
 
   return (

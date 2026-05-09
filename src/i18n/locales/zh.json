@@ -39,7 +39,8 @@
     "prioritySupport": "优先支持",
     "allFeatures": "全部功能",
     "contactUpgrade": "请联系 founders@folo-up.co 升级您的计划。",
-    "noResponses": "暂无回复"
+    "noResponses": "暂无回复",
+    "otherInterviews": "其他"
   },
   "interview": {
     "expectedDuration": "预计时长：",
@@ -77,6 +78,8 @@
     "questions": "问题",
     "anonymousQuestion": "您是否希望受访者的回答保持匿名？",
     "anonymousNote": "注意：如果不匿名，将收集受访者的邮箱和姓名。",
+    "videoEnabledQuestion": "是否开启面试录音录像？",
+    "videoEnabledNote": "开启后会请求候选人摄像头权限，录制视频用于面试回看；关闭则不录视频，仅保留转录文字。",
     "deleteConfirm": "此操作不可撤销，将永久删除此面试。",
     "updatedSuccess": "面试更新成功。",
     "statusUpdated": "面试状态已更新",
@@ -88,6 +91,7 @@
     "testInterview": "测试面试",
     "copyInterviewLink": "复制面试链接",
     "shareInterviewInfo": "分享面试信息",
+    "shareInterviewLink": "分享面试链接",
     "shareMessageTemplate": "水滴AI 邀请你参加由【{{orgName}}】发起的AI 面试， 面试时长 ：{{duration}}分钟，有效期：3天。面试链接：{{link}}。 我们珍重你的知识和经验，祝你面试顺利。",
     "infoCopied": "面试信息已复制",
     "deleteInterview": "删除面试"
@@ -96,6 +100,7 @@
     "backToSummary": "返回概要",
     "tabSwitchDetected": "检测到标签页切换",
     "interviewRecording": "面试录音",
+    "interviewVideo": "面试视频",
     "generalSummary": "总体概要",
     "overallHiringScore": "综合录用评分",
     "communication": "沟通能力",
@@ -104,6 +109,11 @@
     "callSummary": "通话概要：",
     "questionSummary": "问题概要",
     "transcript": "转录文本",
+    "interviewLog": "面试记录",
+    "playVideo": "播放视频",
+    "noVideo": "无视频",
+    "noVideoTip": "候选人未开启摄像头或视频上传失败",
+    "videoLoadFailed": "视频加载失败",
     "deleteSuccess": "回复已成功删除。",
     "deleteFailed": "删除回复失败。",
     "deleteConfirm": "此操作不可撤销，将永久删除此回复。",

@@ -58,6 +58,9 @@ function DetailsPopup({
   const [duration, setDuration] = useState(interviewData.time_duration);
   const [uploadedDocumentContext, setUploadedDocumentContext] = useState("");
   const [language, setLanguage] = useState<"zh" | "en">("zh");
+  const [isVideoEnabled, setIsVideoEnabled] = useState<boolean>(
+    interviewData.is_video_enabled ?? true,
+  );
 
   // sync language default with current UI locale on mount
   useEffect(() => {
@@ -154,6 +157,9 @@ function DetailsPopup({
         description: generatedQuestionsResponse.description,
         is_anonymous: isAnonymous,
         language,
+        // 手动创建一定不挂任何 job，归到 dashboard 的"其他"分组
+        job_id: null,
+        is_video_enabled: isVideoEnabled,
       };
       setInterviewData(updatedInterviewData);
     } catch (err) {
@@ -179,6 +185,8 @@ function DetailsPopup({
       description: "",
       is_anonymous: isAnonymous,
       language,
+      job_id: null,
+      is_video_enabled: isVideoEnabled,
     };
     setInterviewData(updatedInterviewData);
   };
@@ -315,6 +323,24 @@ function DetailsPopup({
               className="font-light text-xs italic w-full text-left block"
             >
               {t("interview.anonymousNote")}
+            </span>
+          </div>
+          <div className="flex-col mt-3 w-full">
+            <div className="flex items-center cursor-pointer">
+              <span className="text-sm font-medium">
+                {t("interview.videoEnabledQuestion")}
+              </span>
+              <Switch
+                checked={isVideoEnabled}
+                className={`ml-4 mt-1 ${isVideoEnabled ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
+                onCheckedChange={(checked) => setIsVideoEnabled(checked)}
+              />
+            </div>
+            <span
+              style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
+              className="font-light text-xs italic w-full text-left block"
+            >
+              {t("interview.videoEnabledNote")}
             </span>
           </div>
           <div className="flex flex-row gap-3 justify-between w-full mt-3">

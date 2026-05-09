@@ -39,7 +39,8 @@
     "prioritySupport": "Priority Support",
     "allFeatures": "All Features",
     "contactUpgrade": "Contact founders@folo-up.co to upgrade your plan.",
-    "noResponses": "No responses to display"
+    "noResponses": "No responses to display",
+    "otherInterviews": "Other"
   },
   "interview": {
     "expectedDuration": "Expected duration:",
@@ -77,6 +78,8 @@
     "questions": "Questions",
     "anonymousQuestion": "Do you prefer the interviewees' responses to be anonymous?",
     "anonymousNote": "Note: If not anonymous, the interviewee's email and name will be collected.",
+    "videoEnabledQuestion": "Record interview audio + video?",
+    "videoEnabledNote": "When enabled, the candidate will be asked for camera permission and the session is recorded for review. When disabled, only the text transcript is kept.",
     "deleteConfirm": "This action cannot be undone. This will permanently delete this interview.",
     "updatedSuccess": "Interview updated successfully.",
     "statusUpdated": "Interview status updated",
@@ -88,6 +91,7 @@
     "testInterview": "Test Interview",
     "copyInterviewLink": "Copy Interview Link",
     "shareInterviewInfo": "Share Interview Info",
+    "shareInterviewLink": "Share Interview Link",
     "shareMessageTemplate": "WaterMirror AI invites you to an AI interview hosted by [{{orgName}}]. Duration: {{duration}} minutes. Valid for 3 days. Interview link: {{link}}. We value your knowledge and experience, and wish you the best of luck.",
     "infoCopied": "Interview info copied",
     "deleteInterview": "Delete Interview"
@@ -96,6 +100,7 @@
     "backToSummary": "Back to Summary",
     "tabSwitchDetected": "Tab Switching Detected",
     "interviewRecording": "Interview Recording",
+    "interviewVideo": "Interview Video",
     "generalSummary": "General Summary",
     "overallHiringScore": "Overall Hiring Score",
     "communication": "Communication",
@@ -104,6 +109,11 @@
     "callSummary": "Call Summary:",
     "questionSummary": "Question Summary",
     "transcript": "Transcript",
+    "interviewLog": "Interview Log",
+    "playVideo": "Play Video",
+    "noVideo": "No Video",
+    "noVideoTip": "Candidate did not enable camera or video upload failed",
+    "videoLoadFailed": "Video failed to load",
     "deleteSuccess": "Response deleted successfully.",
     "deleteFailed": "Failed to delete the response.",
     "deleteConfirm": "This action cannot be undone. This will permanently delete this response.",

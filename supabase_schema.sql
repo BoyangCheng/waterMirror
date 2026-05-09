@@ -61,11 +61,22 @@ CREATE TABLE interview (
     question_count INTEGER,
     response_count INTEGER,
     time_duration TEXT,
-    language TEXT DEFAULT 'zh'
+    language TEXT DEFAULT 'zh',
+    -- 关联到 screening 的 job（"已添加职位简历"创建的面试），手动创建为 NULL
+    -- 注意：FK 约束放到 job 表声明之后通过 ALTER 加，避免 schema 顺序依赖
+    job_id TEXT,
+    -- 创建面试时的"是否开启录像"开关；false → 候选人端不开摄像头、不跑 MediaRecorder
+    is_video_enabled BOOLEAN DEFAULT true
 );
+
+CREATE INDEX IF NOT EXISTS idx_interview_job_id ON interview (job_id);
 
 -- Migration (run if table already exists):
 -- ALTER TABLE interview ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'zh';
+-- ALTER TABLE interview ADD COLUMN IF NOT EXISTS job_id TEXT REFERENCES job(id) ON DELETE SET NULL;
+-- CREATE INDEX IF NOT EXISTS idx_interview_job_id ON interview (job_id);
+-- ALTER TABLE interview ADD COLUMN IF NOT EXISTS is_video_enabled BOOLEAN DEFAULT true;
+-- UPDATE interview SET is_video_enabled = true WHERE is_video_enabled IS NULL;
 
 CREATE TABLE response (
     id SERIAL PRIMARY KEY,
@@ -81,8 +92,17 @@ CREATE TABLE response (
     is_analysed BOOLEAN DEFAULT false,
     is_ended BOOLEAN DEFAULT false,
     is_viewed BOOLEAN DEFAULT false,
-    tab_switch_count INTEGER
+    tab_switch_count INTEGER,
+    -- 浏览器端 MediaRecorder 录的面试视频（VP9 WebM），存自有 OSS。null = 没录到/上传失败
+    video_url TEXT,
+    -- 录像真实时长（ms），前端用 wall-clock 算。WebM 流式 append 缺尾部 SeekHead 元数据，
+    -- 浏览器自报 video.duration 不可靠（NaN/Infinity/动态变化）→ 播放器进度条用这个值
+    video_duration_ms INTEGER
 );
+
+-- Migration (run if table already exists):
+-- ALTER TABLE response ADD COLUMN IF NOT EXISTS video_url TEXT;
+-- ALTER TABLE response ADD COLUMN IF NOT EXISTS video_duration_ms INTEGER;
 
 CREATE TABLE feedback (
     id SERIAL PRIMARY KEY,
@@ -104,6 +124,12 @@ CREATE TABLE job (
     status TEXT DEFAULT 'processing'
 );
 
+-- 现在 job 已经存在，把 interview.job_id 的 FK 约束加上
+-- ON DELETE SET NULL：删 job 不级联删面试，关联清空 → dashboard 自动归到"其他"
+ALTER TABLE interview
+  ADD CONSTRAINT interview_job_id_fkey
+  FOREIGN KEY (job_id) REFERENCES job(id) ON DELETE SET NULL;
+
 CREATE TABLE interviewee (
     id SERIAL PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
@@ -111,12 +137,20 @@ CREATE TABLE interviewee (
     name TEXT,
     company TEXT,
     position TEXT,
+    -- 候选人电话（AI 从简历里抽出来）
+    phone TEXT,
     summary TEXT,
     score INTEGER DEFAULT 0,
     resume_url TEXT,
+    -- 简历原文（pdf-parse 抽出来的纯文本，前端创建面试时拼进 objective 给 AI 做追问参考）
+    resume_text TEXT,
     original_filename TEXT,
     status TEXT DEFAULT 'pending'
 );
+
+-- Migration (run if table already exists):
+-- ALTER TABLE interviewee ADD COLUMN IF NOT EXISTS phone TEXT;
+-- ALTER TABLE interviewee ADD COLUMN IF NOT EXISTS resume_text TEXT;
 
 -- ---------------------------------------------------------------------------
 -- error_log：运行时错误与失败 response 的持久化。

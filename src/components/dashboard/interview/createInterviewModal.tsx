@@ -24,6 +24,7 @@ const CreateEmptyInterviewData = (language: "zh" | "en" = "zh"): InterviewBase =
   description: "",
   response_count: BigInt(0),
   language,
+  is_video_enabled: true,
 });
 
 type TabType = "manual" | "fromJob";

@@ -63,7 +63,11 @@ const updateInterview = async (payload: any, id: string): Promise<null> => {
 const deleteInterview = async (id: string): Promise<null> => {
   console.log("[deleteInterview][server] called → id:", id);
   try {
-    // 先删关联的 responses，避免外键约束报错
+    // interview(id) 被两张表外键引用，必须先把它们都清掉再删主表，
+    // 否则 PG 抛 23503 foreign_key_violation。
+    //   - response.interview_id  REFERENCES interview(id)
+    //   - feedback.interview_id  REFERENCES interview(id)
+    await sql`DELETE FROM feedback WHERE interview_id = ${id}`;
     await sql`DELETE FROM response WHERE interview_id = ${id}`;
     await sql`DELETE FROM interview WHERE id = ${id}`;
     invalidateCache("interviews:");

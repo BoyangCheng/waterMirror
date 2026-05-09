@@ -10,11 +10,15 @@
 
 import { describe, it, expect } from "vitest";
 import {
+  CLOSING_PHRASE_MARKERS,
+  FINAL_SILENCE_MS,
   TIME_UP_GRACE_MS,
   TIME_UP_PROMPT,
   TIME_UP_WARNING_LEAD_SECS,
   computeEndDelayMs,
+  detectClosingPhrase,
   parseInterviewDurationMinutes,
+  shouldEndOnSilence,
   shouldForceEnd,
   shouldSendTimeUpWarning,
 } from "@/lib/interview-timing";
@@ -247,3 +251,145 @@ describe("timer simulation (end-to-end of the timing state machine)", () => {
     expect(forceEnds).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 新加的"自动收尾"逻辑：探测 AI 说完结束语 → 等双方静默 → 自动断开 RTC
+// ---------------------------------------------------------------------------
+
+describe("FINAL_SILENCE_MS 常量", () => {
+  it("是 5 秒（用户最后定的值）", () => {
+    expect(FINAL_SILENCE_MS).toBe(5000);
+  });
+});
+
+describe("CLOSING_PHRASE_MARKERS — 结束语关键词覆盖", () => {
+  it("包含中文常见结束语", () => {
+    expect(CLOSING_PHRASE_MARKERS).toContain("面试就到这里");
+    expect(CLOSING_PHRASE_MARKERS).toContain("面试到此结束");
+    expect(CLOSING_PHRASE_MARKERS).toContain("祝你顺利");
+  });
+  it("包含英文常见结束语", () => {
+    expect(CLOSING_PHRASE_MARKERS).toContain("that's all for the interview");
+    expect(CLOSING_PHRASE_MARKERS).toContain("best of luck");
+  });
+});
+
+describe("detectClosingPhrase", () => {
+  it("命中中文结束语", () => {
+    expect(detectClosingPhrase("好的，今天面试就到这里，谢谢你！")).toBe(true);
+    expect(detectClosingPhrase("那么本次面试到此结束")).toBe(true);
+    expect(detectClosingPhrase("祝你顺利")).toBe(true);
+  });
+
+  it("命中英文结束语（大小写不敏感）", () => {
+    expect(detectClosingPhrase("Thanks, that's all for the interview!")).toBe(true);
+    expect(detectClosingPhrase("BEST OF LUCK")).toBe(true);
+  });
+
+  it("普通追问不命中", () => {
+    expect(detectClosingPhrase("你能再说说项目里的难点吗？")).toBe(false);
+    expect(detectClosingPhrase("那你下一段经历呢？")).toBe(false);
+  });
+
+  it("空字符串 / null / undefined 不会炸", () => {
+    expect(detectClosingPhrase("")).toBe(false);
+    // @ts-expect-error 故意传空验证防御性
+    expect(detectClosingPhrase(null)).toBe(false);
+    // @ts-expect-error 故意传空验证防御性
+    expect(detectClosingPhrase(undefined)).toBe(false);
+  });
+});
+
+describe("shouldEndOnSilence", () => {
+  const now = 100_000;
+
+  it("没收到结束信号（awaiting=false）→ 永远不结束", () => {
+    expect(
+      shouldEndOnSilence({
+        awaiting: false,
+        lastAgentAt: now - 99_999,
+        lastUserAt: now - 99_999,
+        now,
+      }),
+    ).toBe(false);
+  });
+
+  it("agent 从来没说过话（lastAgentAt=0）→ 不结束（防止刚发完 [TIME_UP] 立即误结束）", () => {
+    expect(
+      shouldEndOnSilence({
+        awaiting: true,
+        lastAgentAt: 0,
+        lastUserAt: 0,
+        now,
+      }),
+    ).toBe(false);
+  });
+
+  it("agent 静默 6s + user 静默 6s（默认阈值 5s）→ 结束", () => {
+    expect(
+      shouldEndOnSilence({
+        awaiting: true,
+        lastAgentAt: now - 6000,
+        lastUserAt: now - 6000,
+        now,
+      }),
+    ).toBe(true);
+  });
+
+  it("agent 静默够久但 user 还在说 → 不结束（避免打断收尾对话）", () => {
+    expect(
+      shouldEndOnSilence({
+        awaiting: true,
+        lastAgentAt: now - 30_000,
+        lastUserAt: now - 1000, // 1s 前还在说
+        now,
+      }),
+    ).toBe(false);
+  });
+
+  it("user 安静但 agent 刚说话 → 不结束", () => {
+    expect(
+      shouldEndOnSilence({
+        awaiting: true,
+        lastAgentAt: now - 100,
+        lastUserAt: now - 30_000,
+        now,
+      }),
+    ).toBe(false);
+  });
+
+  it("自定义 silenceMs（例如改 8s）", () => {
+    const params = {
+      awaiting: true,
+      lastAgentAt: now - 7000,
+      lastUserAt: now - 7000,
+      now,
+    };
+    expect(shouldEndOnSilence({ ...params, silenceMs: 8000 })).toBe(false);
+    expect(shouldEndOnSilence({ ...params, silenceMs: 6000 })).toBe(true);
+  });
+
+  it("user 从未说话（lastUserAt=0）当作'极久前安静'", () => {
+    // user 没字幕过 → 用户始终安静，只要 agent 也安静够久就结束
+    expect(
+      shouldEndOnSilence({
+        awaiting: true,
+        lastAgentAt: now - 6000,
+        lastUserAt: 0,
+        now,
+      }),
+    ).toBe(true);
+  });
+
+  it("阈值临界：恰好等于 silenceMs 也算安静（>=）", () => {
+    expect(
+      shouldEndOnSilence({
+        awaiting: true,
+        lastAgentAt: now - FINAL_SILENCE_MS,
+        lastUserAt: now - FINAL_SILENCE_MS,
+        now,
+      }),
+    ).toBe(true);
+  });
+});
+

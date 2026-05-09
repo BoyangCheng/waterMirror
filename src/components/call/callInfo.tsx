@@ -25,27 +25,55 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { CandidateStatus } from "@/lib/enum";
+import { findActiveTurnIndex, formatOffset } from "@/lib/transcript";
 import { getInterviewById } from "@/services/interviews.service";
 import { getResponseByCallId, deleteResponse, updateResponse } from "@/services/responses.service";
 import type { Analytics, CallData } from "@/types/response";
 import { CircularProgress } from "@nextui-org/react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import axios from "axios";
-import { DownloadIcon, FileTextIcon, TrashIcon } from "lucide-react";
+import { FileTextIcon, PlayCircle, TrashIcon, VideoOff } from "lucide-react";
 import { ArrowLeft } from "lucide-react";
 import { marked } from "marked";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
-import ReactAudioPlayer from "react-audio-player";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+
+// turn 数据形状（用于 onVideoData 回调，把 Q/A markers 提供给父页面的播放器）
+export type TurnLite = { role: "agent" | "user"; content: string; offsetMs: number };
+
+export type VideoDataPayload = {
+  videoUrl: string | null;
+  videoDurationMs: number;
+  turns: TurnLite[];
+};
 
 type CallProps = {
   call_id: string;
   onDeleteResponse: (deletedCallId: string) => void;
   onCandidateStatusChange: (callId: string, newStatus: string) => void;
+  /** 当前视频播放时间（秒），由父页面播放器汇报，用于 Q/A 高亮 */
+  currentVideoSec?: number;
+  /** 视频是否已打开（仅用于点击 Q/A 时区分 seek vs open） */
+  videoOpen?: boolean;
+  /** CallInfo 把视频元数据 + turns 通过这个回调推给父页面（父页面渲染播放器） */
+  onVideoData?: (data: VideoDataPayload) => void;
+  /** 用户点击"播放视频"按钮时，请求父页面打开播放器到指定 offset */
+  onOpenVideo?: (initialSec: number) => void;
+  /** 用户点 Q/A 时请求 seek（播放器已打开）/ 打开播放器并 seek（未打开） */
+  onSeekToTurn?: (turnIndex: number) => void;
 };
 
-function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallProps) {
+function CallInfo({
+  call_id,
+  onDeleteResponse,
+  onCandidateStatusChange,
+  currentVideoSec = 0,
+  videoOpen = false,
+  onVideoData,
+  onOpenVideo,
+  onSeekToTurn,
+}: CallProps) {
   const [call, setCall] = useState<CallData>();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [email, setEmail] = useState<string>("");
@@ -59,9 +87,57 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
   const [interviewName, setInterviewName] = useState<string>("");
   const [tabSwitchCount, setTabSwitchCount] = useState<number>();
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  // 视频元数据（仅本组件用于 has-video 判断 + 给父回调）；播放/进度由父页面管
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoDurationMs, setVideoDurationMs] = useState<number>(0);
   const summaryRef = useRef<HTMLDivElement | null>(null);
   const questionSummaryRef = useRef<HTMLDivElement | null>(null);
+
   const { t } = useI18n();
+
+  // 把 details.transcript_object 解析成结构化 turns
+  // 老数据可能没有 offsetMs，default 0
+  const turns: TurnLite[] = useMemo(() => {
+    const raw = call?.transcript_object as
+      | Array<{ role?: string; content?: string; offsetMs?: number }>
+      | undefined;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((it) => it && (it.role === "agent" || it.role === "user") && typeof it.content === "string")
+      .map((it) => ({
+        role: it.role as "agent" | "user",
+        content: it.content as string,
+        offsetMs: typeof it.offsetMs === "number" ? it.offsetMs : 0,
+      }));
+  }, [call]);
+
+  // 当前活跃 turn —— 由父页面传入的 currentVideoSec 算
+  const activeTurnIndex = useMemo(
+    () => findActiveTurnIndex(turns, currentVideoSec),
+    [turns, currentVideoSec],
+  );
+
+  // 高亮 turn 自动滚动进可视区
+  const turnRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  useEffect(() => {
+    if (activeTurnIndex < 0) return;
+    const el = turnRefs.current[activeTurnIndex];
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [activeTurnIndex]);
+
+  const handleClickTurn = (i: number) => {
+    onSeekToTurn?.(i);
+  };
+
+  // 一旦 turns 或 video 元数据变化，把全套数据推给父页面（给左侧栏的 VideoPlayer 用）
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 故意只在数据真正变化时触发
+  useEffect(() => {
+    onVideoData?.({
+      videoUrl,
+      videoDurationMs,
+      turns,
+    });
+  }, [videoUrl, videoDurationMs, turns]);
 
   useEffect(() => {
     const fetchResponses = async () => {
@@ -96,6 +172,8 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
         setCandidateStatus(response.candidate_status);
         setInterviewId(response.interview_id);
         setTabSwitchCount(response.tab_switch_count);
+        setVideoUrl(response.video_url ?? null);
+        setVideoDurationMs(response.video_duration_ms ?? 0);
         // 取面试名称用于 PDF 标题
         if (response.interview_id) {
           getInterviewById(response.interview_id)
@@ -384,20 +462,9 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
                     </AlertDialog>
                   </div>
                 </div>
-                <div className="flex flex-col mt-3">
-                  <p className="font-semibold">{t("response.interviewRecording")}</p>
-                  <div className="flex flex-row gap-3 mt-2">
-                    {call?.recording_url && <ReactAudioPlayer src={call?.recording_url} controls />}
-                    <a
-                      className="my-auto"
-                      href={call?.recording_url}
-                      download=""
-                      aria-label="Download"
-                    >
-                      <DownloadIcon size={20} />
-                    </a>
-                  </div>
-                </div>
+                {/* 录音/视频区已移除独立播放器/下载按钮：
+                    - 完整对话回放走"面试记录"右上角的视频播放按钮（FloatingVideoPlayer）
+                    - 火山服务端的 recording_url 不再前端展示，相关代码可后续清理 */}
               </div>
             </div>
             {/* <div>{call.}</div> */}
@@ -537,19 +604,91 @@ function CallInfo({ call_id, onDeleteResponse, onCandidateStatusChange }: CallPr
             </div>
           )}
           <div className="bg-slate-200 rounded-2xl min-h-[150px] max-h-[500px] p-4 px-5 mb-[150px]">
-            <p className="font-semibold my-2 mb-4">{t("response.transcript")}</p>
-            <ScrollArea className="rounded-2xl text-sm h-96  overflow-y-auto whitespace-pre-line px-2">
-              <div
-                className="text-sm p-4 rounded-2xl leading-5 bg-slate-50"
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: required for markdown rendering
-                dangerouslySetInnerHTML={{ __html: marked(transcript) }}
-              />
-            </ScrollArea>
+            <div className="flex items-center justify-between my-2 mb-4">
+              <p className="font-semibold">{t("response.interviewLog")}</p>
+              {/* 视频播放按钮：有视频→请求父页面打开左侧栏播放器；没视频→灰显并提示原因 */}
+              {videoUrl ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenVideo?.(0)}
+                  className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                  title={t("response.playVideo")}
+                >
+                  <PlayCircle size={20} />
+                  <span>{t("response.playVideo")}</span>
+                </button>
+              ) : (
+                <span
+                  className="flex items-center gap-1 text-gray-400 text-sm"
+                  title={t("response.noVideoTip")}
+                >
+                  <VideoOff size={18} />
+                  <span>{t("response.noVideo")}</span>
+                </span>
+              )}
+            </div>
+
+            {turns.length > 0 ? (
+              <ScrollArea className="rounded-2xl text-sm h-96 overflow-y-auto px-2 bg-slate-50 p-4">
+                <div className="flex flex-col gap-3">
+                  {turns.map((turn, i) => {
+                    const isActive = i === activeTurnIndex;
+                    const isAgent = turn.role === "agent";
+                    const label = isAgent ? "AI interviewer" : (name || t("common.anonymous"));
+                    const ts = formatOffset(turn.offsetMs);
+                    return (
+                      <button
+                        key={`${i}-${turn.offsetMs}`}
+                        type="button"
+                        ref={(el) => {
+                          turnRefs.current[i] = el;
+                        }}
+                        onClick={() => handleClickTurn(i)}
+                        className={`text-left rounded-md px-3 py-2 border transition-colors ${
+                          isActive
+                            ? "bg-indigo-100 border-indigo-400 shadow-sm"
+                            : "bg-white border-gray-200 hover:bg-indigo-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1 text-xs">
+                          <span
+                            className={`font-semibold ${
+                              isAgent ? "text-indigo-600" : "text-emerald-600"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                          {videoUrl && (
+                            <span className="text-gray-400 font-mono">{ts}</span>
+                          )}
+                        </div>
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {turn.content}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            ) : (
+              // 老数据没有 transcript_object 或为空 → 退化展示原始 transcript 文本
+              <ScrollArea className="rounded-2xl text-sm h-96 overflow-y-auto whitespace-pre-line px-2">
+                <div
+                  className="text-sm p-4 rounded-2xl leading-5 bg-slate-50"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: required for markdown rendering
+                  dangerouslySetInnerHTML={{ __html: marked(transcript) }}
+                />
+              </ScrollArea>
+            )}
           </div>
         </>
       )}
+
+      {/* 视频播放器已挪到父页面左侧栏。这里只通过 props 与之同步（currentVideoSec/onSeekToTurn/onOpenVideo）。 */}
     </div>
   );
 }
+
+// formatOffset 已经从 src/lib/transcript 导入
 
 export default CallInfo;

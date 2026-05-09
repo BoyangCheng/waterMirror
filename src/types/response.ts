@@ -13,6 +13,11 @@ export interface Response {
   analytics: any;
   candidate_status: string;
   tab_switch_count: number;
+  /** 浏览器端 MediaRecorder 录的面试视频，VP9 WebM，存在自有 OSS。null=没录到/上传失败。*/
+  video_url: string | null;
+  /** 录像真实时长（ms），前端用 wall-clock 算。WebM 流式 append 缺尾部元数据，
+   *  浏览器自报 duration 不可靠（NaN/Infinity/动态变化）—— 用这个值渲染进度条。 */
+  video_duration_ms?: number | null;
 }
 
 export interface Analytics {

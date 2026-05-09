@@ -22,6 +22,10 @@ export interface InterviewBase {
   description: string;
   response_count: bigint;
   language: "zh" | "en";
+  /** 通过"已添加职位简历"创建的面试会带上 job.id；手动创建的为 null，归到 dashboard 的"其他"分组。 */
+  job_id?: string | null;
+  /** 创建时是否开启录音录像。false → 候选人端不开摄像头、不跑 MediaRecorder。默认 true。 */
+  is_video_enabled?: boolean;
 }
 
 export interface InterviewDetails {

@@ -80,7 +80,6 @@
     "pdfjs-dist": "^4.10.38",
     "postgres": "^3.4.8",
     "react": "^18",
-    "react-audio-player": "^0.17.0",
     "react-color": "^2.19.3",
     "react-dom": "^18",
     "react-dropzone": "^14.2.3",
@@ -100,6 +99,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@playwright/test": "^1.59.1",
+    "@testing-library/dom": "^10.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

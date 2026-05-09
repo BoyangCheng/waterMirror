@@ -38,6 +38,31 @@ const getAllResponses = async (interviewId: string): Promise<Response[]> => {
   }
 };
 
+/**
+ * 拿同一岗位下所有面试的 response（用于面试详情页"同岗位结果合并"）。
+ * 同时把每条 response 标上它所属面试的 name，前端在左侧列表能区分 a/b。
+ */
+const getResponsesByJobId = async (
+  jobId: string,
+  organizationId: string,
+): Promise<(Response & { interview_name: string | null })[]> => {
+  try {
+    const data = await sql<(Response & { interview_name: string | null })[]>`
+      SELECT r.*, i.name AS interview_name
+      FROM response r
+      JOIN interview i ON i.id = r.interview_id
+      WHERE i.job_id = ${jobId}
+        AND i.organization_id = ${organizationId}
+        AND r.is_ended = true
+      ORDER BY r.created_at DESC
+    `;
+    return data ? Array.from(data) : [];
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
+};
+
 const getResponseCountByOrganizationId = async (organizationId: string): Promise<number> => {
   try {
     const [row] = await sql<{ count: number }[]>`
@@ -95,4 +120,4 @@ const updateResponse = async (payload: any, call_id: string): Promise<null> => {
   }
 };
 
-export { createResponse, saveResponse, updateResponse, getAllResponses, getResponseByCallId, deleteResponse, getResponseCountByOrganizationId, getAllEmailAddressesForInterview as getAllEmails };
+export { createResponse, saveResponse, updateResponse, getAllResponses, getResponsesByJobId, getResponseByCallId, deleteResponse, getResponseCountByOrganizationId, getAllEmailAddressesForInterview as getAllEmails };
