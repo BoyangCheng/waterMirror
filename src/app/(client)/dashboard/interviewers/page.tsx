@@ -6,6 +6,7 @@ import { useInterviewers } from "@/contexts/interviewers.context";
 import { useI18n } from "@/i18n";
 import { ChevronLeft } from "lucide-react";
 import { ChevronRight } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 
 function Interviewers() {
@@ -81,6 +82,17 @@ function Interviewers() {
           ) : (
             <></>
           )}
+        </div>
+        {/* 引导图：原图 1670×2162（竖图）。固定 400px 高，宽自适应 ≈ 309 */}
+        <div className="mt-4 ml-1">
+          <Image
+            src="/interviewerdirction.png"
+            alt="面试官引导"
+            width={1670}
+            height={2162}
+            className="h-[400px] w-auto object-contain"
+            priority
+          />
         </div>
       </div>
     </main>

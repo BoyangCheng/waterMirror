@@ -34,9 +34,12 @@ const interviewerCard = ({ interviewer }: Props) => {
 
   return (
     <>
-      <div className="relative inline-block ml-1 mr-3">
+      {/* hover:scale-105 放在 wrapper 上 → Card + 删除按钮一起放大；
+          删除按钮用 group-hover 控制可见，平时藏起，hover 才显示
+          逻辑和 interviewCard / jobCard 完全一致 */}
+      <div className="relative inline-block ml-1 mr-3 group hover:scale-105 ease-in-out duration-300 transition-transform">
         <Card
-          className="p-0 cursor-pointer hover:scale-105 ease-in-out duration-300 h-40 w-36 rounded-xl shrink-0 overflow-hidden shadow-md"
+          className="p-0 cursor-pointer h-40 w-36 rounded-xl shrink-0 overflow-hidden shadow-md"
           onClick={() => setOpen(true)}
         >
           <CardContent className="p-0">
@@ -61,7 +64,7 @@ const interviewerCard = ({ interviewer }: Props) => {
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
-              className="absolute top-1 right-1 h-6 w-6 p-0 text-red-400 bg-white/80 hover:bg-white hover:text-red-600"
+              className="absolute top-1 right-1 h-6 w-6 p-0 text-red-400 bg-white/80 hover:bg-white hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
               variant="secondary"
               onClick={(e) => e.stopPropagation()}
             >

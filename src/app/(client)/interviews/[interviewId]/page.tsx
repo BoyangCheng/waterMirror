@@ -18,6 +18,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useInterviews } from "@/contexts/interviews.context";
+import { useJobs } from "@/contexts/jobs.context";
 import { useI18n } from "@/i18n";
 import { CandidateStatus } from "@/lib/enum";
 import { formatTimestampToDateHHMM } from "@/lib/utils";
@@ -27,7 +28,7 @@ import { updateInterview } from "@/services/interviews.service";
 import { getAllResponses, getResponsesByJobId, saveResponse } from "@/services/responses.service";
 import type { Interview } from "@/types/interview";
 import type { Response } from "@/types/response";
-import { Eye, Filter, Palette, Pencil, Share2, UserIcon } from "lucide-react";
+import { Eye, Filter, Pencil, Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState, use } from "react";
 import { ChromePicker } from "react-color";
@@ -64,6 +65,17 @@ function InterviewHome({ params, searchParams }: Props) {
   const [iconColor, seticonColor] = useState<string>("#4F46E5");
   const { organization } = useOrg();
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const { jobs } = useJobs();
+
+  // 标题显示策略：有 job_id → 用 job.name；否则 fallback 到 interview.name 全名
+  const displayName = useMemo(() => {
+    if (!interview) return "";
+    if (interview.job_id) {
+      const job = jobs.find((j) => j.id === interview.job_id);
+      if (job) return job.name;
+    }
+    return interview.name ?? "";
+  }, [interview, jobs]);
 
   // ── 视频播放器状态（提升到父页面，左侧栏渲染） ────────────────────────────
   const [videoData, setVideoData] = useState<VideoDataPayload>({
@@ -387,17 +399,29 @@ function InterviewHome({ params, searchParams }: Props) {
         </div>
       ) : (
         <>
-          <div className="flex flex-row p-3 pt-4 justify-center gap-6 items-center bg-white">
-            <div className="font-bold text-md">{interview?.name}</div>
+          <div className="flex flex-row p-3 pt-4 justify-center gap-6 items-center bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] relative z-[5]">
+            <div className="font-bold text-md">{displayName}</div>
 
-            <div
-              className="w-5 h-5 rounded-full border-2 border-white shadow"
-              style={{ backgroundColor: iconColor }}
-            />
-
-            <div className="flex flex-row gap-3 my-auto">
-              <UserIcon className="my-auto" size={16} />: {String(responses?.length)}
-            </div>
+            {/* 小色盘自身就是调色入口（替代原来的 Palette 图标按钮） */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-5 h-5 rounded-full border-2 border-white shadow hover:scale-110 transition-transform cursor-pointer"
+                    style={{ backgroundColor: iconColor }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowColorPicker(!showColorPicker);
+                    }}
+                    aria-label={t("themeColor.tooltip")}
+                  />
+                </TooltipTrigger>
+                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
+                  <span className="text-black flex flex-row gap-4">{t("themeColor.tooltip")}</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             <TooltipProvider>
               <Tooltip>
@@ -440,24 +464,7 @@ function InterviewHome({ params, searchParams }: Props) {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="bg-transparent shadow-none text-xs text-indigo-600 px-0 h-7 hover:scale-110 relative"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setShowColorPicker(!showColorPicker);
-                    }}
-                  >
-                    <Palette size={19} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-zinc-300" side="bottom" sideOffset={4}>
-                  <span className="text-black flex flex-row gap-4">{t("themeColor.tooltip")}</span>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {/* 主题色按钮已合并到标题旁边的小色盘，这里不再单独放 Palette 图标 */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

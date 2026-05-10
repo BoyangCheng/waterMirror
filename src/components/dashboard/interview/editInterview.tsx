@@ -149,7 +149,8 @@ function EditInterview({ interview }: EditInterviewProps) {
 
   return (
     <div className=" h-screen z-[10] mx-2">
-      <div className="flex flex-col bg-gray-200 rounded-md min-h-[120px] p-2 pl-4">
+      {/* bg-slate-200 与 SummaryInfo / CallInfo 的卡片底色一致，整套面试详情视觉统一 */}
+      <div className="flex flex-col bg-slate-200 rounded-md min-h-[120px] p-2 pl-4">
         <div>
           <button
             type="button"
@@ -163,7 +164,7 @@ function EditInterview({ interview }: EditInterviewProps) {
           </button>
         </div>
         <div className="flex flex-row justify-between">
-          <p className="mt-3 mb-1 ml-2 font-medium">
+          <p className="mt-3 mb-1 ml-2 text-sm font-medium">
             {t("interview.description")}{" "}
             <span className="text-xs ml-2 font-normal">{t("interview.descriptionHint")}</span>
           </p>
@@ -208,7 +209,7 @@ function EditInterview({ interview }: EditInterviewProps) {
         </div>
         <textarea
           value={description}
-          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-gray-400"
+          className="text-sm h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-gray-400"
           placeholder={t("interview.descriptionPlaceholder")}
           rows={3}
           onChange={(e) => {
@@ -218,18 +219,18 @@ function EditInterview({ interview }: EditInterviewProps) {
             setDescription(e.target.value.trim());
           }}
         />
-        <p className="mt-3 mb-1 ml-2 font-medium">{t("interview.objective")}</p>
+        <p className="mt-3 mb-1 ml-2 text-sm font-medium">{t("interview.objective")}</p>
         <textarea
           value={objective}
-          className="h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-gray-400"
+          className="text-sm h-fit mt-3 ml-2 py-2 border-2 rounded-md w-[75%] px-2 border-gray-400"
           placeholder={t("interview.objectivePlaceholder")}
-          rows={3}
+          rows={6}
           onChange={(e) => setObjective(e.target.value)}
           onBlur={(e) => setObjective(e.target.value.trim())}
         />
         <div className="flex flex-row gap-3">
           <div>
-            <p className="mt-3 mb-1 ml-2 font-medium">{t("interview.interviewer")}</p>
+            <p className="mt-3 mb-1 ml-2 text-sm font-medium">{t("interview.interviewer")}</p>
             <div className=" flex items-center mt-1">
               <div
                 id="slider-3"
@@ -292,7 +293,7 @@ function EditInterview({ interview }: EditInterviewProps) {
         </div>
         <div className="flex flex-row justify-between w-[75%] gap-3 ml-2">
           <div className="flex flex-row justify-center items-center mt-5 ">
-            <h3 className="font-medium ">{t("interview.numQuestions")}</h3>
+            <h3 className="text-sm font-medium">{t("interview.numQuestions")}</h3>
             <input
               type="number"
               step="1"
@@ -312,19 +313,19 @@ function EditInterview({ interview }: EditInterviewProps) {
             />
           </div>
           <div className="flex flex-row items-center mt-5">
-            <h3 className="font-medium ">{t("interview.duration")}</h3>
+            <h3 className="text-sm font-medium">{t("interview.duration")}</h3>
             <input
               type="number"
               step="1"
-              max="10"
+              max="15"
               min="1"
-              className="border-2 text-center focus:outline-none bg-slate-100 rounded-md border-gray-500 w-14 px-2 py-0.5 ml-3"
+              className="text-sm border-2 text-center focus:outline-none bg-slate-100 rounded-md border-gray-500 w-14 px-2 py-0.5 ml-3"
               value={Number(duration)}
               onChange={(e) => {
                 let value = e.target.value;
                 if (value === "" || (Number.isInteger(Number(value)) && Number(value) > 0)) {
-                  if (Number(value) > 10) {
-                    value = "10";
+                  if (Number(value) > 15) {
+                    value = "15";
                   }
                   setDuration(Number(value));
                 }

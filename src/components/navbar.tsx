@@ -33,7 +33,9 @@ function Navbar() {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 bg-slate-100 z-[10] h-fit py-4">
+      {/* z-[20] 比 sideMenu 的 z-[10] 高，navbar 的下沿阴影压在侧边栏顶部上方
+          视觉上"横线在竖线之上"，两条阴影不打架 */}
+      <div className="fixed inset-x-0 top-0 bg-slate-100 z-[20] h-fit py-4 shadow-md">
         <div className="flex items-center justify-between h-full gap-2 px-8 mx-auto">
           <div className="flex flex-row gap-3 justify-center">
             <Link href={"/dashboard"} className="flex items-center gap-2 flex-none">

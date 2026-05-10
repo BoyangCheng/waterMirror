@@ -56,7 +56,8 @@ export default function RootLayout({
                 <Navbar />
                 <div className="flex flex-row h-screen">
                   <SideMenu />
-                  <div className="ml-[200px] pt-[80px] h-full overflow-y-auto flex-grow">
+                  {/* ml 必须和 SideMenu 的 w 同步：sideMenu 改 240，这里也改 240 */}
+                  <div className="ml-[240px] pt-[80px] h-full overflow-y-auto flex-grow">
                     {children}
                   </div>
                 </div>

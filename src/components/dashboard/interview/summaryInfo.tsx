@@ -168,8 +168,9 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
     setTableData(preparedData);
   }, [responses]);
 
+  // h-screen 改 h-fit：让容器按内容高度收紧，不再下方留大段空白
   return (
-    <div className="h-screen z-[10] mx-2">
+    <div className="h-fit z-[10] mx-2 pb-4">
       {responses.length > 0 ? (
         <div className="bg-slate-200 rounded-2xl min-h-[120px] p-2 ">
           <div className="flex flex-row gap-2 justify-between items-center mx-2">

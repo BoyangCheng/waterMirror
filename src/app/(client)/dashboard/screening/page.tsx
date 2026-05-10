@@ -4,6 +4,7 @@ import CreateJobCard from "@/components/dashboard/screening/createJobCard";
 import JobCard from "@/components/dashboard/screening/jobCard";
 import { useJobs } from "@/contexts/jobs.context";
 import { useI18n } from "@/i18n";
+import Image from "next/image";
 import React from "react";
 
 function Screening() {
@@ -30,13 +31,28 @@ function Screening() {
         <h3 className="text-sm tracking-tight text-gray-600 font-medium">
           {t("screening.subtitle")}
         </h3>
-        <div className="relative flex items-center mt-1 flex-wrap">
-          <CreateJobCard />
-          {jobsLoading ? (
-            <JobsLoader />
-          ) : (
-            jobs.map((job) => <JobCard key={job.id} job={job} />)
-          )}
+        {/* 两栏布局：左侧 job 卡片网格（限宽留位），右侧引导图 */}
+        <div className="flex flex-row items-start gap-6 mt-1">
+          {/* job 网格：限制最大 4 列宽度（每张卡 ~14rem + gap），留右侧空间给图 */}
+          <div className="relative flex items-center flex-wrap max-w-[60rem]">
+            <CreateJobCard />
+            {jobsLoading ? (
+              <JobsLoader />
+            ) : (
+              jobs.map((job) => <JobCard key={job.id} job={job} />)
+            )}
+          </div>
+          {/* 引导图：原图 1024×1024（正方形）。设 h-[400px] → 显示 400×400 */}
+          <div className="hidden lg:block flex-shrink-0 mt-4">
+            <Image
+              src="/resume.png"
+              alt="简历筛排引导"
+              width={1024}
+              height={1024}
+              className="h-[400px] w-auto object-contain"
+              priority
+            />
+          </div>
         </div>
       </div>
     </main>

@@ -29,10 +29,12 @@ function JobCard({ job }: Props) {
   const { t } = useI18n();
   const { deleteJob } = useJobs();
 
+  // hover:scale-105 放在 wrapper 上 → Card + 删除按钮一起放大；
+  // 删除按钮用 group-hover 控制可见，平时藏起，hover 才显示
   return (
-    <div className="relative inline-block ml-1 mr-3 mt-4">
+    <div className="relative inline-block ml-1 mr-3 mt-4 group hover:scale-105 ease-in-out duration-300 transition-transform">
       <Card
-        className="flex items-center cursor-pointer hover:scale-105 ease-in-out duration-300 h-60 w-56 rounded-xl shrink-0 overflow-hidden shadow-md border border-gray-200"
+        className="flex items-center cursor-pointer h-60 w-56 rounded-xl shrink-0 overflow-hidden shadow-md border border-gray-200"
         onClick={() => router.push(`/dashboard/screening/${job.id}`)}
       >
         <CardContent className="flex items-center flex-col mx-auto px-4 py-6">
@@ -62,7 +64,7 @@ function JobCard({ job }: Props) {
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button
-            className="absolute top-2 right-2 h-6 w-6 p-0 text-red-400 bg-white/80 hover:bg-white hover:text-red-600"
+            className="absolute top-2 right-2 h-6 w-6 p-0 text-red-400 bg-white/80 hover:bg-white hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             variant="secondary"
             onClick={(e) => e.stopPropagation()}
           >

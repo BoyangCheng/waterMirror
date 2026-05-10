@@ -95,8 +95,8 @@ function Interviews() {
         <h3 className="text-sm tracking-tight text-gray-600 font-medium">
           {t("dashboard.startGettingResponses")}
         </h3>
-        {/* 第 1 行：创建面试 卡片单独占一行（按用户要求） */}
-        <div className="flex items-center mt-1">
+        {/* 第 1 行：创建面试 卡片单独占一行（按用户要求）+ 右边引导图 */}
+        <div className="flex items-center mt-1 gap-3">
           {currentPlan === "free_trial_over" ? (
             <Card className="flex bg-gray-200 items-center border-dashed border-gray-700 border-2 hover:scale-105 ease-in-out duration-300 h-60 w-56 ml-1 mr-3 mt-4 rounded-xl shrink-0 overflow-hidden shadow-md">
               <CardContent className="flex items-center flex-col mx-auto">
@@ -111,6 +111,16 @@ function Interviews() {
           ) : (
             <CreateInterviewCard />
           )}
+          {/* 引导图：原图 1697×766（~2.2:1 横图）。缩到 h-44 (176px) 不抢眼，
+              宽度按比例自适应 → 实际显示约 390×176 */}
+          <Image
+            src="/interviewpagedirection.png"
+            alt="创建面试引导"
+            width={1697}
+            height={766}
+            className="h-44 w-auto object-contain mt-4 ml-2"
+            priority
+          />
         </div>
 
         {/* 升级弹窗（仅 plan 触发，与列表渲染解耦） */}
@@ -183,6 +193,7 @@ function Interviews() {
                         readableSlug={item.readable_slug}
                         responseCount={Number(item.response_count ?? 0)}
                         timeDuration={item.time_duration ?? ""}
+                        themeColor={item.theme_color}
                       />
                     ))}
                   </div>

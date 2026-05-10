@@ -4,6 +4,7 @@
     "poweredBy": "Powered by",
     "cancel": "Cancel",
     "continue": "Continue",
+    "confirm": "Confirm",
     "save": "Save",
     "edit": "Edit",
     "delete": "Delete",
@@ -125,7 +126,8 @@
     "noStatus": "No Status",
     "notSelected": "Not Selected",
     "potential": "Potential",
-    "selected": "Selected"
+    "selected": "Selected",
+    "selectResult": "Select Result"
   },
   "sharePopup": {
     "shareVia": "Share via:",

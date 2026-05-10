@@ -4,6 +4,7 @@
     "poweredBy": "技术支持",
     "cancel": "取消",
     "continue": "继续",
+    "confirm": "确定",
     "save": "保存",
     "edit": "编辑",
     "delete": "删除",
@@ -22,7 +23,7 @@
   "nav": {
     "interviews": "面试",
     "interviewers": "面试官",
-    "screening": "简历筛排"
+    "screening": "职位"
   },
   "dashboard": {
     "myInterviews": "我的面试",
@@ -125,7 +126,8 @@
     "noStatus": "未标记",
     "notSelected": "未录用",
     "potential": "潜在候选",
-    "selected": "已录用"
+    "selected": "已录用",
+    "selectResult": "选择面试结果"
   },
   "sharePopup": {
     "shareVia": "分享方式：",
@@ -238,8 +240,8 @@
     "shareWithRespondents": "请将链接分享给目标受访者"
   },
   "screening": {
-    "title": "简历筛排",
-    "subtitle": "添加职位，AI自动筛选匹配简历",
+    "title": "我的职位",
+    "subtitle": "添加职位，自动筛选匹配简历！",
     "createJob": "添加职位",
     "jobName": "职位名称",
     "jobDescription": "职位描述",

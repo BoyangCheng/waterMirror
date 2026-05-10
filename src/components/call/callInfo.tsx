@@ -404,7 +404,7 @@ function CallInfo({
                       }}
                     >
                       <SelectTrigger className="w-[180px]  bg-slate-50 rounded-2xl">
-                        <SelectValue placeholder={t("candidate.notSelected")} />
+                        <SelectValue placeholder={t("candidate.selectResult")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={CandidateStatus.NO_STATUS}>

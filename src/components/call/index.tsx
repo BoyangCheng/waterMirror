@@ -683,20 +683,18 @@ function Call({ interview }: InterviewProps) {
       // Start camera first (local preview only) so the video element has a
       // stream ready as soon as it mounts.
       // -----------------------------------------------------------------------
-      // 录像开关：interview.is_video_enabled === false 时整个 getUserMedia + MediaRecorder
-      // 都跳过，候选人不被请求摄像头权限、不录像、UI 上展示静态占位
+      // 摄像头永远开启（不管 is_video_enabled 是 true 还是 false）：
+      // 候选人需要看到自己的画面，体验上必须有；
+      // is_video_enabled 只控制是否启动 MediaRecorder 录制 + 上传 OSS。
       const recordingEnabled = interview?.is_video_enabled !== false;
-      if (recordingEnabled) try {
-        // audio:true 让 MediaRecorder 同时录用户麦克风。
+      try {
+        // audio:true 让 MediaRecorder 同时录用户麦克风（如开启录像）；
+        //   即使不录，AudioContext 拿到 mic 流也能给将来的混音/分析留口子。
         // 显式开 echoCancellation+noiseSuppression：候选人外放时 AEC 把扬声器漏到 mic 的
         //   AI 声音消掉，避免录像里 AI 声音听两遍 + 防止 ASR 把 AI 自己的话识别成用户输入。
-        //   这俩在浏览器里默认就开，但显式写出来不依赖默认值，跨浏览器更稳。
         // Volcengine RTC 会自己再 getUserMedia 拿一份做 ASR，Chrome 允许同一 mic 被
         //   多个 stream 同时读取，实测无冲突。
-        // 视频参数：再压一档，面试录像本质只是"看得见这个人"，不是高保真录影。
-        //   - 192×256 竖屏（3:4），比 240×320 再小 36% 像素
-        //   - frameRate 12fps：人脸表情 12fps 都能感知，再低开始卡顿
-        //   - 码率 80kbps（MediaRecorder 那里设），10 分钟约 6MB
+        // 视频参数：192×256 + 12fps + 0.08Mbps，10 分钟约 6MB。
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "user",
@@ -740,9 +738,9 @@ function Call({ interview }: InterviewProps) {
           console.warn("[CAM] AudioContext init failed, fall back to mic-only:", mixErr);
         }
 
-        // 启动 MediaRecorder 录制摄像头 + 混音音频
-        // 优先 VP9（压缩率最好），兜底 VP8/默认；都不行就放弃录制不阻塞面试
-        try {
+        // 启动 MediaRecorder 录制 — 仅在 is_video_enabled=true 时执行
+        // 即使关闭录像，前面的 getUserMedia 也已经跑过，候选人能看到自己画面
+        if (recordingEnabled) try {
           let mimeType = "";
           if (typeof MediaRecorder !== "undefined") {
             for (const candidate of [
@@ -1125,10 +1123,13 @@ function Call({ interview }: InterviewProps) {
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
+  // 整页 gray-100，wrapper 不再 bg-white：原来 watermirror logo 落在 wrapper 的
+  // 白底里，下沿和外围 gray 之间出现一段白条；去掉 bg-white 后 watermirror 自然
+  // 坐在 gray 上，整页颜色统一
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       {isStarted && !isEnded && <TabSwitchWarning />}
-      <div className="bg-white rounded-md md:w-[80%] w-[90%]">
+      <div className="md:w-[80%] w-[90%]">
         <Card className="min-h-[88vh] md:h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all dark:border-white">
           <div>
             {/* Progress bar */}
@@ -1271,14 +1272,16 @@ function Call({ interview }: InterviewProps) {
                     <div className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 h-[150px] md:h-[250px] mx-auto px-4 md:px-6 overflow-y-auto">
                       {lastInterviewerResponse}
                     </div>
-                    <div className="flex flex-col mx-auto justify-center items-center align-middle pb-2 md:pb-0">
+                    {/* 头像下移：mt-auto + pt-6 把头像推到 flex 容器底部并加顶部间距；
+                        头像放大：120px → 160px (md) / 80px → 110px (mobile) */}
+                    <div className="flex flex-col mx-auto justify-center items-center align-middle pb-2 md:pb-0 mt-auto pt-6">
                       {interviewerImg ? (
                         <img
                           src={interviewerImg}
                           alt="Image of the interviewer"
-                          width={120}
-                          height={120}
-                          className={`w-[80px] h-[80px] md:w-[120px] md:h-[120px] object-cover object-center rounded-full mx-auto my-auto ${
+                          width={160}
+                          height={160}
+                          className={`w-[110px] h-[110px] md:w-[160px] md:h-[160px] object-cover object-center rounded-full mx-auto my-auto ${
                             activeTurn === "agent" ? "border-4" : ""
                           }`}
                           style={
@@ -1291,9 +1294,9 @@ function Call({ interview }: InterviewProps) {
                           }}
                         />
                       ) : (
-                        <div className="w-[80px] h-[80px] md:w-[120px] md:h-[120px] bg-gray-200 rounded-full animate-pulse mx-auto" />
+                        <div className="w-[110px] h-[110px] md:w-[160px] md:h-[160px] bg-gray-200 rounded-full animate-pulse mx-auto" />
                       )}
-                      <div className="font-semibold text-sm md:text-base">{t("interview.interviewer")}</div>
+                      <div className="font-semibold text-sm md:text-base mt-2">{t("interview.interviewer")}</div>
                     </div>
                   </div>
                 </div>
@@ -1306,31 +1309,23 @@ function Call({ interview }: InterviewProps) {
                   >
                     {lastUserResponse}
                   </div>
-                  <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                    {interview?.is_video_enabled !== false ? (
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className={`w-[80px] h-[80px] md:w-[120px] md:h-[120px] object-cover rounded-full mx-auto my-auto ${
-                          activeTurn === "user"
-                            ? `border-4 border-[${interview.theme_color}]`
-                            : ""
-                        }`}
-                        style={{ transform: "scaleX(-1)" }}
-                      />
-                    ) : (
-                      // 录像关闭时不申请摄像头权限，UI 用静态头像占位
-                      <div
-                        className={`w-[80px] h-[80px] md:w-[120px] md:h-[120px] rounded-full mx-auto my-auto bg-gray-200 flex items-center justify-center text-gray-500 text-3xl ${
-                          activeTurn === "user" ? `border-4 border-[${interview.theme_color}]` : ""
-                        }`}
-                      >
-                        {(name || email || "?").trim().charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="font-semibold text-sm md:text-base">{t("interview.you")}</div>
+                  {/* 同样下移 + 放大，与左侧 AI 头像视觉对称 */}
+                  <div className="flex flex-col mx-auto justify-center items-center align-middle mt-auto pt-6">
+                    {/* 摄像头永远显示（getUserMedia 已经无条件请求过），
+                        is_video_enabled 只决定是否启动 MediaRecorder 录像，与预览无关 */}
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className={`w-[110px] h-[110px] md:w-[160px] md:h-[160px] object-cover rounded-full mx-auto my-auto ${
+                        activeTurn === "user"
+                          ? `border-4 border-[${interview.theme_color}]`
+                          : ""
+                      }`}
+                      style={{ transform: "scaleX(-1)" }}
+                    />
+                    <div className="font-semibold text-sm md:text-base mt-2">{t("interview.you")}</div>
                   </div>
                 </div>
               </div>
@@ -1342,7 +1337,7 @@ function Call({ interview }: InterviewProps) {
                 <AlertDialog>
                   <AlertDialogTrigger className="w-full">
                     <Button
-                      className="bg-white text-black border border-indigo-600 h-10 mx-auto flex flex-row justify-center mb-8"
+                      className="bg-white text-black border border-indigo-600 h-10 mx-auto flex flex-row justify-center mb-8 transition-transform duration-200 hover:scale-105"
                       disabled={Loading}
                     >
                       {t("interview.endInterview")}{" "}
@@ -1360,7 +1355,7 @@ function Call({ interview }: InterviewProps) {
                         className="bg-indigo-600 hover:bg-indigo-800"
                         onClick={onEndCallClick}
                       >
-                        {t("common.continue")}
+                        {t("common.confirm")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

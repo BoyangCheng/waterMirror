@@ -17,7 +17,7 @@ import { useAuth, useOrg } from "@/contexts/auth.context";
 import { useI18n } from "@/i18n";
 import { useDeleteInterviewMutation } from "@/hooks/useInterviewsQuery";
 import { getInterviewer } from "@/services/interviewers.service";
-import { ArrowUpRight, Check, Share2, Trash2 } from "lucide-react";
+import { Check, Share2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -30,11 +30,14 @@ interface Props {
   readableSlug: string;
   responseCount: number;
   timeDuration?: string;
+  /** 卡片顶部色条，跟着 interview.theme_color 走；空值退回 indigo-600 */
+  themeColor?: string | null;
 }
 
 const base_url = process.env.NEXT_PUBLIC_LIVE_URL;
+const DEFAULT_THEME_COLOR = "#4F46E5"; // tailwind indigo-600
 
-function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCount, timeDuration }: Props) {
+function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCount, timeDuration, themeColor }: Props) {
   const [copied, setCopied] = useState(false);
   const [img, setImg] = useState("");
   const [interviewerName, setInterviewerName] = useState("");
@@ -90,19 +93,19 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCou
     );
   };
 
-  const handleJumpToInterview = () => {
-    const interviewUrl = readableSlug ? `/call/${readableSlug}` : `/call/${id}`;
-    window.open(interviewUrl, "_blank");
-  };
-
   // 按钮不再挂在 <a> 内部 —— 按钮和 <a> 是同级兄弟，避免冒泡 / 默认导航冲突。
   // 这个结构和 src/components/dashboard/screening/jobCard.tsx 对齐。
+  // hover:scale-105 放在 wrapper 上 → Card + 按钮一起放大；
+  // 按钮组用 group-hover 控制可见性，平时藏起来，hover 才显示。
   return (
-    <div className="relative inline-block mt-4 ml-1 mr-3">
+    <div className="relative inline-block mt-4 ml-1 mr-3 group hover:scale-105 ease-in-out duration-300 transition-transform">
       <a href={`/interviews/${id}`}>
         <Card className="p-0 cursor-pointer h-60 w-56 rounded-xl shrink-0 overflow-hidden shadow-md">
           <CardContent className="p-0">
-            <div className="w-full h-40 overflow-hidden bg-indigo-600 flex items-center text-center">
+            <div
+              className="w-full h-40 overflow-hidden flex items-center text-center"
+              style={{ backgroundColor: themeColor || DEFAULT_THEME_COLOR }}
+            >
               <CardTitle className="w-full mt-3 mx-2 text-white text-lg">
                 {name}
               </CardTitle>
@@ -141,15 +144,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCou
           </CardContent>
         </Card>
       </a>
-      <div className="absolute top-2 right-2 flex gap-1 z-10">
-        <Button
-          className="text-xs text-indigo-600 px-1 h-6"
-          variant={"secondary"}
-          title={t("interview.testInterview")}
-          onClick={handleJumpToInterview}
-        >
-          <ArrowUpRight size={16} />
-        </Button>
+      <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <Button
           className={`text-xs text-indigo-600 px-1 h-6  ${
             copied ? "bg-indigo-300 text-white" : ""

@@ -18,10 +18,12 @@ function CreateInterviewerButton() {
         onClick={() => setOpen(true)}
       >
         <CardContent className="p-0">
-          <div className="w-full h-20 overflow-hidden flex justify-center items-center">
+          {/* Plus 容器从 h-20 改 h-28，对齐 InterviewerCard 头像区高度，
+              plus 落在接近卡片视觉中央位置 */}
+          <div className="w-full h-28 overflow-hidden flex justify-center items-center">
             <Plus size={40} />
           </div>
-          <p className="my-3 mx-auto text-xs text-wrap w-fit text-center">
+          <p className="mt-3 mx-auto text-xs text-wrap w-fit text-center">
             {t("interviewerSettings.createNew")}
           </p>
         </CardContent>

@@ -221,8 +221,9 @@ function DetailsPopup({
               onBlur={(e) => setName(e.target.value.trim())}
             />
           </div>
+          {/* 按用户要求：去掉选择面试官的红色必填星号 */}
           <h3 className="text-sm mt-3 font-medium">
-            {t("create.selectInterviewer")}<span className="text-red-500 ml-0.5">*</span>
+            {t("create.selectInterviewer")}
           </h3>
           <div className="relative flex items-center mt-1">
             <div
@@ -307,94 +308,33 @@ function DetailsPopup({
             setFileName={setFileName}
             setUploadedDocumentContext={setUploadedDocumentContext}
           />
-          <div className="flex-col mt-7 w-full">
-            <div className="flex items-center cursor-pointer">
-              <span className="text-sm font-medium">
-                {t("interview.anonymousQuestion")}
-              </span>
-              <Switch
-                checked={isAnonymous}
-                className={`ml-4 mt-1 ${isAnonymous ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
-                onCheckedChange={(checked) => setIsAnonymous(checked)}
-              />
-            </div>
-            <span
-              style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
-              className="font-light text-xs italic w-full text-left block"
-            >
-              {t("interview.anonymousNote")}
-            </span>
-          </div>
-          <div className="flex-col mt-3 w-full">
-            <div className="flex items-center cursor-pointer">
-              <span className="text-sm font-medium">
-                {t("interview.videoEnabledQuestion")}
-              </span>
-              <Switch
-                checked={isVideoEnabled}
-                className={`ml-4 mt-1 ${isVideoEnabled ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
-                onCheckedChange={(checked) => setIsVideoEnabled(checked)}
-              />
-            </div>
-            <span
-              style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
-              className="font-light text-xs italic w-full text-left block"
-            >
-              {t("interview.videoEnabledNote")}
-            </span>
-          </div>
-          <div className="flex flex-row gap-3 justify-between w-full mt-3">
-            <div className="flex flex-row justify-center items-center ">
-              <h3 className="text-sm font-medium ">
-                {t("create.numberOfQuestions")}<span className="text-red-500 ml-0.5">*</span>
-              </h3>
-              <input
-                type="number"
-                step="1"
-                max="5"
-                min="1"
-                className="border-b-2 text-center focus:outline-none  border-gray-500 w-14 px-2 py-0.5 ml-3"
-                value={numQuestions}
-                onChange={(e) => {
-                  let value = e.target.value;
-                  if (value === "" || (Number.isInteger(Number(value)) && Number(value) > 0)) {
-                    if (Number(value) > 5) {
-                      value = "5";
-                    }
-                    setNumQuestions(value);
-                  }
-                }}
-              />
-            </div>
-            <div className="flex flex-row justify-center items-center">
-              <h3 className="text-sm font-medium ">
-                {t("interview.duration")}<span className="text-red-500 ml-0.5">*</span>
-              </h3>
-              <input
-                type="number"
-                step="1"
-                max="30"
-                min="1"
-                className="border-b-2 text-center focus:outline-none  border-gray-500 w-14 px-2 py-0.5 ml-3"
-                value={duration}
-                onChange={(e) => {
-                  let value = e.target.value;
-                  if (value === "" || (Number.isInteger(Number(value)) && Number(value) > 0)) {
-                    if (Number(value) > 30) {
-                      value = "30";
-                    }
-                    setDuration(value);
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex flex-col mt-4 w-full">
+          {/* 两个开关：用 items-center + 去掉 Switch 的 mt-1 让圆滑块和文字基线居中对齐
+              开关下方原来的描述文字按用户要求删掉 */}
+          <div className="flex items-center cursor-pointer mt-7 w-full">
             <span className="text-sm font-medium">
-              {t("create.interviewLanguage")}<span className="text-red-500 ml-0.5">*</span>
+              {t("interview.anonymousQuestion")}
             </span>
-            <div className="flex gap-4 mt-1.5">
-              <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <Switch
+              checked={isAnonymous}
+              className={`ml-4 ${isAnonymous ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
+              onCheckedChange={(checked) => setIsAnonymous(checked)}
+            />
+          </div>
+          <div className="flex items-center cursor-pointer mt-3 w-full">
+            <span className="text-sm font-medium">
+              {t("interview.videoEnabledQuestion")}
+            </span>
+            <Switch
+              checked={isVideoEnabled}
+              className={`ml-4 ${isVideoEnabled ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
+              onCheckedChange={(checked) => setIsVideoEnabled(checked)}
+            />
+          </div>
+          {/* 一行：[面试语言] [问题数量] [时长]，面试语言在最左 */}
+          <div className="flex flex-row gap-6 items-center w-full mt-4 flex-wrap">
+            <div className="flex flex-row items-center">
+              <h3 className="text-sm font-medium mr-2">{t("create.interviewLanguage")}</h3>
+              <label className="flex items-center gap-1.5 cursor-pointer text-sm mr-3">
                 <input
                   type="radio"
                   name="interview-language"
@@ -416,6 +356,50 @@ function DetailsPopup({
                 />
                 {t("create.languageEn")}
               </label>
+            </div>
+            <div className="flex flex-row items-center">
+              <h3 className="text-sm font-medium">
+                {t("create.numberOfQuestions")}<span className="text-red-500 ml-0.5">*</span>
+              </h3>
+              <input
+                type="number"
+                step="1"
+                max="5"
+                min="1"
+                className="border-b-2 text-center focus:outline-none border-gray-500 w-14 px-2 py-0.5 ml-3"
+                value={numQuestions}
+                onChange={(e) => {
+                  let value = e.target.value;
+                  if (value === "" || (Number.isInteger(Number(value)) && Number(value) > 0)) {
+                    if (Number(value) > 5) {
+                      value = "5";
+                    }
+                    setNumQuestions(value);
+                  }
+                }}
+              />
+            </div>
+            <div className="flex flex-row items-center">
+              <h3 className="text-sm font-medium">
+                {t("interview.duration")}<span className="text-red-500 ml-0.5">*</span>
+              </h3>
+              <input
+                type="number"
+                step="1"
+                max="15"
+                min="1"
+                className="border-b-2 text-center focus:outline-none border-gray-500 w-14 px-2 py-0.5 ml-3"
+                value={duration}
+                onChange={(e) => {
+                  let value = e.target.value;
+                  if (value === "" || (Number.isInteger(Number(value)) && Number(value) > 0)) {
+                    if (Number(value) > 15) {
+                      value = "15";
+                    }
+                    setDuration(value);
+                  }
+                }}
+              />
             </div>
           </div>
 

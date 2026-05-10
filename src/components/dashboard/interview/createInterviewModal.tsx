@@ -17,8 +17,9 @@ const CreateEmptyInterviewData = (language: "zh" | "en" = "zh"): InterviewBase =
   name: "",
   interviewer_id: BigInt(0),
   objective: "",
-  question_count: 0,
-  time_duration: "",
+  // 默认问题数量 3、时长 10 分钟（按用户要求）
+  question_count: 3,
+  time_duration: "10",
   is_anonymous: false,
   questions: [],
   description: "",
@@ -34,7 +35,8 @@ function CreateInterviewModal({ open, setOpen }: Props) {
   const [proceed, setProceed] = useState(false);
   const [interviewData, setInterviewData] = useState<InterviewBase>(CreateEmptyInterviewData());
   const [extraQuestions, setExtraQuestions] = useState<Question[]>([]);
-  const [activeTab, setActiveTab] = useState<TabType>("manual");
+  // 默认打开「已添加职位简历」标签（按用户要求挪到左边作为默认）
+  const [activeTab, setActiveTab] = useState<TabType>("fromJob");
   const { t } = useI18n();
 
   // Below for File Upload
@@ -55,7 +57,7 @@ function CreateInterviewModal({ open, setOpen }: Props) {
       setProceed(false);
       setInterviewData(CreateEmptyInterviewData());
       setExtraQuestions([]);
-      setActiveTab("manual");
+      setActiveTab("fromJob");
       // Below for File Upload
       setIsUploaded(false);
       setFileName("");
@@ -76,17 +78,7 @@ function CreateInterviewModal({ open, setOpen }: Props) {
             <h1 className="text-xl font-semibold">{t("create.createInterview")}</h1>
           </div>
           <div className="flex border-b border-gray-200 mb-2 px-10">
-            <button
-              type="button"
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === "manual"
-                  ? "border-b-2 border-indigo-600 text-indigo-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-              onClick={() => setActiveTab("manual")}
-            >
-              {t("create.tabManual")}
-            </button>
+            {/* fromJob 挪到左边并作为默认 tab */}
             <button
               type="button"
               className={`px-4 py-2 text-sm font-medium transition-colors ${
@@ -97,6 +89,17 @@ function CreateInterviewModal({ open, setOpen }: Props) {
               onClick={() => setActiveTab("fromJob")}
             >
               {t("create.tabFromJob")}
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "manual"
+                  ? "border-b-2 border-indigo-600 text-indigo-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+              onClick={() => setActiveTab("manual")}
+            >
+              {t("create.tabManual")}
             </button>
           </div>
 

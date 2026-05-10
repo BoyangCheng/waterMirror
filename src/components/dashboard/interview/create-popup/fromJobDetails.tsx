@@ -461,47 +461,29 @@ function FromJobDetails({
             )}
           </div>
 
-          {/* Anonymous Toggle */}
-          <div className="flex-col w-full">
-            <div className="flex items-center cursor-pointer">
-              <span className="text-sm font-medium">
-                {t("interview.anonymousQuestion")}
-              </span>
-              <Switch
-                checked={isAnonymous}
-                className={`ml-4 mt-1 ${isAnonymous ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
-                onCheckedChange={(checked) => setIsAnonymous(checked)}
-              />
-            </div>
-            <span
-              style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
-              className="font-light text-xs italic w-full text-left block"
-            >
-              {t("interview.anonymousNote")}
+          {/* 两个开关：items-center 让滑块和文字基线居中；删除下方描述 */}
+          <div className="flex items-center cursor-pointer w-full">
+            <span className="text-sm font-medium">
+              {t("interview.anonymousQuestion")}
             </span>
+            <Switch
+              checked={isAnonymous}
+              className={`ml-4 ${isAnonymous ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
+              onCheckedChange={(checked) => setIsAnonymous(checked)}
+            />
+          </div>
+          <div className="flex items-center cursor-pointer mt-3 w-full">
+            <span className="text-sm font-medium">
+              {t("interview.videoEnabledQuestion")}
+            </span>
+            <Switch
+              checked={isVideoEnabled}
+              className={`ml-4 ${isVideoEnabled ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
+              onCheckedChange={(checked) => setIsVideoEnabled(checked)}
+            />
           </div>
 
-          {/* Video toggle */}
-          <div className="flex-col w-full mt-3">
-            <div className="flex items-center cursor-pointer">
-              <span className="text-sm font-medium">
-                {t("interview.videoEnabledQuestion")}
-              </span>
-              <Switch
-                checked={isVideoEnabled}
-                className={`ml-4 mt-1 ${isVideoEnabled ? "bg-indigo-600" : "bg-[#E6E7EB]"}`}
-                onCheckedChange={(checked) => setIsVideoEnabled(checked)}
-              />
-            </div>
-            <span
-              style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
-              className="font-light text-xs italic w-full text-left block"
-            >
-              {t("interview.videoEnabledNote")}
-            </span>
-          </div>
-
-          {/* Questions & Duration */}
+          {/* 问题数量 + 时长（fromJob 没有面试语言选项，时长上限 15） */}
           <div className="flex flex-row gap-3 justify-between w-full mt-3">
             <div className="flex flex-row justify-center items-center">
               <h3 className="text-sm font-medium">{t("create.numberOfQuestions")}</h3>
@@ -528,15 +510,15 @@ function FromJobDetails({
               <input
                 type="number"
                 step="1"
-                max="30"
+                max="15"
                 min="1"
                 className="border-b-2 text-center focus:outline-none border-gray-500 w-14 px-2 py-0.5 ml-3"
                 value={duration}
                 onChange={(e) => {
                   let value = e.target.value;
                   if (value === "" || (Number.isInteger(Number(value)) && Number(value) > 0)) {
-                    if (Number(value) > 30) {
-                      value = "30";
+                    if (Number(value) > 15) {
+                      value = "15";
                     }
                     setDuration(value);
                   }
