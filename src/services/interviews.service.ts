@@ -34,9 +34,13 @@ const getInterviewById = async (id: string): Promise<Interview | null> => {
     return await cachedQuery<Interview | null>(
       `interview:${id}`,
       async () => {
+        // 一次 LEFT JOIN 把 interviewer.image 一起取回来，省掉前端再 getInterviewer 的二次 roundtrip。
+        // interviewer 行可能不存在（被删 / id 错），用 LEFT JOIN 不会让 interview 行消失。
         const data = await sql<Interview[]>`
-          SELECT * FROM interview
-          WHERE id = ${id} OR readable_slug = ${id}
+          SELECT i.*, ir.image AS interviewer_image
+          FROM interview i
+          LEFT JOIN interviewer ir ON ir.id = i.interviewer_id
+          WHERE i.id = ${id} OR i.readable_slug = ${id}
         `;
         return data && data.length > 0 ? data[0] : null;
       },

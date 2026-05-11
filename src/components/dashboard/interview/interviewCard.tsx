@@ -14,12 +14,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { useAuth, useOrg } from "@/contexts/auth.context";
+import { useInterviewers } from "@/contexts/interviewers.context";
 import { useI18n } from "@/i18n";
 import { useDeleteInterviewMutation } from "@/hooks/useInterviewsQuery";
-import { getInterviewer } from "@/services/interviewers.service";
 import { Check, Share2, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface Props {
@@ -39,31 +39,24 @@ const DEFAULT_THEME_COLOR = "#4F46E5"; // tailwind indigo-600
 
 function InterviewCard({ name, interviewerId, id, url, readableSlug, responseCount, timeDuration, themeColor }: Props) {
   const [copied, setCopied] = useState(false);
-  const [img, setImg] = useState("");
-  const [interviewerName, setInterviewerName] = useState("");
   const [imgError, setImgError] = useState(false);
-  const [fetched, setFetched] = useState(false);
   const { t } = useI18n();
   const { user } = useAuth();
   const { organization } = useOrg();
+  const { interviewers, interviewersLoading } = useInterviewers();
   const deleteInterviewMutation = useDeleteInterviewMutation(user?.id, organization?.id);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-  useEffect(() => {
-    const fetchInterviewer = async () => {
-      try {
-        const interviewer = await getInterviewer(interviewerId);
-        if (interviewer) {
-          if (interviewer.image) setImg(interviewer.image);
-          if (interviewer.name) setInterviewerName(interviewer.name);
-        }
-      } finally {
-        setFetched(true);
-      }
-    };
-    fetchInterviewer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // 直接从 InterviewerProvider 的全局缓存里查（org 维度一次性拉过来的，5min staleTime）
+  // 之前每张卡都跑 useEffect → getInterviewer 服务端 roundtrip，N 张卡触发 N 次 server action。
+  // 现在 0 次额外 fetch，首次 render 就拿到 image / name。
+  const interviewer = useMemo(
+    () => interviewers.find((i) => i.id === interviewerId),
+    [interviewers, interviewerId],
+  );
+  const img = interviewer?.image ?? "";
+  const interviewerName = interviewer?.name ?? "";
+  // 用 context 的 loading 状态当 fetched 标志（数据到位 = !loading）
+  const fetched = !interviewersLoading;
 
   const handleDelete = () => {
     deleteInterviewMutation.mutate(id);

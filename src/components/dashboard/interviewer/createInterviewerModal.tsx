@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { useI18n } from "@/i18n";
-import { INTERVIEWER_AVATARS, VOLCENGINE_VOICES } from "@/lib/constants";
+import { FEMALE_AVATARS, MALE_AVATARS, VOLCENGINE_VOICES } from "@/lib/constants";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -20,8 +20,23 @@ export default function CreateInterviewerModal({ onClose }: Props) {
   const { createInterviewer } = useInterviewers();
 
   const [name, setName] = useState("");
-  const [selectedImage, setSelectedImage] = useState(INTERVIEWER_AVATARS[0]);
+  // 默认女声 + Lisa（FEMALE_AVATARS[0]）
   const [agentId, setAgentId] = useState<string>(VOLCENGINE_VOICES[0].id);
+  const [selectedImage, setSelectedImage] = useState(FEMALE_AVATARS[0]);
+
+  // 当前性别决定可选头像列表；首项作为切换性别时的默认
+  const isMaleVoice = agentId === VOLCENGINE_VOICES[1].id;
+  const allowedAvatars = isMaleVoice ? MALE_AVATARS : FEMALE_AVATARS;
+
+  // 切换声音时，如果当前头像不在新性别的允许列表里，自动跳到该性别的第一个（Bob/Lisa）
+  const handleVoiceChange = (voiceId: string) => {
+    setAgentId(voiceId);
+    const isNewMale = voiceId === VOLCENGINE_VOICES[1].id;
+    const newAllowed = isNewMale ? MALE_AVATARS : FEMALE_AVATARS;
+    if (!newAllowed.includes(selectedImage)) {
+      setSelectedImage(newAllowed[0]);
+    }
+  };
   const [empathy, setEmpathy] = useState(7);
   const [rapport, setRapport] = useState(7);
   const [exploration, setExploration] = useState(7);
@@ -50,9 +65,8 @@ export default function CreateInterviewerModal({ onClose }: Props) {
     }
   };
 
-  // Auto-generate description based on voice gender and locale
-  const isMale = agentId === VOLCENGINE_VOICES[1].id;
-  const description = isMale
+  // Auto-generate description based on voice gender and locale（用上面已定义的 isMaleVoice）
+  const description = isMaleVoice
     ? t("interviewers.bob.description" as any)
     : t("interviewers.lisa.description" as any);
 
@@ -100,7 +114,8 @@ export default function CreateInterviewerModal({ onClose }: Props) {
       <div className="flex flex-col gap-2">
         <Label>{t("interviewerSettings.selectAvatar")}</Label>
         <div className="flex flex-row flex-wrap gap-3">
-          {INTERVIEWER_AVATARS.map((src) => (
+          {/* 只渲染当前性别允许的头像（女声→Lisa/liu；男声→Bob/bo） */}
+          {allowedAvatars.map((src) => (
             <div
               key={src}
               onClick={() => setSelectedImage(src)}
@@ -122,7 +137,7 @@ export default function CreateInterviewerModal({ onClose }: Props) {
             <div key={v.id} className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setAgentId(v.id)}
+                onClick={() => handleVoiceChange(v.id)}
                 className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
                   agentId === v.id
                     ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"

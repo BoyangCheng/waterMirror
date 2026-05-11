@@ -42,14 +42,15 @@ function Screening() {
               jobs.map((job) => <JobCard key={job.id} job={job} />)
             )}
           </div>
-          {/* 引导图：原图 1024×1024（正方形）。设 h-[400px] → 显示 400×400 */}
+          {/* 引导图：原图 908×767（约 1.18:1 横图，新尺寸）。
+              h-[400px] → h-[480px]（放大 20%）→ 显示约 568×480，字体看起来比之前大 ~20% */}
           <div className="hidden lg:block flex-shrink-0 mt-4">
             <Image
               src="/resume.png"
               alt="简历筛排引导"
-              width={1024}
-              height={1024}
-              className="h-[400px] w-auto object-contain"
+              width={908}
+              height={767}
+              className="h-[480px] w-auto object-contain"
               priority
             />
           </div>

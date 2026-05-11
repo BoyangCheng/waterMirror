@@ -54,10 +54,17 @@ export const PRESET_INTERVIEWER_MAP: Record<string, keyof typeof INTERVIEWERS> =
  * 面试官头像图片列表，对应 /public/interviewers/ 目录下的文件。
  * 添加新头像时，将图片放入 /public/interviewers/ 并在此数组追加路径即可。
  */
-export const INTERVIEWER_AVATARS = [
+// 按性别分组：女声只能选 Lisa/liu，男声只能选 Bob/bo
+// 数组顺序决定 UI 显示顺序，第一个是默认（切换性别时自动选中）
+export const FEMALE_AVATARS = [
   "/interviewers/Lisa.png",
-  "/interviewers/Bob.png",
+  "/interviewers/liu.png",
 ];
+export const MALE_AVATARS = [
+  "/interviewers/Bob.png",
+  "/interviewers/bo.png",
+];
+export const INTERVIEWER_AVATARS = [...FEMALE_AVATARS, ...MALE_AVATARS];
 
 export const VOLCENGINE_VOICES = [
   { id: "zh_female_yingyujiaoxue_uranus_bigtts", label: "voiceFemale" },

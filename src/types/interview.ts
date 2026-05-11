@@ -40,6 +40,9 @@ export interface InterviewDetails {
   logo_url: string;
   respondents: string[];
   readable_slug: string;
+  /** 由 getInterviewById 的 LEFT JOIN 带过来的面试官头像 URL，
+   *  让候选人页面省一次 getInterviewer roundtrip。可能为 null（面试官被删/id 错）。 */
+  interviewer_image?: string | null;
 }
 
 export interface Interview extends InterviewBase, InterviewDetails {}

@@ -345,19 +345,37 @@ function Call({ interview }: InterviewProps) {
   }, [interview]);
 
   // -------------------------------------------------------------------------
-  // Fetch interviewer image
+  // Fetch + 预加载面试官头像
+  // 优化：
+  //   1. 优先用 interview.interviewer_image（getInterviewById 已经 LEFT JOIN 取回）
+  //      省掉 getInterviewer 的二次 roundtrip
+  //   2. 拿到 URL 立刻 new Image() 触发浏览器开始下载，
+  //      此时 <img> 元素还没 mount（要等用户点"开始面试"），
+  //      候选人填邮箱/姓名的 5-30s 里图片已经躺在缓存，挂载瞬间 0 延迟
+  //   3. JOIN 失败时 fallback 到老路径（getInterviewer），保证向后兼容
   // -------------------------------------------------------------------------
   useEffect(() => {
+    const joinedImg = interview.interviewer_image;
+    if (joinedImg) {
+      setInterviewerImg(joinedImg);
+      return;
+    }
+    // fallback：老数据 / JOIN 没拿到 → 异步走原路径
     const fetchInterviewer = async () => {
       const interviewer = await getInterviewer(interview.interviewer_id);
       if (interviewer?.image) {
         setInterviewerImg(interviewer.image);
-      } else {
-        // console.warn("[Call] getInterviewer returned null or no image, interviewer_id:", interview.interviewer_id);
       }
     };
     fetchInterviewer();
-  }, [interview.interviewer_id]);
+  }, [interview.interviewer_image, interview.interviewer_id]);
+
+  // 拿到头像 URL 后立即预下载（即使 <img> 还没 mount），用户点"开始面试"时秒出图
+  useEffect(() => {
+    if (!interviewerImg) return;
+    const preload = new window.Image();
+    preload.src = interviewerImg;
+  }, [interviewerImg]);
 
   // -------------------------------------------------------------------------
   // Save response when call ends
@@ -1126,8 +1144,9 @@ function Call({ interview }: InterviewProps) {
   // 整页 gray-100，wrapper 不再 bg-white：原来 watermirror logo 落在 wrapper 的
   // 白底里，下沿和外围 gray 之间出现一段白条；去掉 bg-white 后 watermirror 自然
   // 坐在 gray 上，整页颜色统一
+  // items-start 让 Card 贴顶不再有上方留白；外围背景从 gray 改 white（按用户要求）
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-start min-h-screen bg-white pt-2">
       {isStarted && !isEnded && <TabSwitchWarning />}
       <div className="md:w-[80%] w-[90%]">
         <Card className="min-h-[88vh] md:h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all dark:border-white">
