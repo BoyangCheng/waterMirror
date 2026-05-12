@@ -531,7 +531,7 @@ function FromJobDetails({
           <div className="flex flex-row w-full justify-center items-center space-x-24 mt-5">
             <Button
               disabled={!canProceed || isClicked}
-              className="bg-indigo-600 hover:bg-indigo-800 w-40"
+              className="bg-indigo-600 hover:bg-indigo-800 w-40 disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
               onClick={() => {
                 setIsClicked(true);
                 onGenrateQuestions();
@@ -541,7 +541,7 @@ function FromJobDetails({
             </Button>
             <Button
               disabled={!canProceed || isClicked}
-              className="bg-indigo-600 w-40 hover:bg-indigo-800"
+              className="bg-indigo-600 w-40 hover:bg-indigo-800 disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
               onClick={() => {
                 setIsClicked(true);
                 onManual();

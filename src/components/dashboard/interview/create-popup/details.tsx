@@ -330,33 +330,34 @@ function DetailsPopup({
               onCheckedChange={(checked) => setIsVideoEnabled(checked)}
             />
           </div>
-          {/* 一行：[面试语言] [问题数量] [时长]，面试语言在最左 */}
-          <div className="flex flex-row gap-6 items-center w-full mt-4 flex-wrap">
-            <div className="flex flex-row items-center">
-              <h3 className="text-sm font-medium mr-2">{t("create.interviewLanguage")}</h3>
-              <label className="flex items-center gap-1.5 cursor-pointer text-sm mr-3">
-                <input
-                  type="radio"
-                  name="interview-language"
-                  value="zh"
-                  checked={language === "zh"}
-                  onChange={() => setLanguage("zh")}
-                  className="accent-indigo-600"
-                />
-                {t("create.languageZh")}
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer text-sm">
-                <input
-                  type="radio"
-                  name="interview-language"
-                  value="en"
-                  checked={language === "en"}
-                  onChange={() => setLanguage("en")}
-                  className="accent-indigo-600"
-                />
-                {t("create.languageEn")}
-              </label>
-            </div>
+          {/* 行 1：面试语言独占一行 */}
+          <div className="flex flex-row items-center w-full mt-4">
+            <h3 className="text-sm font-medium mr-2">{t("create.interviewLanguage")}</h3>
+            <label className="flex items-center gap-1.5 cursor-pointer text-sm mr-3">
+              <input
+                type="radio"
+                name="interview-language"
+                value="zh"
+                checked={language === "zh"}
+                onChange={() => setLanguage("zh")}
+                className="accent-indigo-600"
+              />
+              {t("create.languageZh")}
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+              <input
+                type="radio"
+                name="interview-language"
+                value="en"
+                checked={language === "en"}
+                onChange={() => setLanguage("en")}
+                className="accent-indigo-600"
+              />
+              {t("create.languageEn")}
+            </label>
+          </div>
+          {/* 行 2：问题数量 + 时长 同一行（去掉 flex-wrap，强制不换行） */}
+          <div className="flex flex-row gap-8 items-center w-full mt-3">
             <div className="flex flex-row items-center">
               <h3 className="text-sm font-medium">
                 {t("create.numberOfQuestions")}<span className="text-red-500 ml-0.5">*</span>
@@ -414,7 +415,7 @@ function DetailsPopup({
                   selectedInterviewer !== BigInt(0)
                 ) || isClicked
               }
-              className="bg-indigo-600 hover:bg-indigo-800 w-40 font-bold"
+              className="bg-indigo-600 hover:bg-indigo-800 w-40 font-bold disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
               onClick={() => {
                 setIsClicked(true);
                 onGenrateQuestions();
@@ -432,7 +433,7 @@ function DetailsPopup({
                   selectedInterviewer !== BigInt(0)
                 ) || isClicked
               }
-              className="bg-indigo-600 w-40 hover:bg-indigo-800 font-bold"
+              className="bg-indigo-600 w-40 hover:bg-indigo-800 font-bold disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:bg-gray-300"
               onClick={() => {
                 setIsClicked(true);
                 onManual();

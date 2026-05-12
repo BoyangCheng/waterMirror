@@ -43,6 +43,10 @@ export interface InterviewDetails {
   /** 由 getInterviewById 的 LEFT JOIN 带过来的面试官头像 URL，
    *  让候选人页面省一次 getInterviewer roundtrip。可能为 null（面试官被删/id 错）。 */
   interviewer_image?: string | null;
+  /** 由 getInterviewById 的 LEFT JOIN 带过来的 org logo URL（organization.image_url）。
+   *  这是候选人页 logo 的真实来源 —— 不再读 interview.logo_url 这个老字段。
+   *  null 时前端 fallback 到 /watermirrorlogo.png。 */
+  org_logo_url?: string | null;
 }
 
 export interface Interview extends InterviewBase, InterviewDetails {}

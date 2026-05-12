@@ -14,6 +14,8 @@ interface ReportPayload {
   message: string;
   stack?: string;
   kind: "window.onerror" | "unhandledrejection" | "manual";
+  /** 默认 "error"；诊断/info 类日志可显式传 "info" 或 "warn"，避免污染错误统计。 */
+  level?: "info" | "warn" | "error";
   pageUrl?: string;
   filename?: string;
   line?: number;

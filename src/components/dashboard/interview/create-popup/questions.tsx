@@ -92,11 +92,12 @@ function QuestionsPopup({ interviewData, extraQuestions = [], setProceed, setOpe
       interviewData.description = description;
 
       // Convert BigInts to strings if necessary
+      // 不再写 logo_url：候选人页通过 organization_id JOIN 实时取 org.image_url，
+      // org logo 改了所有面试自动跟着变。没 logo 时前端 fallback 到 /watermirrorlogo.png。
       const sanitizedInterviewData = {
         ...interviewData,
         interviewer_id: interviewData.interviewer_id.toString(),
         response_count: interviewData.response_count.toString(),
-        logo_url: organization?.imageUrl || "",
       };
 
       const response = await axios.post("/api/create-interview", {

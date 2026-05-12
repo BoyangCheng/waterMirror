@@ -34,8 +34,13 @@ export async function POST(req: Request) {
 
     const userAgent = req.headers.get("user-agent");
 
+    // 白名单 level：默认 error，但允许 info / warn（用于客户端诊断日志，不污染错误统计）
+    const rawLevel = typeof body.level === "string" ? body.level : "error";
+    const level: "info" | "warn" | "error" =
+      rawLevel === "info" || rawLevel === "warn" ? rawLevel : "error";
+
     await recordError({
-      level: "error",
+      level,
       source: "client",
       route: clampString(body.pageUrl, 500) ?? clampString(body.route, 500),
       message: clampString(body.message, 2000) ?? "Client error",

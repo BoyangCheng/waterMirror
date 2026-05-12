@@ -66,6 +66,7 @@ export async function POST(req: Request) {
       name: dynamic_data.name ?? "not provided",
       objective: dynamic_data.objective ?? "",
       questions: dynamic_data.questions ?? "",
+      questionCount: dynamic_data.questionCount ?? 0,
       language: dynamic_data.language ?? "zh",
       interviewer: interviewer
         ? {

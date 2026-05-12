@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useResponses } from "@/contexts/responses.context";
 import { useI18n } from "@/i18n";
+import { reportClientError } from "@/lib/client-error-reporter";
+import { getDeviceClass } from "@/lib/device-detect";
 import { buildAgentCtrlMessage, parseSubtitleMessage } from "@/lib/volcengine-rtc";
 import {
   TIME_UP_GRACE_MS,
@@ -141,6 +143,13 @@ function Call({ interview }: InterviewProps) {
   const streamPublicUrlRef = useRef<string | null>(null); // 服务端拼好的最终播放 URL
   const streamFailedRef = useRef<boolean>(false);         // 一旦 append 失败 → 降级
   const uploadChainRef = useRef<Promise<void>>(Promise.resolve()); // 串行队列
+
+  // 录像/上传链路诊断：每个 session 各类事件只上报一次，避免刷爆 error_log
+  const recDebugReportedRef = useRef({
+    probe: false,        // mimeType 探测结果（成功/失败都打）
+    appendFailed: false, // 第一次 append 失败
+    recorderError: false, // 第一次 MediaRecorder.onerror
+  });
 
   // Attach camera stream to <video> element once it is mounted.
   // The <video> is only rendered when isStarted becomes true, so we need
@@ -539,6 +548,27 @@ function Call({ interview }: InterviewProps) {
     }
     mediaRecorderRef.current = null;
 
+    // 录像生命周期 summary：在停掉 recorder、append 队列消化完之后打一条总结，
+    // 这是一次面试录像情况的"最终判决书"。iOS 微信调试时这条最有用。
+    // 仅当真的尝试过录像（有 chunk 或失败标记）时才上报，避免 video_disabled 场景刷量。
+    if (recordedChunksRef.current.length > 0 || streamFailedRef.current) {
+      const totalBytes = recordedChunksRef.current.reduce((sum, b) => sum + b.size, 0);
+      reportClientError({
+        kind: "manual",
+        level: "info",
+        message: `[CAM-DEBUG] recording end: chunks=${recordedChunksRef.current.length} bytes=${totalBytes} streamFailed=${streamFailedRef.current}`,
+        extra: {
+          chunkCount: recordedChunksRef.current.length,
+          totalBytes,
+          streamFailed: streamFailedRef.current,
+          streamUploadedBytes: streamPositionRef.current,
+          publicUrl: streamPublicUrlRef.current,
+          willFallbackPut: streamFailedRef.current && recordedChunksRef.current.length > 0,
+          callId,
+        },
+      });
+    }
+
     // 关掉 AudioContext，释放 mic/AI 节点（防止泄漏；unmount 兜底里也会再做一遍）
     try {
       audioDestRef.current?.disconnect();
@@ -662,7 +692,12 @@ function Call({ interview }: InterviewProps) {
       const data = {
         mins: interview?.time_duration,
         objective: interview?.objective,
-        questions: interview?.questions.map((q) => q.question).join(", "),
+        // 带编号 + 换行：让 LLM 能数清楚一共几题、问到第几题，避免循环重问。
+        // 配合 buildInterviewerPrompt 里的"共 N 题，问完第 N 题立即结束"硬规则一起生效。
+        questions: interview?.questions
+          .map((q, i) => `${i + 1}. ${q.question}`)
+          .join("\n"),
+        questionCount: interview?.questions.length ?? 0,
         name: name || "not provided",
         language: interview?.language ?? "zh",
       };
@@ -760,6 +795,9 @@ function Call({ interview }: InterviewProps) {
         // 即使关闭录像，前面的 getUserMedia 也已经跑过，候选人能看到自己画面
         if (recordingEnabled) try {
           let mimeType = "";
+          // 探测每个候选 mimeType 的支持情况，全部记下来发到 error_log
+          // 这样 iOS 微信复现时直接能看到："webm 全 false、mp4 全 false" → 根因是 MediaRecorder 不支持
+          const probeResult: Record<string, boolean> = {};
           if (typeof MediaRecorder !== "undefined") {
             for (const candidate of [
               // 桌面 Chrome/Firefox/Edge + Android Chrome 主路径
@@ -771,11 +809,29 @@ function Call({ interview }: InterviewProps) {
               "video/mp4;codecs=h264,aac",
               "video/mp4",
             ]) {
-              if (MediaRecorder.isTypeSupported(candidate)) {
-                mimeType = candidate;
-                break;
-              }
+              const supported = MediaRecorder.isTypeSupported(candidate);
+              probeResult[candidate] = supported;
+              if (supported && !mimeType) mimeType = candidate;
             }
+          }
+          if (!recDebugReportedRef.current.probe) {
+            recDebugReportedRef.current.probe = true;
+            const dev = getDeviceClass();
+            reportClientError({
+              kind: "manual",
+              level: "info",
+              message: `[CAM-DEBUG] mimeType probe: ${mimeType || "NONE"}`,
+              extra: {
+                pickedMime: mimeType,
+                hasMediaRecorder: typeof MediaRecorder !== "undefined",
+                probeResult,
+                device: dev,
+                screen: typeof window !== "undefined"
+                  ? { w: window.innerWidth, h: window.innerHeight, dpr: window.devicePixelRatio }
+                  : null,
+                callId: call_id,
+              },
+            });
           }
           if (mimeType) {
             // 喂给 MediaRecorder 的 stream：摄像头 video + 混音 audio
@@ -796,6 +852,27 @@ function Call({ interview }: InterviewProps) {
               videoBitsPerSecond: 80_000,
               audioBitsPerSecond: 32_000, // 32kbps opus，人声足够
             });
+            // recorder 自身错误（编码失败 / track 异常 / WebView 限制）
+            // 这是 iOS 微信视频上传调试的关键信号 —— 探测过了但实际跑不起来时这里会触发
+            recorder.onerror = (e) => {
+              console.warn("[CAM] MediaRecorder.onerror:", e);
+              if (!recDebugReportedRef.current.recorderError) {
+                recDebugReportedRef.current.recorderError = true;
+                const errAny = e as unknown as { error?: { name?: string; message?: string } };
+                reportClientError({
+                  kind: "manual",
+                  level: "warn",
+                  message: "[CAM-DEBUG] MediaRecorder.onerror fired",
+                  extra: {
+                    errorName: errAny.error?.name ?? null,
+                    errorMessage: errAny.error?.message ?? null,
+                    recorderState: recorder.state,
+                    mimeType: recorder.mimeType,
+                    callId: call_id,
+                  },
+                });
+              }
+            };
             recordedChunksRef.current = [];
             // 重置流式上传状态
             streamObjectKeyRef.current = null;
@@ -842,6 +919,21 @@ function Call({ interview }: InterviewProps) {
                   if (!res.ok) {
                     const text = await res.text().catch(() => "");
                     console.warn("[CAM] append failed", res.status, text);
+                    if (!recDebugReportedRef.current.appendFailed) {
+                      recDebugReportedRef.current.appendFailed = true;
+                      reportClientError({
+                        kind: "manual",
+                        level: "warn",
+                        message: `[CAM-DEBUG] OSS append failed status=${res.status}`,
+                        extra: {
+                          status: res.status,
+                          responseBody: text.slice(0, 500),
+                          isFirst,
+                          chunkSize: buf.byteLength,
+                          callId: callIdAtStart,
+                        },
+                      });
+                    }
                     streamFailedRef.current = true;
                     return;
                   }
@@ -855,6 +947,18 @@ function Call({ interview }: InterviewProps) {
                   streamPublicUrlRef.current = data.publicUrl;
                 } catch (err) {
                   console.warn("[CAM] append exception:", err);
+                  if (!recDebugReportedRef.current.appendFailed) {
+                    recDebugReportedRef.current.appendFailed = true;
+                    reportClientError({
+                      kind: "manual",
+                      level: "warn",
+                      message: "[CAM-DEBUG] OSS append threw (network/CORS/cert?)",
+                      extra: {
+                        errorMessage: err instanceof Error ? err.message : String(err),
+                        callId: callIdAtStart,
+                      },
+                    });
+                  }
                   streamFailedRef.current = true;
                 }
               });
@@ -867,9 +971,28 @@ function Call({ interview }: InterviewProps) {
             console.log("[CAM] MediaRecorder + streaming append started, mime=", mimeType);
           } else {
             console.warn("[CAM] MediaRecorder not supported, skip video recording");
+            // probe 那条已经报过了，这里只在 probe 没成功上报时补一发兜底（理论上不会走到）
+            if (!recDebugReportedRef.current.probe) {
+              recDebugReportedRef.current.probe = true;
+              reportClientError({
+                kind: "manual",
+                level: "warn",
+                message: "[CAM-DEBUG] No supported mimeType — skipping recording",
+                extra: { callId: call_id, device: getDeviceClass() },
+              });
+            }
           }
         } catch (recErr) {
           console.warn("[CAM] MediaRecorder init failed, skip video recording:", recErr);
+          reportClientError({
+            kind: "manual",
+            level: "warn",
+            message: "[CAM-DEBUG] MediaRecorder init threw",
+            extra: {
+              errorMessage: recErr instanceof Error ? recErr.message : String(recErr),
+              callId: call_id,
+            },
+          });
         }
       } catch (camErr) {
         // 摄像头被拒不阻塞面试本身
@@ -1202,17 +1325,15 @@ function Call({ interview }: InterviewProps) {
                   <div className="flex justify-end p-1">
                     <LanguageSwitcher />
                   </div>
-                  {interview?.logo_url && (
-                    <div className="p-1 flex justify-center">
-                      <Image
-                        src={interview?.logo_url}
-                        alt="Logo"
-                        className="h-40 w-auto max-w-full object-contain"
-                        width={560}
-                        height={400}
-                      />
-                    </div>
-                  )}
+                  <div className="p-1 flex justify-center">
+                    <Image
+                      src={interview?.org_logo_url || "/watermirrorlogo.png"}
+                      alt="Logo"
+                      className="h-40 w-auto max-w-full object-contain"
+                      width={560}
+                      height={400}
+                    />
+                  </div>
                   <div className="p-2 font-normal text-sm mb-4 whitespace-pre-line">
                     {interview?.description}
                     <p className="font-bold text-sm">

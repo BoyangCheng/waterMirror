@@ -148,3 +148,14 @@
 .interview-row-scroll:hover::-webkit-scrollbar-thumb:hover {
   background: rgba(99, 102, 241, 0.8); /* hover 在 thumb 上时更深 */
 }
+
+/* 全局禁止图片拖拽 —— 覆盖 <img> 和 Next/Image
+   - -webkit-user-drag: none → Chrome/Edge/Safari (绝大多数用户)
+   - user-select: none → 防止误选图片像选文字一样高亮
+   - HTML draggable 属性给 Firefox 兜底（CSS 不够用）：通过 [draggable] 选择器没法
+     从 CSS 设置，所以 Firefox 用户仍能拖；如需彻底，可在每个 <img> 上加 draggable={false} */
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+

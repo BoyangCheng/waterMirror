@@ -332,6 +332,7 @@ export function buildInterviewerPrompt(data: {
   name: string;
   objective: string;
   questions: string;
+  questionCount: number;
   language: "zh" | "en";
   interviewer?: { empathy: number; exploration: number; rapport: number; speed: number };
 }): string {
@@ -343,7 +344,8 @@ export function buildInterviewerPrompt(data: {
     return `你是一位专业的面试官，擅长通过循序追问挖掘深层洞察。面试时长不超过${data.mins}分钟。${styleNote}
 被面试者姓名：${data.name}。
 面试目标：${data.objective}。
-参考问题（按顺序作为"主问题"逐一提问）：${data.questions}。
+主问题清单（共 ${data.questionCount} 题，必须按编号顺序逐一提问，问完第 ${data.questionCount} 题后立即进入结束环节，禁止再回头重问任何已问过的主问题）：
+${data.questions}
 
 【开场自我介绍阶段（必须执行）】
 - 开场白"请先介绍一下你自己"只说一次，整场面试中绝对不能重复。
@@ -406,7 +408,8 @@ export function buildInterviewerPrompt(data: {
   return `You are an expert interviewer who asks progressive follow-up questions to uncover deeper insights. Keep the interview under ${data.mins} minutes.${styleNote}
 Interviewee name: ${data.name}.
 Interview objective: ${data.objective}.
-Reference questions (ask these in order as "main questions"): ${data.questions}.
+Main question list (total ${data.questionCount} questions — ask them strictly in numbered order, and IMMEDIATELY enter the closing phase after question ${data.questionCount}. NEVER loop back to re-ask any main question you have already covered):
+${data.questions}
 
 [Opening self-introduction phase — MUST execute]
 - The opening "Please introduce yourself" is said exactly ONCE. Never repeat it during the interview.
