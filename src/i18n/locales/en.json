@@ -1,6 +1,7 @@
 {
   "common": {
     "beta": "Beta",
+    "comingSoon": "Coming soon",
     "poweredBy": "Powered by",
     "cancel": "Cancel",
     "continue": "Continue",
@@ -23,7 +24,20 @@
   "nav": {
     "interviews": "Interviews",
     "interviewers": "Interviewers",
-    "screening": "Resume Screening"
+    "screening": "Resume Screening",
+    "aiAssistant": "Watermirror AI",
+    "talentPool": "Talent Pool",
+    "searchTrigger": "Search interviews, jobs...",
+    "commandTitle": "Global search",
+    "commandPlaceholder": "Type to search...",
+    "commandEmpty": "No results found",
+    "commandInterviews": "Interviews",
+    "commandJobs": "Jobs",
+    "commandPeopleSuffix": "people",
+    "commandNavigate": "Navigate",
+    "commandSelect": "Select",
+    "jobCompleted": "Completed",
+    "jobProcessing": "Processing"
   },
   "dashboard": {
     "myInterviews": "My Interviews",
@@ -69,9 +83,12 @@
     "unavailableMessage": "We are not currently accepting responses. Please contact the sender for more information.",
     "usePc": "Please use a PC to respond to the interview. Apologies for any inconvenience caused.",
     "usePcTitle": "Desktop recommended",
-    "useSafariTitle": "Please open in Safari",
-    "useSafari": "WeChat's in-app browser cannot record video reliably. Tap the ··· menu in the top-right and choose \"Open in Safari\" before starting.",
     "continueAnyway": "I understand, continue anyway",
+    "tipPrefix": "Tip: ",
+    "tipAt0": "Speech-to-text isn't perfect, but the AI understands you in context.",
+    "tipAt25": "If a question feels repeated, just tell the AI.",
+    "tipAt50": "The AI reads your micro-expressions — give it a smile.",
+    "tipAt95": "Almost done — you're doing great!",
     "linkCopied": "The link to your interview has been copied to your clipboard.",
     "description": "Interview Description",
     "descriptionHint": "(Your respondents will see this.)",
@@ -302,6 +319,20 @@
     "userManagement": "User Settings",
     "orgManagement": "Organization",
     "signOut": "Sign Out"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No new notifications",
+    "markAllRead": "Mark all read",
+    "completedPrefix": "completed",
+    "completedSuffix": "interview",
+    "highScoreInPrefix": "scored high in",
+    "highScoreInSuffix": "interview",
+    "scoreSuffix": "pts",
+    "justNow": "just now",
+    "minAgo": "min ago",
+    "hourAgo": "hr ago",
+    "dayAgo": "d ago"
   },
   "userProfile": {
     "title": "User Settings",

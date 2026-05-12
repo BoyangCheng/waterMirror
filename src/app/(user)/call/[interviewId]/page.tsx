@@ -164,15 +164,8 @@ function InterviewInterface({ params }: Props) {
           description={t("interview.unavailableMessage")}
           image="/closed.png"
         />
-      ) : device && device.isIOSWeChat && !proceedAnyway ? (
-        // iOS 微信 WebView：MediaRecorder 在这里基本不可用，强烈建议跳到 Safari
-        <DeviceWarning
-          title={t("interview.useSafariTitle")}
-          description={t("interview.useSafari")}
-          onContinue={() => setProceedAnyway(true)}
-        />
       ) : device && device.isMobile && !proceedAnyway ? (
-        // 其他移动端（iOS Safari / Android Chrome / Android 微信）：录像基本可用，但屏幕窄、性能差
+        // 所有移动端（含 iOS / Android / 微信内嵌）统一提示建议用电脑，给"继续"按钮兜底
         <DeviceWarning
           title={t("interview.usePcTitle")}
           description={t("interview.usePc")}

@@ -1,4 +1,3 @@
-import { auth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { appendToOSS, getCallVideoObjectKey, getOSSPublicUrl } from "@/lib/oss";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,17 +14,16 @@ import { NextRequest, NextResponse } from "next/server";
  *   后续片不传 first，但要带 object_key=（首片返回的）+ position（上次 nextAppendPosition）
  * - 返回：{ nextAppendPosition, objectKey, publicUrl }
  *
- * 安全：必须登录；call_id / position 严校验防 path traversal、防伪造他人 key。
+ * 安全：候选人面试页 /call/[id] 是公开路由，候选人无登录态 → 这里不能要求 session。
+ * 改用以下边界控制防滥用：
+ *   - call_id 是 nanoid 21 字符随机串，不可枚举
+ *   - objectKey 锁死 call-videos/{callId}/ 前缀，无法写到任意 OSS 路径
+ *   - content_type 白名单只允许 video/webm | video/mp4
  *
  * MediaRecorder 的 webm 切片是按设计可顺序拼接的（首片含 EBML header，
  * 后续是 cluster 续段），所以 OSS append 出来的最终对象就是一个合法可播放 WebM。
  */
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
   try {
     const url = req.nextUrl;
     const callId = (url.searchParams.get("call_id") ?? "").trim();

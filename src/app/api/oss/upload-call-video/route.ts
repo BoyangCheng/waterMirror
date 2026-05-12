@@ -1,4 +1,3 @@
-import { auth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { getCallVideoObjectKey, getPresignedPutUrl } from "@/lib/oss";
 import { NextResponse } from "next/server";
@@ -13,15 +12,14 @@ import { NextResponse } from "next/server";
  *   3. 前端用 uploadUrl 直接 PUT blob 到 OSS（不绕 Next.js）
  *   4. 上传成功后前端把 publicUrl 写到 response.video_url
  *
- * 安全：必须登录才能拿 URL；call_id 字符串校验防止 OSS path traversal。
+ * 安全：候选人面试页 /call/[id] 公开访问，候选人无登录态 → 不能要求 session。
+ * 用以下边界控制防滥用：
+ *   - call_id 是 nanoid 21 字符随机串，不可枚举
+ *   - objectKey 锁死 call-videos/{callId}/ 前缀（getCallVideoObjectKey 内部强制）
+ *   - content_type 白名单 video/webm | video/mp4
+ *   - 预签名 URL 5 分钟有效，PUT 完即过期
  */
 export async function POST(req: Request) {
-  // 必须有 session，防止匿名滥用拿签名
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
   try {
     const body = await req.json();
     const callId = String(body.call_id ?? "").trim();

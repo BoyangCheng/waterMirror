@@ -113,6 +113,15 @@ function Call({ interview }: InterviewProps) {
   const [currentTimeDuration, setCurrentTimeDuration] = useState("0");
   const [interviewTimeDuration, setInterviewTimeDuration] = useState("1");
 
+  // 面试时间进度上方的"小提示"气泡：在 0% / 25% / 50% / 95% 各推一条
+  // 一旦显示过的索引会被记进 tipShownRef，整场面试不再触发第二次
+  const TIP_THRESHOLDS = [0, 25, 50, 95] as const;
+  const [activeTipIdx, setActiveTipIdx] = useState<number | null>(null);
+  const [tipPhase, setTipPhase] = useState<"in" | "out">("in");
+  const tipShownRef = useRef<Set<number>>(new Set());
+  const tipDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tipUnmountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // UI state
   const [interviewerImg, setInterviewerImg] = useState("");
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(false);
@@ -336,6 +345,38 @@ function Call({ interview }: InterviewProps) {
         clearTimeout(endTimeoutRef.current);
         endTimeoutRef.current = null;
       }
+    };
+  }, []);
+
+  // 进度阈值触发"小提示"气泡：0% / 25% / 50% / 95% 各推一条，每条只触发一次
+  // - 显示 8.5s 后切到淡出动画，再过 0.4s 卸载（让 CSS 动画跑完）
+  // - 切换到下一条 tip 时立即清掉前一条的 timer 防止状态错乱
+  useEffect(() => {
+    if (!isCalling) return;
+    const total = Number(interviewTimeDuration) * 60;
+    if (!Number.isFinite(total) || total <= 0) return;
+    const cur = Number(currentTimeDuration);
+    const pct = (cur / total) * 100;
+
+    for (let i = 0; i < TIP_THRESHOLDS.length; i++) {
+      if (pct >= TIP_THRESHOLDS[i] && !tipShownRef.current.has(i)) {
+        tipShownRef.current.add(i);
+        if (tipDismissTimerRef.current) clearTimeout(tipDismissTimerRef.current);
+        if (tipUnmountTimerRef.current) clearTimeout(tipUnmountTimerRef.current);
+        setTipPhase("in");
+        setActiveTipIdx(i);
+        tipDismissTimerRef.current = setTimeout(() => setTipPhase("out"), 8500);
+        tipUnmountTimerRef.current = setTimeout(() => setActiveTipIdx(null), 8900);
+        break;
+      }
+    }
+  }, [currentTimeDuration, interviewTimeDuration, isCalling]);
+
+  // 卸载时清掉 tip 的 timer
+  useEffect(() => {
+    return () => {
+      if (tipDismissTimerRef.current) clearTimeout(tipDismissTimerRef.current);
+      if (tipUnmountTimerRef.current) clearTimeout(tipUnmountTimerRef.current);
     };
   }, []);
 
@@ -1271,37 +1312,63 @@ function Call({ interview }: InterviewProps) {
   return (
     <div className="flex justify-center items-start min-h-screen bg-white pt-2">
       {isStarted && !isEnded && <TabSwitchWarning />}
-      <div className="md:w-[80%] w-[90%]">
-        <Card className="min-h-[88vh] md:h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all dark:border-white">
-          <div>
-            {/* Progress bar */}
-            <div className="m-4 h-[15px] rounded-lg border-[1px] border-black overflow-hidden">
-              <div
-                className="bg-indigo-600 h-[15px] rounded-lg transition-[width] duration-300"
-                style={{
-                  // 必须 clamp 到 100%：[TIME_UP] 发出之后到真正断开还有 ~25s grace period，
-                  // 这段时间墙钟会超过 interviewTimeDuration*60，不 clamp 进度条会一直涨爆容器。
-                  // 双保险：父容器 overflow-hidden 即使 width 算错也不会溢出可视框。
-                  width: isEnded
-                    ? "100%"
-                    : `${Math.min(
-                        100,
-                        Math.max(
-                          0,
-                          (Number(currentTimeDuration) / (Number(interviewTimeDuration) * 60)) * 100,
-                        ),
-                      )}%`,
-                }}
-              />
-            </div>
+      {/* Mobile: 整张 Card 锁定 100dvh（动态视口排除地址栏），flex-col + overflow-hidden 让内部不滚
+          Desktop: 沿用 88vh 固定高度
+          老 iOS Safari (<15.4) 不支持 dvh，回退到自然 min-h-screen */}
+      <div className="md:w-[80%] w-full md:px-0 px-2">
+        <Card className="h-[100dvh] md:h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all dark:border-white flex flex-col overflow-hidden">
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* 进度条 + 上方"小提示"气泡 —— 仅在面试已开始（isStarted）时渲染。
+                填信息界面（!isStarted）不显示进度条，避免视觉干扰。
+                shrink-0 防 mobile 锁屏时被字幕区挤压。 */}
+            {isStarted && (
+              <div className="m-4 shrink-0">
+                <div className="relative h-9 mb-2">
+                  {activeTipIdx !== null && (
+                    <div
+                      key={activeTipIdx}
+                      className={`absolute left-1/2 top-0 -translate-x-1/2 max-w-[92%] text-center px-4 py-2 rounded-full bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 text-indigo-900 text-xs md:text-sm font-normal shadow-[0_4px_12px_-2px_rgba(99,102,241,0.18)] ${
+                        tipPhase === "out" ? "tip-fade-out" : "tip-pop-in"
+                      }`}
+                    >
+                      <span className="tip-emoji mr-1">💡</span>
+                      <span className="font-semibold">{t("interview.tipPrefix")}</span>
+                      {t(`interview.tipAt${TIP_THRESHOLDS[activeTipIdx]}`)}
+                    </div>
+                  )}
+                </div>
+                {/* Progress bar：渐变填充 + shimmer 高光，呼应小提示的紫粉色调
+                    高度从 15px 缩到 8px 视觉更克制，rounded-full 全圆角，弱化"硬边框"感 */}
+                <div className="relative h-2 rounded-full bg-indigo-100/70 overflow-hidden shadow-inner">
+                  <div
+                    className="progress-fill relative h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-[width] duration-500 ease-out"
+                    style={{
+                      // 必须 clamp 到 100%：[TIME_UP] 发出之后到真正断开还有 ~25s grace period，
+                      // 这段时间墙钟会超过 interviewTimeDuration*60，不 clamp 进度条会一直涨爆容器。
+                      width: isEnded
+                        ? "100%"
+                        : `${Math.min(
+                            100,
+                            Math.max(
+                              0,
+                              (Number(currentTimeDuration) / (Number(interviewTimeDuration) * 60)) * 100,
+                            ),
+                          )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
-            <CardHeader className="items-center p-1">
-              {!isEnded && (
+            {/* CardHeader 加 shrink-0：mobile 锁屏时不被压扁；
+                通话中（isStarted）时倒计时已经在进度条上方有显示，把这段隐藏避免重复占位 */}
+            <CardHeader className="items-center p-1 shrink-0">
+              {!isEnded && !isStarted && (
                 <CardTitle className="flex flex-row items-center text-lg md:text-xl font-bold mb-2">
                   {interview?.name}
                 </CardTitle>
               )}
-              {!isEnded && (
+              {!isEnded && !isStarted && (
                 <div className="flex mt-2 flex-row">
                   <AlarmClockIcon
                     className="text-indigo-600 h-[1rem] w-[1rem] rotate-0 scale-100 dark:-rotate-90 dark:scale-0 mr-2 font-bold"
@@ -1318,9 +1385,16 @@ function Call({ interview }: InterviewProps) {
               )}
             </CardHeader>
 
-            {/* Pre-call form */}
+            {/* Pre-call form
+                Mobile 改造：
+                  - logo h-40 → h-24（160→96px），不挤压表单
+                  - description 字号 text-sm → text-base（mobile）
+                  - input text-sm → text-base（防 iOS Safari 自动 zoom-in）
+                  - input 宽度 75% → 90%（窄屏更易点）
+                  - 按钮 h-10 → h-12（mobile 触摸目标 48px）
+                  - flex-1 + overflow-y-auto：mobile 锁屏时表单内容多了能内部滚 */}
             {!isStarted && !isEnded && !isOldUser && (
-              <div className="w-[90%] md:w-fit md:min-w-[400px] max-w-[600px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
+              <div className="w-[95%] md:w-fit md:min-w-[400px] max-w-[600px] mx-auto mt-2 border border-indigo-200 rounded-md p-2 m-2 bg-slate-50 flex-1 min-h-0 overflow-y-auto md:flex-initial md:min-h-fit md:overflow-visible">
                 <div>
                   <div className="flex justify-end p-1">
                     <LanguageSwitcher />
@@ -1329,24 +1403,26 @@ function Call({ interview }: InterviewProps) {
                     <Image
                       src={interview?.org_logo_url || "/watermirrorlogo.png"}
                       alt="Logo"
-                      className="h-40 w-auto max-w-full object-contain"
+                      className="h-24 md:h-40 w-auto max-w-full object-contain"
                       width={560}
                       height={400}
                     />
                   </div>
-                  <div className="p-2 font-normal text-sm mb-4 whitespace-pre-line">
-                    {interview?.description}
-                    <p className="font-bold text-sm">
+                  <div className="p-2 font-normal text-base md:text-sm mb-4 whitespace-pre-line">
+                    {/* description trim 后至少要有意义的内容（>= 5 字符）才显示
+                        防止偶然的 "a"/"测试" 等占位文字漏到候选人页 */}
+                    {(interview?.description ?? "").trim().length >= 5 && interview?.description}
+                    <p className="font-bold text-base md:text-sm">
                       {"\n"}{t("interview.volumeNote")}
                       {"\n\n"}{t("interview.tabSwitchNote")}
                     </p>
                   </div>
                   {!interview?.is_anonymous && (
-                    <div className="flex flex-col gap-2 justify-center">
+                    <div className="flex flex-col gap-3 justify-center">
                       <div className="flex justify-center">
                         <input
                           value={email}
-                          className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                          className="h-fit mx-auto py-3 md:py-2 border-2 rounded-md w-[90%] md:w-[75%] self-center px-3 border-gray-400 text-base md:text-sm font-normal"
                           placeholder={t("interview.enterEmail")}
                           onChange={(e) => setEmail(e.target.value)}
                         />
@@ -1354,7 +1430,7 @@ function Call({ interview }: InterviewProps) {
                       <div className="flex justify-center">
                         <input
                           value={name}
-                          className="h-fit mb-4 mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
+                          className="h-fit mb-4 mx-auto py-3 md:py-2 border-2 rounded-md w-[90%] md:w-[75%] self-center px-3 border-gray-400 text-base md:text-sm font-normal"
                           placeholder={t("interview.enterFirstName")}
                           onChange={(e) => setName(e.target.value)}
                         />
@@ -1362,9 +1438,9 @@ function Call({ interview }: InterviewProps) {
                     </div>
                   )}
                 </div>
-                <div className="w-[80%] flex flex-row mx-auto justify-center items-center align-middle">
+                <div className="w-[90%] md:w-[80%] flex flex-row gap-2 mx-auto justify-center items-center align-middle">
                   <Button
-                    className="min-w-20 h-10 rounded-lg flex flex-row justify-center mb-8 font-bold"
+                    className="min-w-20 h-12 md:h-10 rounded-lg flex flex-row justify-center mb-8 font-bold text-base md:text-sm"
                     style={{
                       backgroundColor: interview.theme_color ?? "#4F46E5",
                       color: isLightColor(interview.theme_color ?? "#4F46E5") ? "black" : "white",
@@ -1377,7 +1453,7 @@ function Call({ interview }: InterviewProps) {
                   <AlertDialog>
                     <AlertDialogTrigger>
                       <Button
-                        className="bg-white border ml-2 text-black min-w-15 h-10 rounded-lg flex flex-row justify-center mb-8"
+                        className="bg-white border text-black min-w-15 h-12 md:h-10 rounded-lg flex flex-row justify-center mb-8 text-base md:text-sm"
                         style={{ borderColor: interview.theme_color }}
                         disabled={Loading}
                       >
@@ -1403,25 +1479,28 @@ function Call({ interview }: InterviewProps) {
               </div>
             )}
 
-            {/* Active call UI */}
+            {/* Active call UI ——
+                Mobile: flex-col 占满剩余空间，AI/候选人 各占一半，字幕区 flex-1 内部滚，
+                  头像 shrink-0 固定 95×95，整屏不滚
+                Desktop: flex-row 左右 50/50，沿用原 layout（头像 160×160 + 字幕 250px 高） */}
             {isStarted && !isEnded && !isOldUser && (
-              <div className="flex flex-col md:flex-row p-2 grow">
-                {/* Interviewer — top on mobile, left on desktop */}
-                <div className="border-b-2 md:border-b-0 md:border-x-2 border-grey w-full md:w-[50%] my-auto md:min-h-[70%]">
-                  <div className="flex flex-col justify-evenly">
-                    <div className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 h-[150px] md:h-[250px] mx-auto px-4 md:px-6 overflow-y-auto">
+              <div className="flex flex-col md:flex-row p-2 flex-1 min-h-0 overflow-hidden">
+                {/* Interviewer — mobile 上半，desktop 左侧 */}
+                <div className="border-b-2 md:border-b-0 md:border-x-2 border-grey w-full md:w-[50%] flex-1 min-h-0 md:flex-initial md:my-auto md:min-h-[70%]">
+                  <div className="flex flex-col h-full md:h-auto md:justify-evenly">
+                    {/* 字幕：mobile flex-1 自适应剩余空间，内部 overflow-y-auto */}
+                    <div className="text-base md:text-[17px] w-[90%] md:w-[80%] leading-relaxed mt-2 md:mt-4 flex-1 min-h-0 md:flex-initial md:h-[250px] mx-auto px-3 md:px-6 overflow-y-auto">
                       {lastInterviewerResponse}
                     </div>
-                    {/* 头像下移：mt-auto + pt-6 把头像推到 flex 容器底部并加顶部间距；
-                        头像放大：120px → 160px (md) / 80px → 110px (mobile) */}
-                    <div className="flex flex-col mx-auto justify-center items-center align-middle pb-2 md:pb-0 mt-auto pt-6">
+                    {/* 头像：mobile shrink-0 固定 95px，desktop 160px */}
+                    <div className="flex flex-col shrink-0 mx-auto justify-center items-center align-middle pb-2 md:pb-0 mt-2 md:mt-auto md:pt-6">
                       {interviewerImg ? (
                         <img
                           src={interviewerImg}
                           alt="Image of the interviewer"
                           width={160}
                           height={160}
-                          className={`w-[110px] h-[110px] md:w-[160px] md:h-[160px] object-cover object-center rounded-full mx-auto my-auto ${
+                          className={`w-[95px] h-[95px] md:w-[160px] md:h-[160px] object-cover object-center rounded-full mx-auto my-auto ${
                             activeTurn === "agent" ? "border-4" : ""
                           }`}
                           style={
@@ -1434,23 +1513,22 @@ function Call({ interview }: InterviewProps) {
                           }}
                         />
                       ) : (
-                        <div className="w-[110px] h-[110px] md:w-[160px] md:h-[160px] bg-gray-200 rounded-full animate-pulse mx-auto" />
+                        <div className="w-[95px] h-[95px] md:w-[160px] md:h-[160px] bg-gray-200 rounded-full animate-pulse mx-auto" />
                       )}
-                      <div className="font-semibold text-sm md:text-base mt-2">{t("interview.interviewer")}</div>
+                      <div className="font-semibold text-xs md:text-base mt-1 md:mt-2">{t("interview.interviewer")}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Interviewee — bottom on mobile, right on desktop */}
-                <div className="flex flex-col justify-evenly w-full md:w-[50%] mt-2 md:mt-0">
+                {/* Interviewee — mobile 下半，desktop 右侧 */}
+                <div className="flex flex-col w-full md:w-[50%] mt-1 md:mt-0 flex-1 min-h-0 md:flex-initial md:justify-evenly">
                   <div
                     ref={lastUserResponseRef}
-                    className="text-[15px] w-[80%] md:text-[17px] leading-relaxed mt-4 mx-auto h-[150px] md:h-[250px] px-4 md:px-6 overflow-y-auto"
+                    className="text-base md:text-[17px] w-[90%] md:w-[80%] leading-relaxed mt-2 md:mt-4 mx-auto flex-1 min-h-0 md:flex-initial md:h-[250px] px-3 md:px-6 overflow-y-auto"
                   >
                     {lastUserResponse}
                   </div>
-                  {/* 同样下移 + 放大，与左侧 AI 头像视觉对称 */}
-                  <div className="flex flex-col mx-auto justify-center items-center align-middle mt-auto pt-6">
+                  <div className="flex flex-col shrink-0 mx-auto justify-center items-center align-middle mt-2 md:mt-auto md:pt-6">
                     {/* 摄像头永远显示（getUserMedia 已经无条件请求过），
                         is_video_enabled 只决定是否启动 MediaRecorder 录像，与预览无关 */}
                     <video
@@ -1458,26 +1536,27 @@ function Call({ interview }: InterviewProps) {
                       autoPlay
                       playsInline
                       muted
-                      className={`w-[110px] h-[110px] md:w-[160px] md:h-[160px] object-cover rounded-full mx-auto my-auto ${
+                      className={`w-[95px] h-[95px] md:w-[160px] md:h-[160px] object-cover rounded-full mx-auto my-auto ${
                         activeTurn === "user"
                           ? `border-4 border-[${interview.theme_color}]`
                           : ""
                       }`}
                       style={{ transform: "scaleX(-1)" }}
                     />
-                    <div className="font-semibold text-sm md:text-base mt-2">{t("interview.you")}</div>
+                    <div className="font-semibold text-xs md:text-base mt-1 md:mt-2">{t("interview.you")}</div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* End call button */}
+            {/* End call button —— shrink-0 固定底部不被压扁；
+                mobile 按钮 h-12（48px 触摸目标），mb 收紧到 mb-2 节省空间，desktop 沿用 mb-8 */}
             {isStarted && !isEnded && !isOldUser && (
-              <div className="items-center p-2">
+              <div className="items-center p-2 shrink-0">
                 <AlertDialog>
                   <AlertDialogTrigger className="w-full">
                     <Button
-                      className="bg-white text-black border border-indigo-600 h-10 mx-auto flex flex-row justify-center mb-8 transition-transform duration-200 hover:scale-105"
+                      className="bg-white text-black border border-indigo-600 h-12 md:h-10 mx-auto flex flex-row justify-center mb-2 md:mb-8 transition-transform duration-200 hover:scale-105 text-base md:text-sm"
                       disabled={Loading}
                     >
                       {t("interview.endInterview")}{" "}

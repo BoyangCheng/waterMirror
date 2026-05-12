@@ -1,8 +1,6 @@
 // 浏览器设备/环境识别。
 // 用途：
-//   1. 候选人面试页根据设备类型展示不同的入场提示
-//      - iOS 微信内嵌 WebView：MediaRecorder/getUserMedia 兼容性最差，建议跳到 Safari
-//      - 其他移动端：录像可用但屏幕/性能不如桌面，建议用电脑
+//   1. 候选人面试页：移动端入场提示"建议用电脑"
 //   2. 录像/上传日志附带设备信息（写入 error_log.context）便于排查
 
 export interface DeviceClass {
@@ -12,8 +10,6 @@ export interface DeviceClass {
   isSafari: boolean;
   /** 任意手机/平板（iOS 或 Android），不含桌面浏览器的窄窗口 */
   isMobile: boolean;
-  /** iOS 微信内嵌 WebView —— 录像最容易挂的环境 */
-  isIOSWeChat: boolean;
 }
 
 const DEFAULT_CLASS: DeviceClass = {
@@ -22,7 +18,6 @@ const DEFAULT_CLASS: DeviceClass = {
   isWeChat: false,
   isSafari: false,
   isMobile: false,
-  isIOSWeChat: false,
 };
 
 /**
@@ -40,7 +35,6 @@ export function getDeviceClass(ua?: string): DeviceClass {
   const isWeChat = /MicroMessenger/i.test(userAgent);
   const isSafari = /Safari/.test(userAgent) && !/Chrome|CriOS|FxiOS|EdgiOS/.test(userAgent);
   const isMobile = isIOS || isAndroid;
-  const isIOSWeChat = isIOS && isWeChat;
 
-  return { isIOS, isAndroid, isWeChat, isSafari, isMobile, isIOSWeChat };
+  return { isIOS, isAndroid, isWeChat, isSafari, isMobile };
 }
