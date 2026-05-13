@@ -1319,6 +1319,26 @@ function Call({ interview }: InterviewProps) {
     } catch (err: any) {
       console.error("Error starting conversation:", err);
       const detail = err?.response?.data?.error || err?.message || "";
+
+      // Bug 1 fix: Server Action ID 因服务器重新部署而失效 → 自动 reload 拿新 ID
+      // 这是 Next.js Server Actions 的设计缺陷:client 端 action ID 在 build 时绑定,
+      // deployment 后旧 ID 失效。catch 后自动刷新比让用户手动重试体验好
+      if (
+        detail.includes("Server Action") &&
+        (detail.includes("was not found") || detail.includes("failed-to-find-server-action"))
+      ) {
+        toast.error(t("interview.versionStaleReloading"), { duration: 2000 });
+        setTimeout(() => window.location.reload(), 1500);
+        return;
+      }
+
+      // Bug 2 fix: getUserMedia NotAllowedError → 友好提示用户检查权限
+      // iOS Edge / 用户拒绝权限 / OS 层禁了浏览器都可能触发
+      if (err?.name === "NotAllowedError" || detail.includes("NotAllowedError")) {
+        toast.error(t("interview.micCameraDenied"), { duration: 8000 });
+        return;
+      }
+
       toast.error(
         detail
           ? `${t("interview.startFailed")}: ${detail}`

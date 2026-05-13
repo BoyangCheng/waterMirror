@@ -62,6 +62,8 @@
     "minsOrLess": "分钟以内",
     "startInterview": "开始面试",
     "startFailed": "面试启动失败，请重试",
+    "versionStaleReloading": "页面版本过期，正在自动刷新...",
+    "micCameraDenied": "麦克风/摄像头权限被拒绝。请到浏览器地址栏点 🔒 → 网站设置 → 允许麦克风和摄像头，然后刷新页面重试。",
     "endInterview": "结束面试",
     "exit": "退出",
     "endCallConfirm": "此操作不可撤销，将立即结束通话。",

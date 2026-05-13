@@ -62,6 +62,8 @@
     "minsOrLess": "mins or less",
     "startInterview": "Start Interview",
     "startFailed": "Failed to start interview, please try again",
+    "versionStaleReloading": "Page out of date, refreshing...",
+    "micCameraDenied": "Microphone/camera permission denied. Click the 🔒 icon in the browser address bar → Site settings → Allow microphone and camera, then refresh.",
     "endInterview": "End Interview",
     "exit": "Exit",
     "endCallConfirm": "This action cannot be undone. This action will end the call.",
