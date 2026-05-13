@@ -1,5 +1,6 @@
 "use client";
 
+import { InsightTicker } from "@/components/dashboard/InsightTicker";
 import CreateInterviewerButton from "@/components/dashboard/interviewer/createInterviewerButton";
 import InterviewerCard from "@/components/dashboard/interviewer/interviewerCard";
 import { useInterviewers } from "@/contexts/interviewers.context";
@@ -44,7 +45,13 @@ function Interviewers() {
       <div className="flex flex-col items-left">
         <div className="flex flex-row mt-5">
           <div>
-            <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-3">{t("nav.interviewers")}</h2>
+            {/* 标题在左，ticker 在 main 区水平居中（视觉对齐 navbar 中央搜索） */}
+            <div className="relative flex flex-row flex-wrap items-center gap-4 mt-3">
+              <h2 className="text-2xl font-semibold tracking-tight">{t("nav.interviewers")}</h2>
+              <div className="md:absolute md:left-1/2 md:-translate-x-1/2">
+                <InsightTicker />
+              </div>
+            </div>
             <h3 className=" text-sm tracking-tight text-gray-600 font-medium ">
               {t("interviewerSettings.getToKnow")}
             </h3>

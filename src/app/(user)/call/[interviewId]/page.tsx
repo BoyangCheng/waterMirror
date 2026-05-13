@@ -164,14 +164,9 @@ function InterviewInterface({ params }: Props) {
           description={t("interview.unavailableMessage")}
           image="/closed.png"
         />
-      ) : device && device.isMobile && !proceedAnyway ? (
-        // 所有移动端（含 iOS / Android / 微信内嵌）统一提示建议用电脑，给"继续"按钮兜底
-        <DeviceWarning
-          title={t("interview.usePcTitle")}
-          description={t("interview.usePc")}
-          onContinue={() => setProceedAnyway(true)}
-        />
       ) : (
+        // 移除"建议用电脑"拦截：候选人 mobile 直接进入面试。
+        // device-detect / DeviceWarning 暂保留(call/index.tsx 的录像日志还在用 getDeviceClass)。
         <Call interview={interview} />
       )}
     </div>

@@ -554,8 +554,9 @@ function InterviewHome({ params, searchParams }: Props) {
                 </Select>
               </div>
 
-              {/* 把 response 列表高度限制 1/2，给下面的视频播放器槽位让空间 */}
-              <ScrollArea className="flex-1 min-h-[160px] max-h-[50%] p-1 rounded-md border-none">
+              {/* response 列表高度：从 max-h-[50%]/min-h-[160px] 增大 60% → 80%/256px
+                  下方视频播放器槽位仍保留剩余空间 */}
+              <ScrollArea className="flex-1 min-h-[256px] max-h-[80%] p-1 rounded-md border-none">
                 {filterResponses().length > 0 ? (
                   filterResponses().map((response) => {
                     // 合并模式下要标注 response 来自哪个面试（跨 a/b/c 区分用）；

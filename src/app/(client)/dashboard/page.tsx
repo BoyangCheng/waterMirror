@@ -1,5 +1,6 @@
 "use client";
 
+import { InsightTicker } from "@/components/dashboard/InsightTicker";
 import Modal from "@/components/dashboard/Modal";
 import CreateInterviewCard from "@/components/dashboard/interview/createInterviewCard";
 import InterviewCard from "@/components/dashboard/interview/interviewCard";
@@ -89,9 +90,16 @@ function Interviews() {
   return (
     <main className="p-8 pt-0 ml-12 mr-auto rounded-md">
       <div className="flex flex-col items-left">
-        <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-8">
-          {t("dashboard.myInterviews")}
-        </h2>
+        {/* 标题在左，ticker 在 main 区水平居中（视觉对齐 navbar 中央搜索）
+            mobile: 跟随 h2 自然排列；desktop: ticker 绝对居中 */}
+        <div className="relative flex flex-row flex-wrap items-center gap-4 mt-8">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {t("dashboard.myInterviews")}
+          </h2>
+          <div className="md:absolute md:left-1/2 md:-translate-x-1/2">
+            <InsightTicker />
+          </div>
+        </div>
         <h3 className="text-sm tracking-tight text-gray-600 font-medium">
           {t("dashboard.startGettingResponses")}
         </h3>

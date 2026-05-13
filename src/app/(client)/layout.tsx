@@ -5,7 +5,6 @@ import Navbar from "@/components/navbar";
 import Providers from "@/components/providers";
 import SideMenu from "@/components/sideMenu";
 import BugReportButton from "@/components/bug-report/BugReportButton";
-import { InsightTicker } from "@/components/dashboard/InsightTicker";
 import ErrorReporterInit from "@/components/error-reporter-init";
 import { AuthProvider } from "@/contexts/auth.context";
 import { cn } from "@/lib/utils";
@@ -38,12 +37,6 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
   const isAuthRoute = pathname.includes("/sign-in") || pathname.includes("/sign-up");
-  // Insight ticker 只在 dashboard 主区显示（dashboard/screening/interviewers），
-  // 不在面试详情页 / 面试官编辑页等子路由显示，避免视觉过载
-  const showInsightTicker =
-    pathname === "/dashboard" ||
-    pathname === "/dashboard/screening" ||
-    pathname === "/dashboard/interviewers";
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -65,7 +58,6 @@ export default function RootLayout({
                   <SideMenu />
                   {/* ml 必须和 SideMenu 的 w 同步：sideMenu 改 240，这里也改 240 */}
                   <div className="ml-[240px] pt-[80px] h-full overflow-y-auto flex-grow">
-                    {showInsightTicker && <InsightTicker />}
                     {children}
                   </div>
                 </div>

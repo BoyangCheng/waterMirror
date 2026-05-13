@@ -50,37 +50,37 @@ export function InsightTicker() {
   if (items.length === 0) return null;
   const current = items[idx % items.length];
 
+  // 不再自带 outer w-full 容器：由调用方决定如何放置（一般紧跟 dashboard 标题同行）
+  // 字号从 text-sm → text-base，更醒目
   return (
     <div
-      className="w-full flex justify-center pt-3 pb-1"
+      className="relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 text-indigo-900 text-base font-normal shadow-[0_4px_12px_-2px_rgba(99,102,241,0.18)] max-w-full"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 text-indigo-900 text-sm font-normal shadow-[0_4px_12px_-2px_rgba(99,102,241,0.18)] max-w-[90%]">
-        {/* key 触发动画重跑；emoji 单独 wiggle 抖动 */}
-        <span key={`emoji-${animKey}`} className="tip-emoji text-base leading-none flex-none">
-          {current.emoji ?? "💡"}
+      {/* key 触发动画重跑；emoji 单独 wiggle 抖动 */}
+      <span key={`emoji-${animKey}`} className="tip-emoji text-lg leading-none flex-none">
+        {current.emoji ?? "💡"}
+      </span>
+      <span
+        key={`text-${animKey}`}
+        className="truncate animate-in fade-in slide-in-from-bottom-1 duration-500"
+      >
+        {current.text}
+      </span>
+      {/* 进度小点（仅当有多条时显示） */}
+      {items.length > 1 && (
+        <span className="ml-2 flex items-center gap-1 flex-none">
+          {items.map((_, i) => (
+            <span
+              key={i}
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                i === idx % items.length ? "bg-indigo-500" : "bg-indigo-200"
+              }`}
+            />
+          ))}
         </span>
-        <span
-          key={`text-${animKey}`}
-          className="truncate animate-in fade-in slide-in-from-bottom-1 duration-500"
-        >
-          {current.text}
-        </span>
-        {/* 进度小点（仅当有多条时显示） */}
-        {items.length > 1 && (
-          <span className="ml-2 flex items-center gap-1 flex-none">
-            {items.map((_, i) => (
-              <span
-                key={i}
-                className={`w-1 h-1 rounded-full transition-colors ${
-                  i === idx % items.length ? "bg-indigo-500" : "bg-indigo-200"
-                }`}
-              />
-            ))}
-          </span>
-        )}
-      </div>
+      )}
     </div>
   );
 }

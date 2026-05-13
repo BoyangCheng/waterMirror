@@ -129,7 +129,18 @@ function Call({ interview }: InterviewProps) {
 
   const { tabSwitchCount } = useTabSwitchPrevention();
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // mobile/desktop 各有一份字幕 div,通过 callback ref 自动选当前可见的那个绑定:
+  // offsetParent === null 表示 display:none(被 viewport 切隐藏),跳过
+  const setUserResponseRef = useCallback((el: HTMLDivElement | null) => {
+    if (el && el.offsetParent !== null) {
+      lastUserResponseRef.current = el;
+    }
+  }, []);
+  // mobile/desktop 各有一个 <video>。两个都挂同一 ref 会 race condition（后挂的覆盖
+  // 前挂的，hidden 那个反而拿 ref），导致可见 video 没 srcObject → 黑屏。
+  // 解法：两个独立 ref，useEffect 给两个都 attach stream，hidden 那个 setSrc 是 no-op
+  const videoRefMobile = useRef<HTMLVideoElement | null>(null);
+  const videoRefDesktop = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
@@ -164,9 +175,11 @@ function Call({ interview }: InterviewProps) {
   // The <video> is only rendered when isStarted becomes true, so we need
   // this effect to bind the stream after the element exists.
   useEffect(() => {
-    if (isStarted && videoRef.current && cameraStream) {
-      videoRef.current.srcObject = cameraStream;
-    }
+    if (!isStarted || !cameraStream) return;
+    // 给 mobile + desktop 两个 <video> 都 attach stream
+    // hidden 那个 setSrc 没视觉效果但无副作用
+    if (videoRefMobile.current) videoRefMobile.current.srcObject = cameraStream;
+    if (videoRefDesktop.current) videoRefDesktop.current.srcObject = cameraStream;
   }, [isStarted, cameraStream]);
 
   // Safety net: release RTC engine + camera on unmount so that if the
@@ -781,6 +794,9 @@ function Call({ interview }: InterviewProps) {
       // 候选人需要看到自己的画面，体验上必须有；
       // is_video_enabled 只控制是否启动 MediaRecorder 录制 + 上传 OSS。
       const recordingEnabled = interview?.is_video_enabled !== false;
+      // mobile 设备整体降低视频负担:分辨率/帧率/码率全部减半,
+      // 把 CPU 让给 RTC 音频解码线程,改善 AI 声音流畅度(D 优化)
+      const isMobileDevice = getDeviceClass().isMobile;
       try {
         // audio:true 让 MediaRecorder 同时录用户麦克风（如开启录像）；
         //   即使不录，AudioContext 拿到 mic 流也能给将来的混音/分析留口子。
@@ -788,13 +804,16 @@ function Call({ interview }: InterviewProps) {
         //   AI 声音消掉，避免录像里 AI 声音听两遍 + 防止 ASR 把 AI 自己的话识别成用户输入。
         // Volcengine RTC 会自己再 getUserMedia 拿一份做 ASR，Chrome 允许同一 mic 被
         //   多个 stream 同时读取，实测无冲突。
-        // 视频参数：192×256 + 12fps + 0.08Mbps，10 分钟约 6MB。
+        // 视频参数：desktop 192×256@12fps@80kbps,mobile 128×172@6fps(等比缩小,减半负担)
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "user",
-            width: { ideal: 192 },
-            height: { ideal: 256 },
-            frameRate: { ideal: 12, max: 12 },
+            width: { ideal: isMobileDevice ? 128 : 192 },
+            height: { ideal: isMobileDevice ? 172 : 256 },
+            frameRate: {
+              ideal: isMobileDevice ? 6 : 12,
+              max: isMobileDevice ? 8 : 12,
+            },
           },
           audio: {
             echoCancellation: true,
@@ -840,16 +859,25 @@ function Call({ interview }: InterviewProps) {
           // 这样 iOS 微信复现时直接能看到："webm 全 false、mp4 全 false" → 根因是 MediaRecorder 不支持
           const probeResult: Record<string, boolean> = {};
           if (typeof MediaRecorder !== "undefined") {
-            for (const candidate of [
-              // 桌面 Chrome/Firefox/Edge + Android Chrome 主路径
-              "video/webm;codecs=vp9,opus",
-              "video/webm;codecs=vp8,opus",
-              "video/webm",
-              // iOS Safari / WeChat iOS / 任何 WKWebView 走 mp4 fallback
-              // Safari MediaRecorder 输出 fragmented MP4，理论上可顺序 append 拼接
-              "video/mp4;codecs=h264,aac",
-              "video/mp4",
-            ]) {
+            // mobile: H264 通常有硬件加速,优先;VP9 fallback
+            // desktop: VP9 软编 CPU 占用可控,优先(更小文件)
+            // (B 优化: mobile 用 H264 减少编码 CPU,给 RTC 音频解码线程腾出资源)
+            const candidates = isMobileDevice
+              ? [
+                  "video/mp4;codecs=h264,aac",
+                  "video/mp4",
+                  "video/webm;codecs=vp8,opus",
+                  "video/webm;codecs=vp9,opus",
+                  "video/webm",
+                ]
+              : [
+                  "video/webm;codecs=vp9,opus",
+                  "video/webm;codecs=vp8,opus",
+                  "video/webm",
+                  "video/mp4;codecs=h264,aac",
+                  "video/mp4",
+                ];
+            for (const candidate of candidates) {
               const supported = MediaRecorder.isTypeSupported(candidate);
               probeResult[candidate] = supported;
               if (supported && !mimeType) mimeType = candidate;
@@ -888,10 +916,10 @@ function Call({ interview }: InterviewProps) {
             }
             const recorder = new MediaRecorder(recorderStream, {
               mimeType,
-              // 0.08 Mbps（再降）。192×256 + 12fps + VP9 在这码率下面部仍可辨识，
-              // 10 分钟面试 ~6MB，OSS 流量极低
-              videoBitsPerSecond: 80_000,
-              audioBitsPerSecond: 32_000, // 32kbps opus，人声足够
+              // desktop 80kbps / mobile 40kbps —— mobile 减半减少编码 CPU 抢占
+              // 配合 mobile 6fps + 128×172,实际负载 ~30% 桌面水平
+              videoBitsPerSecond: isMobileDevice ? 40_000 : 80_000,
+              audioBitsPerSecond: 32_000, // 32kbps opus,人声足够
             });
             // recorder 自身错误（编码失败 / track 异常 / WebView 限制）
             // 这是 iOS 微信视频上传调试的关键信号 —— 探测过了但实际跑不起来时这里会触发
@@ -1323,11 +1351,13 @@ function Call({ interview }: InterviewProps) {
                 shrink-0 防 mobile 锁屏时被字幕区挤压。 */}
             {isStarted && (
               <div className="m-4 shrink-0">
-                <div className="relative h-9 mb-2">
+                {/* tip slot 高度 h-9 → h-14：mobile 上气泡能容纳两行不挤压进度条；
+                    mb-3 跟进度条留 12px 喘息间距 */}
+                <div className="relative h-14 md:h-9 mb-3 md:mb-2">
                   {activeTipIdx !== null && (
                     <div
                       key={activeTipIdx}
-                      className={`absolute left-1/2 top-0 -translate-x-1/2 max-w-[92%] text-center px-4 py-2 rounded-full bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 text-indigo-900 text-xs md:text-sm font-normal shadow-[0_4px_12px_-2px_rgba(99,102,241,0.18)] ${
+                      className={`absolute left-1/2 top-0 -translate-x-1/2 max-w-[350px] md:max-w-[92%] text-center px-4 py-2 rounded-2xl md:rounded-full bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 text-indigo-900 text-xs md:text-sm font-normal shadow-[0_4px_12px_-2px_rgba(99,102,241,0.18)] ${
                         tipPhase === "out" ? "tip-fade-out" : "tip-pop-in"
                       }`}
                     >
@@ -1480,28 +1510,42 @@ function Call({ interview }: InterviewProps) {
             )}
 
             {/* Active call UI ——
-                Mobile: flex-col 占满剩余空间，AI/候选人 各占一半，字幕区 flex-1 内部滚，
-                  头像 shrink-0 固定 95×95，整屏不滚
-                Desktop: flex-row 左右 50/50，沿用原 layout（头像 160×160 + 字幕 250px 高） */}
+                Mobile: 上方两个字幕区平分剩余高度,中间一条柔和分隔线;
+                       底部 AI + 候选人头像并排,整屏不滚
+                Desktop: 沿用左右 50/50,每边字幕在上头像在下 */}
             {isStarted && !isEnded && !isOldUser && (
-              <div className="flex flex-col md:flex-row p-2 flex-1 min-h-0 overflow-hidden">
-                {/* Interviewer — mobile 上半，desktop 左侧 */}
-                <div className="border-b-2 md:border-b-0 md:border-x-2 border-grey w-full md:w-[50%] flex-1 min-h-0 md:flex-initial md:my-auto md:min-h-[70%]">
-                  <div className="flex flex-col h-full md:h-auto md:justify-evenly">
-                    {/* 字幕：mobile flex-1 自适应剩余空间，内部 overflow-y-auto */}
-                    <div className="text-base md:text-[17px] w-[90%] md:w-[80%] leading-relaxed mt-2 md:mt-4 flex-1 min-h-0 md:flex-initial md:h-[250px] mx-auto px-3 md:px-6 overflow-y-auto">
+              <>
+                {/* ===== MOBILE LAYOUT ===== */}
+                <div className="md:hidden flex flex-col flex-1 min-h-0 overflow-hidden p-2">
+                  {/* 字幕区:上下平分 */}
+                  <div className="flex flex-col flex-1 min-h-0">
+                    {/* AI 字幕 */}
+                    <div className="flex-1 min-h-0 overflow-y-auto text-base leading-relaxed px-3 py-2 mx-auto w-[92%]">
                       {lastInterviewerResponse}
                     </div>
-                    {/* 头像：mobile shrink-0 固定 95px，desktop 160px */}
-                    <div className="flex flex-col shrink-0 mx-auto justify-center items-center align-middle pb-2 md:pb-0 mt-2 md:mt-auto md:pt-6">
+                    {/* 柔和分隔线,替代原 border-b-2 */}
+                    <div className="border-b border-gray-200 mx-3 my-1" />
+                    {/* 你字幕 */}
+                    <div
+                      ref={setUserResponseRef}
+                      className="flex-1 min-h-0 overflow-y-auto text-base leading-relaxed px-3 py-2 mx-auto w-[92%]"
+                    >
+                      {lastUserResponse}
+                    </div>
+                  </div>
+
+                  {/* 头像并排底部 */}
+                  <div className="flex flex-row justify-center gap-10 shrink-0 pt-3 pb-1 border-t border-gray-200">
+                    {/* AI 头像 + label */}
+                    <div className="flex flex-col items-center">
                       {interviewerImg ? (
                         <img
                           src={interviewerImg}
                           alt="Image of the interviewer"
-                          width={160}
-                          height={160}
-                          className={`w-[95px] h-[95px] md:w-[160px] md:h-[160px] object-cover object-center rounded-full mx-auto my-auto ${
-                            activeTurn === "agent" ? "border-4" : ""
+                          width={90}
+                          height={90}
+                          className={`w-[90px] h-[90px] object-cover object-center rounded-full ${
+                            activeTurn === "agent" ? "border-4 ai-pulse" : ""
                           }`}
                           style={
                             activeTurn === "agent"
@@ -1513,40 +1557,97 @@ function Call({ interview }: InterviewProps) {
                           }}
                         />
                       ) : (
-                        <div className="w-[95px] h-[95px] md:w-[160px] md:h-[160px] bg-gray-200 rounded-full animate-pulse mx-auto" />
+                        <div className="w-[90px] h-[90px] bg-gray-200 rounded-full animate-pulse" />
                       )}
-                      <div className="font-semibold text-xs md:text-base mt-1 md:mt-2">{t("interview.interviewer")}</div>
+                      <div className="font-semibold text-xs mt-2">{t("interview.interviewer")}</div>
+                    </div>
+
+                    {/* 你头像 (video) + label */}
+                    <div className="flex flex-col items-center">
+                      <video
+                        ref={videoRefMobile}
+                        autoPlay
+                        playsInline
+                        muted
+                        className={`w-[90px] h-[90px] object-cover rounded-full ${
+                          activeTurn === "user" ? "border-4" : ""
+                        }`}
+                        style={{
+                          transform: "scaleX(-1)",
+                          ...(activeTurn === "user"
+                            ? { borderColor: interview.theme_color ?? "#4F46E5" }
+                            : {}),
+                        }}
+                      />
+                      <div className="font-semibold text-xs mt-2">{t("interview.you")}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Interviewee — mobile 下半，desktop 右侧 */}
-                <div className="flex flex-col w-full md:w-[50%] mt-1 md:mt-0 flex-1 min-h-0 md:flex-initial md:justify-evenly">
-                  <div
-                    ref={lastUserResponseRef}
-                    className="text-base md:text-[17px] w-[90%] md:w-[80%] leading-relaxed mt-2 md:mt-4 mx-auto flex-1 min-h-0 md:flex-initial md:h-[250px] px-3 md:px-6 overflow-y-auto"
-                  >
-                    {lastUserResponse}
+                {/* ===== DESKTOP LAYOUT ===== */}
+                <div className="hidden md:flex md:flex-row p-2 flex-1 min-h-0 overflow-hidden">
+                  {/* AI 区 (左) */}
+                  <div className="border-x-2 border-grey w-[50%] my-auto min-h-[70%]">
+                    <div className="flex flex-col justify-evenly">
+                      <div className="text-[17px] w-[80%] leading-relaxed mt-4 h-[250px] mx-auto px-6 overflow-y-auto">
+                        {lastInterviewerResponse}
+                      </div>
+                      <div className="flex flex-col mx-auto justify-center items-center mt-auto pt-6">
+                        {interviewerImg ? (
+                          <img
+                            src={interviewerImg}
+                            alt="Image of the interviewer"
+                            width={160}
+                            height={160}
+                            className={`w-[160px] h-[160px] object-cover object-center rounded-full mx-auto ${
+                              activeTurn === "agent" ? "border-4 ai-pulse" : ""
+                            }`}
+                            style={
+                              activeTurn === "agent"
+                                ? { borderColor: interview.theme_color ?? "#4F46E5" }
+                                : undefined
+                            }
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-[160px] h-[160px] bg-gray-200 rounded-full animate-pulse mx-auto" />
+                        )}
+                        <div className="font-semibold text-base mt-2">{t("interview.interviewer")}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col shrink-0 mx-auto justify-center items-center align-middle mt-2 md:mt-auto md:pt-6">
-                    {/* 摄像头永远显示（getUserMedia 已经无条件请求过），
-                        is_video_enabled 只决定是否启动 MediaRecorder 录像，与预览无关 */}
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className={`w-[95px] h-[95px] md:w-[160px] md:h-[160px] object-cover rounded-full mx-auto my-auto ${
-                        activeTurn === "user"
-                          ? `border-4 border-[${interview.theme_color}]`
-                          : ""
-                      }`}
-                      style={{ transform: "scaleX(-1)" }}
-                    />
-                    <div className="font-semibold text-xs md:text-base mt-1 md:mt-2">{t("interview.you")}</div>
+
+                  {/* 你区 (右) */}
+                  <div className="flex flex-col w-[50%] justify-evenly">
+                    <div
+                      ref={setUserResponseRef}
+                      className="text-[17px] w-[80%] leading-relaxed mt-4 mx-auto h-[250px] px-6 overflow-y-auto"
+                    >
+                      {lastUserResponse}
+                    </div>
+                    <div className="flex flex-col mx-auto justify-center items-center mt-auto pt-6">
+                      <video
+                        ref={videoRefDesktop}
+                        autoPlay
+                        playsInline
+                        muted
+                        className={`w-[160px] h-[160px] object-cover rounded-full mx-auto ${
+                          activeTurn === "user" ? "border-4" : ""
+                        }`}
+                        style={{
+                          transform: "scaleX(-1)",
+                          ...(activeTurn === "user"
+                            ? { borderColor: interview.theme_color ?? "#4F46E5" }
+                            : {}),
+                        }}
+                      />
+                      <div className="font-semibold text-base mt-2">{t("interview.you")}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </>
             )}
 
             {/* End call button —— shrink-0 固定底部不被压扁；
@@ -1556,7 +1657,7 @@ function Call({ interview }: InterviewProps) {
                 <AlertDialog>
                   <AlertDialogTrigger className="w-full">
                     <Button
-                      className="bg-white text-black border border-indigo-600 h-12 md:h-10 mx-auto flex flex-row justify-center mb-2 md:mb-8 transition-transform duration-200 hover:scale-105 text-base md:text-sm"
+                      className="bg-white text-black border border-indigo-600 h-12 md:h-10 mx-auto flex flex-row justify-center mb-3 md:mb-8 transition-transform duration-200 hover:scale-105 text-base md:text-sm"
                       disabled={Loading}
                     >
                       {t("interview.endInterview")}{" "}
