@@ -1545,7 +1545,7 @@ function Call({ interview }: InterviewProps) {
                           width={90}
                           height={90}
                           className={`w-[90px] h-[90px] object-cover object-center rounded-full ${
-                            activeTurn === "agent" ? "border-4 ai-pulse" : ""
+                            activeTurn === "agent" ? "border-4 talking-pulse" : ""
                           }`}
                           style={
                             activeTurn === "agent"
@@ -1570,7 +1570,7 @@ function Call({ interview }: InterviewProps) {
                         playsInline
                         muted
                         className={`w-[90px] h-[90px] object-cover rounded-full ${
-                          activeTurn === "user" ? "border-4" : ""
+                          activeTurn === "user" ? "border-4 talking-pulse" : ""
                         }`}
                         style={{
                           transform: "scaleX(-1)",
@@ -1600,7 +1600,7 @@ function Call({ interview }: InterviewProps) {
                             width={160}
                             height={160}
                             className={`w-[160px] h-[160px] object-cover object-center rounded-full mx-auto ${
-                              activeTurn === "agent" ? "border-4 ai-pulse" : ""
+                              activeTurn === "agent" ? "border-4 talking-pulse" : ""
                             }`}
                             style={
                               activeTurn === "agent"
@@ -1634,7 +1634,7 @@ function Call({ interview }: InterviewProps) {
                         playsInline
                         muted
                         className={`w-[160px] h-[160px] object-cover rounded-full mx-auto ${
-                          activeTurn === "user" ? "border-4" : ""
+                          activeTurn === "user" ? "border-4 talking-pulse" : ""
                         }`}
                         style={{
                           transform: "scaleX(-1)",

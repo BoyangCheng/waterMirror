@@ -224,14 +224,14 @@ img {
   letter-spacing: 0.05em;
 }
 
-/* AI 头像"正在说话"呼吸动画 ——
+/* "正在说话"呼吸动画 —— AI 和候选人头像 active 时都用
    用 box-shadow 同心圆向外扩散模拟声波,不影响 layout
-   1.6s 一周期,无限循环,activeTurn===agent 时挂 .ai-pulse 类启用 */
-@keyframes ai-pulse {
+   1.6s 一周期,无限循环 */
+@keyframes talking-pulse {
   0%   { box-shadow: 0 0 0 0   rgba(99, 102, 241, 0.5); }
   70%  { box-shadow: 0 0 0 14px rgba(99, 102, 241, 0);  }
   100% { box-shadow: 0 0 0 0   rgba(99, 102, 241, 0);   }
 }
-.ai-pulse {
-  animation: ai-pulse 1.6s ease-out infinite;
+.talking-pulse {
+  animation: talking-pulse 1.6s ease-out infinite;
 }

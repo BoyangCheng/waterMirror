@@ -31,7 +31,8 @@ function Screening() {
           <h2 className="text-2xl font-semibold tracking-tight">
             {t("screening.title")}
           </h2>
-          <div className="md:absolute md:left-1/2 md:-translate-x-1/2">
+          {/* ticker 对齐 navbar 中央搜索:viewport 中心 = main 中心 - 120px (sidebar 240/2) */}
+          <div className="md:absolute md:left-[calc(50%-120px)] md:-translate-x-1/2">
             <InsightTicker />
           </div>
         </div>

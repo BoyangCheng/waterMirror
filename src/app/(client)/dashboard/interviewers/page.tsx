@@ -43,20 +43,19 @@ function Interviewers() {
   return (
     <main className="p-8 pt-0 ml-12 mr-auto rounded-md">
       <div className="flex flex-col items-left">
-        <div className="flex flex-row mt-5">
-          <div>
-            {/* 标题在左，ticker 在 main 区水平居中（视觉对齐 navbar 中央搜索） */}
-            <div className="relative flex flex-row flex-wrap items-center gap-4 mt-3">
-              <h2 className="text-2xl font-semibold tracking-tight">{t("nav.interviewers")}</h2>
-              <div className="md:absolute md:left-1/2 md:-translate-x-1/2">
-                <InsightTicker />
-              </div>
-            </div>
-            <h3 className=" text-sm tracking-tight text-gray-600 font-medium ">
-              {t("interviewerSettings.getToKnow")}
-            </h3>
+        {/* 标题在左，ticker 在 main 区水平居中（视觉对齐 navbar 中央搜索）
+            relative wrapper 必须直接挂在 main 全宽位置上,absolute 才能用 main 中心定位
+            （之前嵌套在 flex-row 里时 wrapper 被挤窄,absolute 跑到 h2 旁边） */}
+        <div className="relative flex flex-row flex-wrap items-center gap-4 mt-8">
+          <h2 className="text-2xl font-semibold tracking-tight">{t("nav.interviewers")}</h2>
+          {/* ticker 对齐 navbar 中央搜索:viewport 中心 = main 中心 - 120px (sidebar 240/2) */}
+          <div className="md:absolute md:left-[calc(50%-120px)] md:-translate-x-1/2">
+            <InsightTicker />
           </div>
         </div>
+        <h3 className=" text-sm tracking-tight text-gray-600 font-medium ">
+          {t("interviewerSettings.getToKnow")}
+        </h3>
         <div className="relative flex items-center mt-2 ">
           <div
             id="slider"

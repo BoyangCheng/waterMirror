@@ -68,17 +68,28 @@ export function InsightTicker() {
       >
         {current.text}
       </span>
-      {/* 进度小点（仅当有多条时显示） */}
+      {/* 进度小点（仅当有多条时显示）—— 可点击跳转到对应 insight
+          点击时清掉自动轮播 timer 防止瞬间被覆盖,触发动画重跑 */}
       {items.length > 1 && (
-        <span className="ml-2 flex items-center gap-1 flex-none">
-          {items.map((_, i) => (
-            <span
-              key={i}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                i === idx % items.length ? "bg-indigo-500" : "bg-indigo-200"
-              }`}
-            />
-          ))}
+        <span className="ml-2 flex items-center gap-1.5 flex-none">
+          {items.map((_, i) => {
+            const active = i === idx % items.length;
+            return (
+              <button
+                key={i}
+                type="button"
+                aria-label={`第 ${i + 1} 条小提示`}
+                onClick={() => {
+                  if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current);
+                  setIdx(i);
+                  setAnimKey((k) => k + 1);
+                }}
+                className={`w-2 h-2 rounded-full transition-all hover:scale-150 cursor-pointer ${
+                  active ? "bg-indigo-500" : "bg-indigo-200 hover:bg-indigo-400"
+                }`}
+              />
+            );
+          })}
         </span>
       )}
     </div>
